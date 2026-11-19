@@ -106,7 +106,7 @@ const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlo
       data-step-index={i}
       data-incoherent={why ? '' : undefined}
       data-match={match || undefined}
-      style={selected ? undefined : { contentVisibility: 'auto', containIntrinsicSize: 'auto 56px' }}
+      style={selected ? { scrollMarginTop: 112, scrollMarginBottom: 16 } : { contentVisibility: 'auto', containIntrinsicSize: 'auto 56px', scrollMarginTop: 112, scrollMarginBottom: 16 }}
       className={cn(
         'rounded-md border bg-surface-1',
         selected ? 'border-accent-text' : 'border-line',
@@ -241,7 +241,8 @@ export function StepsPanel({
         </div>
       </div>
       {doc.steps.length > 8 ? (
-        <div className="flex items-center gap-1">
+        // la ricerca resta visibile sotto le schede mentre si scorre la lista
+        <div className="sticky top-11 z-10 -mx-1 flex items-center gap-1 bg-surface-1 px-1 pb-2 pt-1">
           <div className="relative min-w-0 flex-1">
             <Search aria-hidden size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
             <input

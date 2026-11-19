@@ -7,7 +7,7 @@
  * (`log[i]` = messaggi prodotti dopo la risposta i, `log[0]` = avvio) permette di mostrare lo stato senza il core.
  */
 import type { OcgMessage, OcgResponse } from '@n1xx1/ocgcore-wasm'
-import type { Step, Uid, ComboDoc } from '@/domain/combo/types'
+import type { ComboDoc, Endboard, Step, Uid } from '@/domain/combo/types'
 
 /** Risposta del giocatore a una richiesta del core (tipo del pacchetto; può contenere bigint → vedi `codec.ts`). */
 export type Answer = OcgResponse
@@ -49,6 +49,11 @@ export interface DuelState {
   steps: Step[]
   /** uid → passcode usati dai passi (`combo.cards`, comprensivo di quelli assegnati dal normalizzatore). */
   cards: Record<Uid, number>
+  /** `setup.hand.required` da salvare: mano richiesta + carte della mano iniziale usate dai passi. */
+  requiredHand: Uid[]
+  /** Campo (formato combo) alla posizione corrente, dallo stato del core. */
+  endboard: Endboard
+  lp: [number, number]
   /** Script mancanti scaricati con "rigioca da capo" durante questa operazione (0 = nessuna passata aggiuntiva). */
   replays: number
   /** Errori Lua/core ricevuti dall'`errorHandler` (diagnostica). */

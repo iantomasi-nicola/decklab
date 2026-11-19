@@ -212,7 +212,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
 
   const panelBody = (
     <Tabs value={activeTab} onValueChange={(v) => setPanelState({ ...panel, tab: v as PanelTab })} className="min-w-0">
-      <TabsList aria-label={t('combos.panels')}>
+      <TabsList aria-label={t('combos.panels')} className="sticky top-0 z-10 bg-surface-1">
         <TabsTrigger value="steps">{t('combos.tab.steps')}</TabsTrigger>
         <TabsTrigger value="setup">{t('combos.tab.setup')}</TabsTrigger>
         {showPiles ? <TabsTrigger value="piles">{t('combos.tab.piles')}</TabsTrigger> : null}

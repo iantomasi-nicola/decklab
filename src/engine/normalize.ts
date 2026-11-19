@@ -247,6 +247,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
 
   // ---- stato di costruzione
   const steps: Step[] = []
+  const movedIn = new Map<Step, Set<Key>>()
   const stepKeys = new Map<Step, { card?: Key; summoned: boolean; activated: boolean }>()
   let nextId = 1
   let cur: Step | null = null
@@ -341,7 +342,10 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     const u = uid(k, to.p)
     referenced.add(k)
     const mv: Move = { uid: u, to: toPlace, why }
-    if (fromPlace && wasKnown) mv.from = fromPlace
+    // il validatore confronta `from` con lo stato a INIZIO passo: solo la prima mossa di una carta nel passo lo porta
+    const moved = (movedIn.get(s) ?? movedIn.set(s, new Set()).get(s))!
+    if (fromPlace && wasKnown && !moved.has(k)) mv.from = fromPlace
+    moved.add(k)
     s.moves.push(mv)
     const info = stepKeys.get(s)!
     if (info.card === k && (to.z === 'mz' || to.z === 'sz')) { info.summoned = true; s.to = toPlace }
@@ -483,7 +487,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
         if (k === undefined) k = tr.create(m.card) // carta creata (token/evocata da fuori partita)
         if (!zTo) {
           // lascia il gioco (token distrutto): resta tracciata nel GY come mossa
-          moveCard(k, { p: from.controller, z: 'gy', seq: -1 }, { why: 'send' })
+          moveCard(k, { p: from.controller, z: 'gy', seq: -1 })
           return
         }
         let host: Key | undefined
@@ -515,7 +519,9 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
         tr.pos.set(k, m.position)
         if (started && cur) {
           const after = loose(placeOf(k))
-          cur.moves.push({ uid: uid(k), ...(known.has(k) ? { from: before } : {}), to: after, why: 'position' })
+          const moved = (movedIn.get(cur) ?? movedIn.set(cur, new Set()).get(cur))!
+          cur.moves.push({ uid: uid(k), ...(known.has(k) && !moved.has(k) ? { from: before } : {}), to: after, why: 'position' })
+          moved.add(k)
           known.add(k)
           referenced.add(k)
           if (cur.action === 'changePosition') cur.to = after

@@ -1,0 +1,50 @@
+/* Token dei grafici dello Stats Lab. Blu/arancio = giocabile/brick (coppia validata con dataviz/validate_palette, scuro e chiaro). */
+.stats-lab {
+  --viz-playable: #3987e5;
+  --viz-brick: #d95926;
+  --viz-on: #ffffff;
+  --viz-neutral: var(--accent);
+  --viz-cat-1: #9085e9; /* violetto */
+  --viz-cat-2: #199e70; /* acqua */
+  --viz-cat-3: #d55181; /* magenta */
+  --viz-grid: var(--border);
+  --viz-axis: var(--border-strong);
+}
+:root[data-theme='light'] .stats-lab {
+  --viz-playable: #2a78d6;
+  --viz-brick: #eb6834;
+  --viz-cat-1: #6250d6;
+  --viz-cat-2: #1baf7a;
+  --viz-cat-3: #e87ba4;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .stats-lab {
+    --viz-playable: #2a78d6;
+    --viz-brick: #eb6834;
+    --viz-cat-1: #6250d6;
+    --viz-cat-2: #1baf7a;
+    --viz-cat-3: #e87ba4;
+  }
+}
+/* testo dei grafici: sempre inchiostro del tema, mai il colore della serie */
+.stats-lab svg text {
+  fill: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+.stats-lab svg text.viz-strong {
+  fill: var(--fg);
+  font-weight: 600;
+}
+.stats-lab .viz-hero {
+  font-size: clamp(48px, 9vw, 64px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stats-lab * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -208,7 +208,7 @@
     height: calc(var(--th) * var(--hs));
     container-type: size;
   }
-  .cl-hand-item:not(:first-child) {
+  .cl-hand-item ~ .cl-hand-item {
     margin-left: min(var(--g), calc((5 * var(--th) + var(--ts) + 5 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
   }
   /* ventaglio Cimitero/Bandite: le carte precedenti sporgono; al passaggio del mouse la carta si ingrandisce */
