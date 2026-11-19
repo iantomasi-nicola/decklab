@@ -10,7 +10,7 @@ import type { ComboDoc, Step, Uid } from '../../src/domain/combo/types'
 import type { Card } from '../../src/domain/types'
 import { SCRIPTS_COMMIT } from '../../src/engine/constants'
 import { EngineHost } from '../../src/engine/host'
-import { answerIdle } from '../../src/engine/answers'
+import { answerEffectYn, answerIdle } from '../../src/engine/answers'
 import { shuffleDeck } from '../../src/engine/prng'
 import { ScriptStore } from '../../src/engine/scripts'
 import { decodeEntries } from '../../src/engine/codec'
@@ -70,6 +70,7 @@ const wantSpecial = (target: number, opts: DriveOpts = {}) => (p: PendingRequest
     const o = p.specialSummons.find((x) => x.code === target)
     return o ? answerIdle('specialSummon', o.index) : null
   }
+  if (p.kind === 'effectYn') return answerEffectYn(false) // non attivare gli effetti d'evocazione: il test misura l'evocazione
   return drive(p, opts)
 }
 
