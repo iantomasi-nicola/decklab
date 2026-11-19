@@ -5,7 +5,7 @@ import { execSync } from 'node:child_process'
 const rss = () => Math.round(+execSync("ps -eo rss,args | grep -i '[g]oogle-chrome\\|[c]hrome' | awk '{s+=$1} END {print s}'").toString() / 1024)
 const extra = (process.argv[3] ?? '').split(' ').filter(Boolean)
 const proxy = process.env.HTTPS_PROXY
-const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: extra, headless: true, ...(mode === 'raw' && proxy ? { proxy: { server: proxy } } : {}) })
+const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: extra, headless: true, ...(mode === 'raw' && proxy ? { proxy: { server: proxy, bypass: 'localhost,127.0.0.1' } } : {}) })
 console.log('chrome', browser.version(), 'flags', extra.join(' '))
 const page = await browser.newPage()
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console.error]', m.text().slice(0, 200)) })

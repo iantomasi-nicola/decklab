@@ -8,7 +8,7 @@ const link = encodeLink(doc)
 const WIDTHS = [375, 768, 1024, 1440] as const
 const THEMES = ['dark', 'light'] as const
 const LANGS = ['it', 'en'] as const
-const OUT = 'test-results/visual-backup'
+const OUT = process.env.SHOTS_DIR ?? 'test-results/visual-backup'
 mkdirSync(OUT, { recursive: true })
 
 async function prepare(page: Page, theme: string, lang: string, width: number) {

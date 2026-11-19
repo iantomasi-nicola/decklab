@@ -1,0 +1,19 @@
+/* Replay: numero d'anello sulle carte della catena (si aggiunge ai contorni di Field: data-chain / data-active); il numero (`content`) è generato per carta in ReplayField. */
+@layer components {
+  .rp-field [data-card][data-chain] .cl-fit::after {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    z-index: 12;
+    min-width: clamp(14px, 28cqw, 22px);
+    padding-inline: 3px;
+    border-radius: 999px;
+    background: var(--warn);
+    color: var(--bg);
+    font-size: clamp(9px, 17cqw, 13px);
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+}

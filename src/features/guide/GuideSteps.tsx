@@ -12,6 +12,7 @@ import type { Branch, ComboDoc, Step } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
 import { buildSteps, pickLoc, stepDetails, type VariantRow } from './guideModel'
 import { NoteText } from './GuideParts'
+import { stepHeadline } from './stepText'
 import type { NoteResolver } from './notes'
 
 export interface GuideCtx {
@@ -36,19 +37,15 @@ function Thumb({ code, name, className }: { code: number | undefined; name: stri
 
 function StepBody({ step, ctx }: { step: Step; ctx: GuideCtx }) {
   const { t } = useTranslation()
-  const { doc, nameOfUid } = ctx
-  const cardName = step.card ? nameOfUid(step.card) : ''
-  const verb = step.action === 'custom' ? (step.label ?? t('guide.act.custom')) : t(`guide.act.${step.action}`)
-  const methodTxt = step.action === 'specialSummon' && step.method ? t(`guide.method.${step.method}`) : ''
-  const effectTxt = step.action === 'activate' && step.effect?.index ? t('guide.effect', { n: step.effect.index }) : ''
-  const sub = [methodTxt, effectTxt].filter(Boolean).join(' · ')
+  const { nameOfUid } = ctx
+  const h = stepHeadline(step, t, nameOfUid)
   const details = stepDetails(step)
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
       <p className="text-base leading-6">
-        <span className="font-semibold text-fg">{verb}</span>
-        {cardName ? <span className="text-fg"> {cardName}</span> : null}
-        {sub ? <span className="text-muted"> ({sub})</span> : null}
+        <span className="font-semibold text-fg">{h.verb}</span>
+        {h.card ? <span className="text-fg"> {h.card}</span> : null}
+        {h.sub ? <span className="text-muted"> ({h.sub})</span> : null}
       </p>
       <NoteText note={step.note} lang={ctx.lang} resolver={ctx.resolver} nameOf={ctx.nameOf} />
       {details.length ? (
