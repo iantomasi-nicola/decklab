@@ -186,8 +186,8 @@ export function PlanEditor({ plan, others, variant, variantName, index, banlist,
     />
   )
 
-  const outLane = <Lane kind="out" stacks={mainStacks} selected={draft.outs} index={index} lang={lang} onSet={setSwap('outs')} />
-  const inLane = <Lane kind="in" stacks={sideStacks} selected={draft.ins} index={index} lang={lang} onSet={setSwap('ins')} empty={sideEmpty} />
+  const outLane = <Lane kind="out" stacks={mainStacks} selected={draft.outs} index={index} lang={lang} onSet={setSwap('outs')} scroll={twoLanes} />
+  const inLane = <Lane kind="in" stacks={sideStacks} selected={draft.ins} index={index} lang={lang} onSet={setSwap('ins')} empty={sideEmpty} scroll={twoLanes} />
   const preview = <Preview rows={rows} mainAfter={after.main.length} index={index} lang={lang} />
 
   const subtitle = [variantName, draft.matchup.archetype, t(`side.turn.${draft.matchup.turn}`)].filter(Boolean).join(' · ')

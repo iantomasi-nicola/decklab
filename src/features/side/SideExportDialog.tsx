@@ -153,6 +153,7 @@ export function SideExportDialog({ open, onOpenChange, title, subtitle, rows, ou
       <div className="flex flex-col gap-4">
         <Segmented
           label={t('side.export.orientation')}
+          fill
           value={orientation}
           onValueChange={setOrientation}
           options={[

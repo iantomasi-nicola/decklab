@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import ArrowLeftRight from 'lucide-react/icons/arrow-left-right'
@@ -79,12 +79,9 @@ export function SideView() {
     return findBanlist(ready.banlists, variant.v.banlist) ?? noLimits(variant.v.banlist)
   }, [ready, variant])
 
-  // se il matchup aperto sparisce (eliminato/ripristinato altrove) torna all'elenco
-  useEffect(() => {
-    if (openId && plansLoaded && !plans.some((p) => p.id === openId)) setOpenId(null)
-  }, [openId, plans, plansLoaded])
-  // contenitore largo: l'editor mostra sempre un matchup
-  const selectedId = openId ?? (split && plans.length ? plans[0]!.id : null)
+  // Un matchup appena creato o ripristinato compare nell'elenco con qualche ms di ritardo: un id non ancora (o non più)
+  // presente vale "nessuna selezione". Con il contenitore largo l'editor mostra sempre un matchup.
+  const selectedId = plans.some((p) => p.id === openId) ? openId : split && plans.length ? plans[0]!.id : null
   const selected = plans.find((p) => p.id === selectedId)
 
   const validations = useMemo(() => {

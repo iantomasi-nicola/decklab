@@ -120,10 +120,12 @@ export interface LaneProps {
   /** Mostrato al posto della griglia quando non ci sono carte (es. Side vuoto). */
   empty?: ReactNode
   className?: string
+  /** Corsia alta: il corpo scorre da solo (OUT e IN affiancati, così l'anteprima resta vicina). */
+  scroll?: boolean
 }
 
 /** Una corsia del piano: OUT (rosso tenue, carte del Main) o IN (verde, carte del Side). Tocco = +1, "−" = −1. */
-export function Lane({ kind, stacks, selected, index, lang, onSet, empty, className }: LaneProps) {
+export function Lane({ kind, stacks, selected, index, lang, onSet, empty, className, scroll }: LaneProps) {
   const { t } = useTranslation()
   const tone = TONE[kind]
   const Icon = kind === 'out' ? LogOut : LogIn
@@ -145,7 +147,7 @@ export function Lane({ kind, stacks, selected, index, lang, onSet, empty, classN
           {total}
         </span>
       </header>
-      <div className="p-3">
+      <div className={cn('p-3', scroll && 'max-h-[min(68dvh,620px)] overflow-y-auto overscroll-contain')}>
         {stacks.length ? (
           <>
             <p className="mb-3 text-sm text-muted">{t(kind === 'out' ? 'side.lane.tapOut' : 'side.lane.tapIn')}</p>
