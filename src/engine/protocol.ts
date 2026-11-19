@@ -47,8 +47,8 @@ export interface StartDuelRequest {
   auto?: Partial<AutoSettings>
 }
 
-export type { PendingRequest } from './requests'
-import type { PendingRequest } from './requests'
+export type { PendingRequest, PlayerPiles } from './requests'
+import type { PendingRequest, PlayerPiles } from './requests'
 
 export interface DuelState {
   /** Messaggi prodotti dall'ultima operazione (per animazioni/log incrementali). */
@@ -73,6 +73,8 @@ export interface DuelState {
   /** Campo (formato combo) alla posizione corrente, dallo stato del core. */
   endboard: Endboard
   lp: [number, number]
+  /** Mano, Cimitero, Bandite, Extra e conteggi, indicizzati per giocatore (0 = utente, 1 = avversario), alla posizione corrente. */
+  piles: [PlayerPiles, PlayerPiles]
   /** Script mancanti scaricati con "rigioca da capo" durante questa operazione (0 = nessuna passata aggiuntiva). */
   replays: number
   /** Errori Lua/core ricevuti dall'`errorHandler` (diagnostica). */
@@ -87,6 +89,8 @@ export interface DuelSnapshot {
   auto: boolean[]
   /** log[0] = messaggi di avvio, log[i] = messaggi dopo la risposta i (i ≥ 1). */
   log: EngineMessage[][]
+  /** Mano/Cimitero/Bandite/Extra alla posizione corrente (come `DuelState.piles`). */
+  piles: [PlayerPiles, PlayerPiles]
   /** Risposte annullate, ripristinabili con `redo` (la prossima per prima). */
   redo: { answer: Answer; auto: boolean }[]
 }

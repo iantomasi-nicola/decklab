@@ -21,7 +21,8 @@ import type {
   ActionKind, Board, BoardPlacement, EffectKind, Endboard, Loc, Move, MoveWhy, Place, PlayerIdx, Position, Step, SummonMethod, Uid,
 } from '@/domain/combo/types'
 import type { DuelPlan } from './duel'
-import type { CardRef } from './requests'
+import type { CardRef, PlayerPiles } from './requests'
+import { FILLER_CODE } from './cards'
 import { isRequest } from './duel'
 
 // ------------------------------------------------------------------ tipi carta (bitmask cdb)
@@ -213,6 +214,7 @@ export interface NormalizeResult {
   /** board a fine duello (stato del core), nel formato combo */
   endboard: Endboard
   lp: [number, number]
+  piles: [PlayerPiles, PlayerPiles]
   /** Risolve una posizione del core (come nelle richieste) in uid + Place, allo stato finale. */
   ref(l: { controller: number; location: number; sequence: number; overlay_sequence?: number }, code?: number): CardRef
   outP(team: number): PlayerIdx
@@ -232,9 +234,11 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const used = new Set<Uid>(Object.keys(cards))
   for (const c of plan.cards) if (c.uid) { uidOfKey.set(c.idx, c.uid); used.add(c.uid) }
   const counters: [number, number] = [1, 1]
+  const presetKeys = new Set<Key>(uidOfKey.keys())
   const uid = (k: Key, p: PlayerIdx = 0): Uid => {
     let u = uidOfKey.get(k)
     if (u) return u
+    if (tr.codes.get(k) === FILLER_CODE) { u = `x${k}`; uidOfKey.set(k, u); return u } // riempitivo: mai in `cards`
     const pref = outP(tr.where.get(k)?.p ?? p) === 1 ? 'o' : 'u'
     const ci = pref === 'o' ? 1 : 0
     do u = `${pref}${counters[ci]!++}`
@@ -245,6 +249,10 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     return u
   }
   const keyOfUid = (u: Uid): Key | undefined => { for (const [k, v] of uidOfKey) if (v === u) return k; return undefined }
+
+  // uid stabili: a ogni carta fisica del giocatore e dell'avversario (da setup) si assegna l'uid subito, in ordine di piano,
+  // così non dipendono da quali carte i passi citano (la UI li usa come chiavi tra una posizione e l'altra)
+  for (const c of plan.cards) if (c.origin !== 'filler' && !uidOfKey.has(c.idx)) uid(c.idx, outP(c.team))
 
   // mano iniziale (dopo le DRAW del primo batch) — usata per `requiredHand`
   for (const c of plan.cards) if (c.uid) known0.add(c.idx)
@@ -342,7 +350,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     const fromPlace = prev ? loose(placeOf(k)) : undefined
     tr.place(k, to.p, to.z, to.seq, to.host, to.pos)
     known.add(k)
-    if (!started || !cur) return
+    if (!started || !cur || tr.codes.get(k) === FILLER_CODE) return
     const s = cur
     const why = opts.why ?? whyOf(s, k, fromZone, to.z, !!opts.isDraw)
     const toPlace = loose(placeOf(k))
@@ -660,7 +668,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const requiredHand: Uid[] = []
   for (const c of plan.cards) if (c.uid && c.origin === 'main' && tr.where.get(c.idx) && initialHand.has(c.idx)) requiredHand.push(c.uid)
   for (const k of initialHand) {
-    if (referenced.has(k) || uidOfKey.has(k)) {
+    if (referenced.has(k) || presetKeys.has(k)) {
       const u = uid(k)
       if (!requiredHand.includes(u)) requiredHand.push(u)
     }
@@ -681,6 +689,20 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const endboard: Endboard = opp.places.length === 0 && opp.lp === 8000 ? { own } : { own, opponent: opp }
   void TYPE_TOKEN
 
+  const pileOf = (pOut: PlayerIdx): PlayerPiles => {
+    const p = pOut === 0 ? plan.userTeam : ((1 - plan.userTeam) as 0 | 1)
+    const list = (arr: Key[]): CardRef[] =>
+      arr.map((k, i) => {
+        const hidden = tr.codes.get(k) === FILLER_CODE
+        return { uid: uid(k, pOut), code: hidden ? 0 : tr.codes.get(k) ?? 0, place: { ...placeOf(k), seq: i } }
+      })
+    return {
+      hand: list(tr.arr.hand[p]), gy: list(tr.arr.gy[p]), banished: list(tr.arr.rm[p]), extra: list(tr.arr.extra[p]),
+      deckCount: tr.arr.deck[p].length, handCount: tr.arr.hand[p].length,
+    }
+  }
+  const piles: [PlayerPiles, PlayerPiles] = [pileOf(0), pileOf(1)]
+
   const ref: NormalizeResult['ref'] = (l, code) => {
     const k = tr.find(l.controller as 0 | 1, l.location, l.sequence, code, l.overlay_sequence)
     if (k !== undefined && tr.where.has(k)) return { uid: uid(k), code: tr.codes.get(k) ?? code ?? 0, place: placeOf(k) }
@@ -694,5 +716,5 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     return { uid: u, code: code ?? 0, place: tr.where.has(nk) ? placeOf(nk) : { loc: 'hand' } }
   }
 
-  return { steps, cards, requiredHand, endboard, lp: [tr.lp[plan.userTeam], tr.lp[(1 - plan.userTeam) as 0 | 1]], ref, outP }
+  return { steps, cards, requiredHand, endboard, lp: [tr.lp[plan.userTeam], tr.lp[(1 - plan.userTeam) as 0 | 1]], piles, ref, outP }
 }

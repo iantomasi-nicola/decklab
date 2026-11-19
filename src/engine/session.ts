@@ -130,6 +130,7 @@ export class DuelSession {
   snapshot(): DuelSnapshot {
     const { req } = this.need()
     return {
+      piles: this.state(0, [], 0).piles,
       seed: req.seed,
       answers: this.entries.slice(0, this.pos).map((e) => e.answer),
       auto: this.entries.slice(0, this.pos).map((e) => e.auto),
@@ -200,6 +201,7 @@ export class DuelSession {
       requiredHand: norm.requiredHand,
       endboard: norm.endboard,
       lp: norm.lp,
+      piles: norm.piles,
       replays,
       errors: this.errors,
     }

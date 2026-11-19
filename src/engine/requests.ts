@@ -15,6 +15,16 @@ export interface CardRef {
   code: number
   place: Place
 }
+/** Zone "a pila" di un giocatore. `hand` nell'ordine reale; `gy`/`banished`: l'ultima è la cima. Carte coperte dell'avversario: `code` 0. */
+export interface PlayerPiles {
+  hand: CardRef[]
+  gy: CardRef[]
+  banished: CardRef[]
+  extra: CardRef[]
+  deckCount: number
+  handCount: number
+}
+
 /** Opzione scegliibile: `index` = indice nell'elenco originale del core. */
 export type Opt = CardRef & { index: number }
 
