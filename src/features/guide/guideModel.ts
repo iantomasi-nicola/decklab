@@ -158,3 +158,132 @@ export function stepDetails(s: Step): { kind: 'search' | 'targets' | 'costs' | '
   if (s.targets?.length) out.push({ kind: 'targets', uids: s.targets })
   return out
 }
+
+/* ------------------------------------------------------------------ combo lunghe: fasi, blocchi e sommario */
+export type PhaseKey = NonNullable<Step['phase']>
+export const PHASES: readonly PhaseKey[] = ['draw', 'standby', 'main1', 'battle', 'main2', 'end']
+
+/** Id della catena a cui il passo appartiene (anche via `ref` dei passi `resolve`). */
+export function chainIdOf(steps: readonly Step[], s: Step): string | undefined {
+  if (s.chain) return s.chain.id
+  if (s.action === 'resolve' && s.ref) return steps.find((x) => x.id === s.ref)?.chain?.id
+  return undefined
+}
+
+/** Fase di ogni passo: quella dichiarata, altrimenti quella del passo precedente (undefined finché nessuna è dichiarata). */
+export function phasesOf(steps: readonly Step[]): (PhaseKey | undefined)[] {
+  let cur: PhaseKey | undefined
+  return steps.map((s) => (cur = s.phase ?? cur))
+}
+
+export type ListItem =
+  | { kind: 'phase'; phase: PhaseKey }
+  | { kind: 'chain'; id: string; from: number; to: number; links: number; collapsed: boolean }
+  | { kind: 'step'; gs: GuideStep; inChain: boolean }
+
+/** Righe della lista passi: passi, intestazioni di fase e di catena comprimibile. `only` = filtro per numero di passo (ricerca): niente intestazioni. */
+export function buildListItems(doc: ComboDoc, collapsed: ReadonlySet<string>, only?: ReadonlySet<number> | null): ListItem[] {
+  const steps = buildSteps(doc)
+  if (only) return steps.filter((gs) => only.has(gs.number)).map((gs) => ({ kind: 'step', gs, inChain: false }))
+  const phases = phasesOf(doc.steps)
+  const cids = doc.steps.map((s) => chainIdOf(doc.steps, s))
+  const out: ListItem[] = []
+  let prevPhase: PhaseKey | undefined
+  let i = 0
+  while (i < steps.length) {
+    const ph = phases[i]
+    if (ph !== prevPhase) {
+      if (ph) out.push({ kind: 'phase', phase: ph })
+      prevPhase = ph
+    }
+    const cid = cids[i]
+    let j = i
+    if (cid) while (j + 1 < steps.length && cids[j + 1] === cid && phases[j + 1] === ph) j++
+    if (cid && j > i) {
+      const isCollapsed = collapsed.has(cid)
+      const links = new Set(doc.steps.slice(i, j + 1).filter((s) => s.chain).map((s) => s.chain!.link)).size
+      out.push({ kind: 'chain', id: cid, from: i + 1, to: j + 1, links, collapsed: isCollapsed })
+      for (let k = i; k <= j; k++) if (!isCollapsed) out.push({ kind: 'step', gs: steps[k]!, inChain: true })
+      // fasi che cambiano dentro un blocco non esistono: il blocco si ferma al cambio di fase
+    } else {
+      out.push({ kind: 'step', gs: steps[i]!, inChain: false })
+      j = i
+    }
+    i = j + 1
+  }
+  return out
+}
+
+export interface OutlineBlock {
+  kind: 'steps' | 'chain' | 'group'
+  from: number
+  to: number
+  /** carta del primo passo (uid), per l'etichetta */
+  uid?: Uid
+  /** anelli (solo catene) */
+  links?: number
+  chainId?: string
+}
+export interface OutlineSection { phase?: PhaseKey; from: number; to: number; blocks: OutlineBlock[] }
+
+const MAX_PLAIN_RUN = 6
+const CHUNK = 10
+
+/**
+ * Sommario: sezioni per fase (se i passi ne dichiarano) o a gruppi di 10 passi, con dentro blocchi di catena,
+ * gruppi "ordine libero" e serie di passi semplici (al massimo 6 per riga). Numeri 1-based della linea principale.
+ */
+export function buildOutline(doc: Pick<ComboDoc, 'steps'>): OutlineSection[] {
+  const steps = doc.steps
+  if (steps.length === 0) return []
+  const phases = phasesOf(steps)
+  const hasPhases = phases.some(Boolean)
+  const sections: OutlineSection[] = []
+  const secKey = (i: number) => (hasPhases ? `${phases[i] ?? ''}` : `${Math.floor(i / CHUNK)}`)
+  const cids = steps.map((s) => chainIdOf(steps, s))
+  let i = 0
+  while (i < steps.length) {
+    const key = secKey(i)
+    let e = i
+    while (e + 1 < steps.length && secKey(e + 1) === key) e++
+    const sec: OutlineSection = { ...(hasPhases && phases[i] ? { phase: phases[i]! } : {}), from: i + 1, to: e + 1, blocks: [] }
+    let k = i
+    while (k <= e) {
+      const s = steps[k]!
+      const cid = cids[k]
+      let m = k
+      let kind: OutlineBlock['kind'] = 'steps'
+      if (cid) {
+        kind = 'chain'
+        while (m + 1 <= e && cids[m + 1] === cid) m++
+      } else if (s.group) {
+        kind = 'group'
+        while (m + 1 <= e && steps[m + 1]!.group === s.group) m++
+      } else {
+        while (m + 1 <= e && m - k + 1 < MAX_PLAIN_RUN && !cids[m + 1] && !steps[m + 1]!.group) m++
+      }
+      const block: OutlineBlock = { kind, from: k + 1, to: m + 1, ...(s.card ? { uid: s.card } : {}) }
+      if (kind === 'chain') {
+        block.chainId = cid!
+        block.links = new Set(steps.slice(k, m + 1).filter((x) => x.chain).map((x) => x.chain!.link)).size
+      }
+      sec.blocks.push(block)
+      k = m + 1
+    }
+    sections.push(sec)
+    i = e + 1
+  }
+  return sections
+}
+
+/** Testo ricercabile di un passo (minuscolo, senza accenti), riga per riga. */
+export function matchSteps(haystacks: readonly string[], query: string, normalize: (s: string) => string): Set<number> | null {
+  const q = normalize(query)
+  if (!q) return null
+  const out = new Set<number>()
+  const num = /^\d+$/.test(q) ? Number(q) : 0
+  haystacks.forEach((h, i) => {
+    if (h.includes(q) || (num > 0 && i + 1 === num)) out.add(i + 1)
+  })
+  return out
+}

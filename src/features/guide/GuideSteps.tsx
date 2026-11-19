@@ -1,5 +1,5 @@
 /** Elenco dei passi numerati con catene, ordine libero, handtrap (rami) e marcatori di divergenza. */
-import type { ReactNode } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import CircleDot from 'lucide-react/icons/circle-dot'
@@ -7,13 +7,23 @@ import Link2 from 'lucide-react/icons/link-2'
 import Shuffle from 'lucide-react/icons/shuffle'
 import TriangleAlert from 'lucide-react/icons/triangle-alert'
 import GitBranch from 'lucide-react/icons/git-branch'
+import ChevronDown from 'lucide-react/icons/chevron-down'
+import Flag from 'lucide-react/icons/flag'
+import ListTree from 'lucide-react/icons/list-tree'
 import { CardImage } from '@/features/cards/CardImage'
 import type { Branch, ComboDoc, Step } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
-import { buildSteps, pickLoc, stepDetails, type VariantRow } from './guideModel'
+import { normalizeName } from '@/domain/deck/cardIndex'
+import { useMediaQuery } from '@/features/combos/useCards'
+import { Button } from '@/ui/Button'
+import { BottomSheet } from '@/ui/BottomSheet'
+import { inputBase } from '@/ui/Input'
+import { SearchField } from '@/ui/SearchField'
+import { buildListItems, buildOutline, matchSteps, pickLoc, stepDetails, type GuideStep, type ListItem, type VariantRow } from './guideModel'
+import { TocBody } from './GuideToc'
 import { NoteText } from './GuideParts'
-import { stepHeadline } from './stepText'
-import type { NoteResolver } from './notes'
+import { headlineText, stepHeadline } from './stepText'
+import { noteToPlain, parseNote, type NoteResolver } from './notes'
 
 export interface GuideCtx {
   doc: ComboDoc
@@ -103,7 +113,7 @@ function BranchBlock({ branch, ctx }: { branch: Branch; ctx: GuideCtx }) {
   const title = pickLoc(branch.title, ctx.lang)
   const rejoinNo = branch.rejoin ? doc.steps.findIndex((s) => s.id === branch.rejoin) + 1 : 0
   return (
-    <aside data-testid="guide-branch" data-branch={branch.id} className="rounded-lg border border-line border-l-2 border-l-warn bg-surface-1 p-3 sm:p-4">
+    <aside data-testid="guide-branch" data-branch={branch.id} className="scroll-mt-[8.25rem] rounded-lg border border-line border-l-2 border-l-warn bg-surface-1 p-3 sm:p-4">
       <header className="flex items-start gap-3">
         <div className="w-12 shrink-0 sm:w-14">
           <Thumb code={opp.code} name={ctx.nameOf(opp.code)} />
@@ -142,43 +152,3 @@ function BranchBlock({ branch, ctx }: { branch: Branch; ctx: GuideCtx }) {
   )
 }
 
-export function StepsList({ ctx, variants }: { ctx: GuideCtx; variants: VariantRow[] }) {
-  const { t } = useTranslation()
-  const steps = buildSteps(ctx.doc)
-  if (steps.length === 0) return <p className="text-[15px] text-muted">{t('guide.steps.empty')}</p>
-  return (
-    <ol className="flex flex-col" data-testid="guide-steps">
-      {steps.map((gs, i) => {
-        const here = variants.filter((v) => v.afterStepId === gs.step.id)
-        const last = i === steps.length - 1
-        return (
-          <li key={gs.step.id} data-step={gs.number} className="relative flex gap-3 pb-5 sm:gap-4">
-            {/* binario: numero + linea continua */}
-            <div className="flex w-8 shrink-0 flex-col items-center">
-              <span className="grid size-8 place-items-center rounded-full bg-accent text-sm font-semibold tabular-nums text-accent-fg">{gs.number}</span>
-              {!last ? <span aria-hidden className="mt-1 w-px flex-1 bg-line-strong/60" /> : null}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
-              <div className={cn('flex gap-3 border-l-2 pl-3', gs.chain ? 'border-warn' : gs.group ? 'border-dashed border-accent-text' : 'border-transparent')}>
-                <div className="w-14 shrink-0 sm:w-16">
-                  <Thumb code={gs.step.card ? ctx.doc.cards[gs.step.card] : undefined} name={gs.step.card ? ctx.nameOfUid(gs.step.card) : ''} />
-                </div>
-                <StepBody step={gs.step} ctx={ctx} />
-              </div>
-              {gs.branches.map((b) => (
-                <BranchBlock key={b.id} branch={b} ctx={ctx} />
-              ))}
-              {here.map((v) => (
-                <p key={v.id} className="text-sm text-muted">
-                  <Link to="/combo/$comboId/guida" params={{ comboId: v.id }} className="inline-flex min-h-11 items-center text-accent-text underline underline-offset-2">
-                    {t('guide.steps.variantHere', { title: pickLoc(v.title, ctx.lang) ?? '—' })}
-                  </Link>
-                </p>
-              ))}
-            </div>
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
