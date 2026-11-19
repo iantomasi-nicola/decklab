@@ -58,7 +58,7 @@ export function encodeCards(cards: readonly Card[]): CardsFile {
   }
   sorted.forEach((c, i) => {
     const base = c.alias ? byId.get(c.alias) : undefined
-    const inherit = !!base && base.name.en === c.name.en && itOf(base) === itOf(c)
+    const inherit = !!base && base.alias === 0 && base.name.en === c.name.en && itOf(base) === itOf(c)
     cols.id.push(c.id)
     cols.alias.push(c.alias)
     cols.en.push(inherit ? '' : c.name.en)
@@ -83,13 +83,12 @@ export function decodeCards(file: CardsFile): Card[] {
   const index = new Map<number, number>()
   for (let i = 0; i < n; i++) index.set(cols.id[i]!, i)
   const out: Card[] = new Array(n)
+  // ereditarietà a un solo salto: la carta base ha sempre il nome esplicito (l'encoder non eredita da alias)
   const nameOf = (i: number): { en: string; it?: string } => {
-    const en = cols.en[i]!
-    const it = cols.it[i]!
-    if (en === '' && cols.alias[i]) {
-      const b = index.get(cols.alias[i]!)
-      if (b !== undefined && b !== i) return nameOf(b)
-    }
+    let j = i
+    if (cols.en[i] === '' && cols.alias[i]) j = index.get(cols.alias[i]!) ?? i
+    const en = cols.en[j]!
+    const it = cols.it[j]!
     return it ? { en, it } : { en }
   }
   for (let i = 0; i < n; i++) {

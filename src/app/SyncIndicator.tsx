@@ -32,7 +32,7 @@ export function SyncIndicator({ showLabel = false, className }: { showLabel?: bo
       className={cn('flex min-h-11 items-center gap-2', TONES[state], className)}
     >
       <Icon aria-hidden size={18} className={cn('shrink-0', state === 'syncing' && 'animate-spin')} />
-      {showLabel ? <span className="truncate text-sm text-muted">{text}</span> : null}
+      {showLabel ? <span className="text-sm leading-snug text-muted">{text}</span> : null}
     </div>
   )
 }

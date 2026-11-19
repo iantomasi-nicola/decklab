@@ -123,14 +123,18 @@ function buildCards(ygo, cdb) {
   for (const id of parentOfImg.keys()) wanted.add(id)
   const addExtra = (id) => {
     const row = cdb.get(id)
-    const parent = row?.alias || parentOfImg.get(id)
-    const base = parent ? cards.get(parent) : undefined
-    if (row && row.alias === 0 && parentOfImg.has(id)) stats.aliasFromImagesOnly++
+    // il cdb è l'autorità sugli alias; card_images di YGOPRODeck solo se il cdb non conosce la carta
+    let parent = row ? row.alias : parentOfImg.get(id)
+    if (parent && cards.get(parent)?.alias) parent = cards.get(parent).alias // niente catene
+    const hint = parentOfImg.get(id)
+    const base = parent ? cards.get(parent) : hint ? cards.get(hint) : undefined
+    if (row && row.alias === 0 && hint && cards.get(hint)?.alias !== id) stats.aliasFromImagesOnly++
     if (!row && !base) return
     const src = row ?? base
+    const sameName = base && (!row || row.name === base.name.en)
     const card = {
       id, alias: parent ?? 0,
-      name: base ? { ...base.name } : { en: row.name },
+      name: sameName ? { ...base.name } : { en: row.name },
       type: src.type, race: src.race, attribute: src.attribute, level: src.level, atk: src.atk, def: src.def,
       ...((row?.scale ?? base?.scale) !== undefined ? { scale: row?.scale ?? base.scale } : {}),
       setcodes: row?.setcodes ?? base?.setcodes ?? [],
@@ -308,7 +312,7 @@ async function main() {
   for (const s of sizes) log(`  ${s.name.padEnd(36)} raw ${kb(s.raw).padStart(10)}  gzip ${kb(s.gzip).padStart(9)}`)
   log(`carte: ${cards.length} (alias/artwork ${cards.filter((c) => c.alias).length}; Extra Deck ${cards.filter((c) => c.isExtra).length}; con punti Genesys ${cards.filter((c) => c.genesys).length})`)
   log(`  Skill Card escluse: ${stats.skillExcluded}; derivate da YGOPRODeck (assenti da ogni cdb): ${stats.derivedFromYgo.length}`)
-  log(`  alias dal cdb: ${stats.extraAlias}, sintetizzati da card_images: ${stats.synthAlias}, basi aggiunte per chiusura: ${stats.closure}, alias solo-YGOPRODeck: ${stats.aliasFromImagesOnly}`)
+  log(`  alias dal cdb: ${stats.extraAlias}, sintetizzati da card_images: ${stats.synthAlias}, basi aggiunte per chiusura: ${stats.closure}, artwork YGOPRODeck che il cdb tratta come base indipendente (alias 0): ${stats.aliasFromImagesOnly}`)
   log(`  senza nome IT nel dump: ${stats.itMissing}; name_en != nome EN: ${stats.itNameMismatch}; nomi con entità HTML: ${stats.htmlEntityNames}`)
   log(`  alias con base assente dal dataset: ${stats.orphanAliases.length}`, stats.orphanAliases.slice(0, 5).join(' | '))
   const fromOther = [...cdb.keys()].filter((id) => origin.get(id) !== 'cards' && cards.some((c) => c.id === id)).length

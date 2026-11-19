@@ -93,10 +93,10 @@
   "sync": {
     "label": "Stato della sincronizzazione",
     "idle": "Sincronizzato",
-    "syncing": "Sincronizzazione in corso",
+    "syncing": "Sincronizzazione…",
     "offline": "Offline",
-    "error": "Sincronizzazione non riuscita",
-    "disabled": "Sincronizzazione disattivata",
+    "error": "Sync non riuscita",
+    "disabled": "Sync non attiva",
     "pending_one": "{{count}} modifica in attesa",
     "pending_other": "{{count}} modifiche in attesa"
   },

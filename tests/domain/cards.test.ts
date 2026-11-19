@@ -43,6 +43,13 @@ describe('formato carte compatto', () => {
     expect(Object.keys(file.cols.genesys)).toHaveLength(2)
   })
 
+  it('alias reciproci (dati sporchi) non causano ricorsione infinita', () => {
+    const a = base({ id: 10, alias: 11, name: { en: 'X' } })
+    const b = base({ id: 11, alias: 10, name: { en: 'X' } })
+    const out = decodeCards(encodeCards([a, b]))
+    expect(out.map((c) => c.name.en)).toEqual(['X', 'X'])
+  })
+
   it('rifiuta versioni sconosciute', () => {
     const file = { ...encodeCards(FIXTURE), v: 2 } as never
     expect(() => decodeCards(file)).toThrow()

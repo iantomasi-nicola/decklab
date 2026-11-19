@@ -87,7 +87,7 @@ function BottomNav({ onMore, moreActive }: { onMore: () => void; moreActive: boo
               <>
                 <span aria-hidden className={cn('absolute top-0 h-0.5 w-8 rounded-full', isActive ? 'bg-accent-text' : 'bg-transparent')} />
                 <Icon aria-hidden size={22} />
-                <span className="max-w-full truncate px-1">{t(`nav.${key}`)}</span>
+                <span>{t(`nav.${key}`)}</span>
               </>
             )}
           </Link>
@@ -137,7 +137,8 @@ export function Shell() {
 
       <div className="min-w-0">
         {/* Barra alta */}
-        <header className="sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-line bg-bg px-4 md:px-8">
+        <header className="sticky top-0 z-30 border-b border-line bg-bg">
+         <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-4 md:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <LogoMark size={28} />
             <span className="font-semibold tracking-tight">{t('app.name')}</span>
@@ -155,6 +156,7 @@ export function Shell() {
               />
             </Tooltip>
           </div>
+         </div>
         </header>
 
         <main

@@ -93,7 +93,7 @@
   "sync": {
     "label": "Sync status",
     "idle": "Synced",
-    "syncing": "Syncing",
+    "syncing": "Syncing…",
     "offline": "Offline",
     "error": "Sync failed",
     "disabled": "Sync is off",
