@@ -221,6 +221,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const cards: Record<Uid, number> = { ...(inp.cards ?? {}) }
 
   // ---- uid
+  const known0 = new Set<Key>() // carte del setup con uid noto (board iniziale, mano richiesta)
   const uidOfKey = new Map<Key, Uid>()
   const used = new Set<Uid>(Object.keys(cards))
   for (const c of plan.cards) if (c.uid) { uidOfKey.set(c.idx, c.uid); used.add(c.uid) }
@@ -238,9 +239,9 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     return u
   }
   const keyOfUid = (u: Uid): Key | undefined => { for (const [k, v] of uidOfKey) if (v === u) return k; return undefined }
-  for (const [u, code] of Object.entries(cards)) void u, void code
 
   // mano iniziale (dopo le DRAW del primo batch) — usata per `requiredHand`
+  for (const c of plan.cards) if (c.uid) known0.add(c.idx)
   const initialHand = new Set<Key>()
   const referenced = new Set<Key>() // carte citate da almeno un passo
 
@@ -253,7 +254,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const chain: Step[] = []
   let phase: Step['phase'] | undefined
   let started = false // dopo la prima richiesta (le mosse iniziali non sono passi)
-  const known = new Set<Key>() // carte già "note" a chi legge il doc: possono avere `from`
+  const known = new Set<Key>(known0) // carte già "note" a chi legge il doc: possono avere `from`
 
   const placeOf = (k: Key, withSeq = true): Place => {
     const w = tr.where.get(k)!
@@ -300,6 +301,14 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const whyOf = (s: Step | null, k: Key, from: Zone | null, to: Zone, isDraw: boolean): MoveWhy => {
     if (isDraw) return 'draw'
     const info = s ? stepKeys.get(s) : undefined
+    if (s && info && info.card === k && (to === 'mz' || to === 'sz')) {
+      switch (s.action) {
+        case 'setMonster': case 'setSpellTrap': return 'set'
+        case 'flipSummon': return 'flip'
+        case 'activate': case 'chainActivate': return 'other'
+        default: return 'summon'
+      }
+    }
     const preChain = !!s && !!info && !info.activated
     if (to === 'ov') return 'material'
     if (to === 'mz' || to === 'sz') return from === 'ov' ? 'other' : 'summon'
@@ -381,6 +390,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
 
   // ---- gestione risposta
   const onAnswer = (req: OcgMessage, ans: OcgResponse) => {
+    if (ans.type === OcgResponseType.SELECT_IDLECMD || ans.type === OcgResponseType.SELECT_BATTLECMD || ans.type === OcgResponseType.SELECT_CHAIN) pending = null
     if (ans.type === OcgResponseType.SELECT_IDLECMD && req.type === T.SELECT_IDLECMD) {
       const a = ans.action
       const idx = ans.index ?? 0
@@ -445,7 +455,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     }
     if (ans.type === OcgResponseType.SELECT_TRIBUTE && cur && cur.action === 'normalSummon') cur.action = 'tributeSummon'
   }
-  const isFaceDownMonster = (k: Key | undefined): boolean => k !== undefined && tr.where.get(k)?.z === 'mz' && (tr.pos.get(k) ?? 1) !== 1 && ((tr.pos.get(k) ?? 1) & 0xa) !== 0
+  const isFaceDownMonster = (k: Key | undefined): boolean => k !== undefined && tr.where.get(k)?.z === 'mz' && ((tr.pos.get(k) ?? 1) & 0xa) !== 0
 
   // ---- gestione messaggi
   const asLp = (m: OcgLocPos | { controller: 0 | 1; location: number; sequence: number }) => m as { controller: 0 | 1; location: number; sequence: number; position?: number; overlay_sequence?: number }

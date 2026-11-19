@@ -160,3 +160,90 @@ export async function openPanel(page: Page) {
   if ((await page.locator('[data-panel]').count()) === 0) await page.getByTestId('panel-toggle').click()
   await page.locator('[data-panel]').first().waitFor()
 }
+
+/** Combo lunga (n passi) generata qui: per ogni carta k una Evocazione Normale e un "manda al Cimitero"; una catena e un gruppo "ordine libero". */
+export function longDoc(n = 60) {
+  const pairs = Math.ceil(n / 2)
+  const cards: Record<string, number> = {}
+  const codes = [C.ash, C.tengu, C.rooklord, C.xyz, C.spell, C.trap]
+  const uids: string[] = []
+  for (let k = 1; k <= pairs; k++) {
+    cards[`u${k}`] = codes[k % codes.length]!
+    uids.push(`u${k}`)
+  }
+  const steps: Array<Record<string, unknown>> = []
+  for (let k = 1; k <= pairs && steps.length < n; k++) {
+    const uid = `u${k}`
+    steps.push({
+      id: `s${steps.length + 1}`,
+      action: 'normalSummon',
+      card: uid,
+      from: { p: 0, loc: 'hand', seq: k - 1 },
+      to: { p: 0, loc: 'mzone', seq: 0, pos: 'FACEUP_ATK' },
+      moves: [{ uid, from: { p: 0, loc: 'hand', seq: k - 1 }, to: { p: 0, loc: 'mzone', seq: 0, pos: 'FACEUP_ATK' }, why: 'summon' }],
+      note: k % 5 === 0 ? { it: `Nota del passo ${steps.length + 1}`, en: `Note on step ${steps.length + 1}` } : undefined,
+    })
+    if (steps.length >= n) break
+    steps.push({
+      id: `s${steps.length + 1}`,
+      action: 'sendToGY',
+      card: uid,
+      moves: [{ uid, from: { p: 0, loc: 'mzone', seq: 0, pos: 'FACEUP_ATK' }, to: { p: 0, loc: 'gy', seq: k }, why: 'send' }],
+    })
+  }
+  // catena (passi 11–13) e gruppo "ordine libero" (passi 21–23)
+  for (const [i, link] of [[10, 1], [11, 2], [12, 3]] as const) steps[i]!.chain = { id: 'ch1', link }
+  for (const i of [20, 21, 22]) steps[i]!.group = 'g1'
+  const now = new Date().toISOString()
+  return {
+    format: 'combolab.combo',
+    v: 1,
+    meta: {
+      id: 'long',
+      title: { it: 'Combo lunga', en: 'Long combo' },
+      scope: 'archetype',
+      archetype: { name: { it: 'Prova', en: 'Test' } },
+      variant: null,
+      rules: 'TCG',
+      banlist: { format: 'TCG', id: '' },
+      tags: [],
+      noteLang: ['it', 'en'],
+      favorite: false,
+      createdAt: now,
+      updatedAt: now,
+      source: 'manual',
+    },
+    deck: { main: uids.map((u) => cards[u]!), extra: [], side: [] },
+    cards,
+    setup: { first: true, hand: { required: uids, size: Math.max(5, uids.length), fill: 'none' }, own: { lp: 8000, places: [] }, opponent: { board: { lp: 8000, places: [] }, interrupts: [] } },
+    steps,
+    branches: [],
+  }
+}
+
+/** Scrive in IndexedDB una combo completa (documento già pronto) e ritorna l'id del record. */
+export async function seedDoc(page: Page, doc: unknown): Promise<string> {
+  await page.goto('/combo')
+  await page.getByTestId('new-combo').waitFor()
+  return page.evaluate(async (d) => {
+    const id = crypto.randomUUID()
+    const archetypeId = crypto.randomUUID()
+    const now = new Date().toISOString()
+    const doc = JSON.parse(JSON.stringify(d)) as { meta: { id: string; title: object } }
+    doc.meta.id = id
+    const db = await new Promise<IDBDatabase>((res, rej) => {
+      const r = indexedDB.open('decklab')
+      r.onsuccess = () => res(r.result)
+      r.onerror = () => rej(r.error)
+    })
+    await new Promise<void>((res, rej) => {
+      const tx = db.transaction(['archetypes', 'combos'], 'readwrite')
+      tx.objectStore('archetypes').put({ id: archetypeId, name: { it: 'Prova', en: 'Test' }, keyCards: [], starters: [], extenders: [], updatedAt: now, deletedAt: null })
+      tx.objectStore('combos').put({ id, archetypeId, variantId: null, name: doc.meta.title, tagIds: [], payload: doc, updatedAt: now, deletedAt: null })
+      tx.oncomplete = () => res()
+      tx.onerror = () => rej(tx.error)
+    })
+    db.close()
+    return id
+  }, doc)
+}
