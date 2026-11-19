@@ -108,6 +108,7 @@ test('guida: carta proibita → badge illegale con motivo; combo vuota → messa
   await page.goto(`/combo/${ids.illegalId}/guida`)
   await expect(page.getByTestId('legality-badge')).toHaveAttribute('data-state', 'illegal')
   await expect(page.getByTestId('legality-issues')).toContainText('Branded Expulsion')
+  await page.screenshot({ path: `${OUT}/guida-illegale-dark-en.png`, fullPage: true })
   await page.goto(`/combo/${ids.emptyId}/guida`)
   await expect(page.getByText('This combo has no steps yet.')).toBeVisible()
 })
@@ -253,11 +254,12 @@ test('replay: barra riducibile e combo senza passi', async ({ page }) => {
   await seeded(page)
   await page.goto(`/combo/${ids.motherId}/replay`)
   await page.waitForSelector('[data-field]')
-  const h0 = (await page.locator('[data-field]').boundingBox())!.height
+  await expect(page.getByTestId('replay-timeline')).toBeVisible()
+  await page.getByTestId('rp-expand').click()
+  await expect(page.getByTestId('replay-timeline')).toHaveCount(0)
+  await expect(page.getByTestId('replay-controls')).toBeVisible()
   await page.getByTestId('rp-expand').click()
   await expect(page.getByTestId('replay-timeline')).toBeVisible()
-  const h1 = (await page.locator('[data-field]').boundingBox())!.height
-  expect(h1).toBeLessThanOrEqual(h0)
   await page.goto(`/combo/${ids.emptyId}/replay`)
   await expect(page.getByTestId('replay-empty')).toBeVisible()
   await expect(page.getByTestId('rp-play')).toBeDisabled()
