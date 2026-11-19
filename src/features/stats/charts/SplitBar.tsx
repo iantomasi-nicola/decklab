@@ -7,6 +7,8 @@ export interface SplitPart {
   color: string
   /** Testo stampato dentro il blocco (se ci sta). */
   text: string
+  /** Tratteggio a 45° (canale di riserva per chi non distingue i colori). */
+  hatch?: boolean
 }
 
 /**
@@ -29,7 +31,7 @@ export function SplitBar({ parts, ariaLabel }: { parts: SplitPart[]; ariaLabel: 
               <div
                 key={p.key}
                 title={`${p.label}: ${p.text}`}
-                className="flex items-center overflow-hidden rounded-[4px] px-2 text-[14px] font-bold leading-none"
+                className={`flex items-center overflow-hidden rounded-[4px] px-2 text-[14px] font-bold leading-none${p.hatch ? ' viz-hatch' : ''}`}
                 style={{ width: w, background: p.color, color: 'var(--viz-on)' }}
               >
                 {fits ? <span className="whitespace-nowrap">{p.text}</span> : null}

@@ -7,7 +7,7 @@ import X from 'lucide-react/icons/x'
 import ChevronLeft from 'lucide-react/icons/chevron-left'
 import ChevronRight from 'lucide-react/icons/chevron-right'
 import { TabsList } from '@/ui/Tabs'
-import type { Label } from '@/domain/stats'
+import type { LabelState } from '@/domain/stats'
 import type { Lang } from '@/domain/types'
 import { cn } from '@/ui/cn'
 
@@ -60,17 +60,13 @@ export function StatTile({ label, value, hint, emphasis, className }: { label: s
   )
 }
 
-/** Etichetta PLAYABLE/BRICK: simbolo + testo, mai solo il colore. */
-export function LabelBadge({ label, text }: { label: Label; text: string }) {
-  const playable = label === 'PLAYABLE'
+/** Stato PLAYABLE / da confermare / BRICK: simbolo + testo, mai solo il colore. */
+export function LabelBadge({ label, text }: { label: LabelState; text: string }) {
+  const bg = label === 'PLAYABLE' ? 'var(--viz-playable)' : label === 'BRICK' ? 'var(--viz-brick)' : 'var(--viz-unknown)'
   return (
     <span className="inline-flex items-center gap-2 whitespace-nowrap text-[15px] font-medium text-fg">
-      <span
-        aria-hidden
-        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full"
-        style={{ background: playable ? 'var(--viz-playable)' : 'var(--viz-brick)', color: 'var(--viz-on)' }}
-      >
-        {playable ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
+      <span aria-hidden className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[13px] font-bold leading-none" style={{ background: bg, color: 'var(--viz-on)' }}>
+        {label === 'PLAYABLE' ? <Check size={14} strokeWidth={3} /> : label === 'BRICK' ? <X size={14} strokeWidth={3} /> : '?'}
       </span>
       {text}
     </span>

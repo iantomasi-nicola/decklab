@@ -2,6 +2,7 @@
 .stats-lab {
   --viz-playable: #3987e5;
   --viz-brick: #d95926;
+  --viz-unknown: #6f7a93; /* da confermare: grigio con tratteggio, mai solo il colore */
   --viz-on: #ffffff;
   --viz-neutral: var(--accent);
   --viz-cat-1: #9085e9; /* violetto */
@@ -16,6 +17,7 @@
   --viz-cat-1: #6250d6;
   --viz-cat-2: #1baf7a;
   --viz-cat-3: #e87ba4;
+  --viz-unknown: #667089;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) .stats-lab {
@@ -47,4 +49,9 @@
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
+}
+
+/* "Da confermare": tratteggio a 45° sul grigio, così si distingue anche senza colore */
+.stats-lab .viz-hatch {
+  background-image: repeating-linear-gradient(45deg, rgb(255 255 255 / 0.22) 0 2px, transparent 2px 7px);
 }
