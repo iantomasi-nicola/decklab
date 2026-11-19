@@ -484,7 +484,9 @@
       "next": "Next step",
       "start": "Starting situation",
       "step": "Step {{n}} of {{total}}"
-    }
+    },
+    "mineOnlyOn": "My field: tap to show the opponent's too",
+    "mineOnlyOff": "Show only my field"
   },
   "learn": {
     "title": "Learn",

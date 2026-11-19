@@ -1,0 +1,570 @@
+/* Stato del turno: barra fasi, chip, promemoria, marcature OPT, selezione bersagli. Solo token dell'app, griglia 8px. */
+
+/* ------------------------------ TurnBar ------------------------------ */
+.tbar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+@media (min-width: 640px) {
+  .tbar-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+}
+.tbar-turn {
+  flex: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tbar {
+  container-type: inline-size;
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.tbar-btn {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 56px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 1px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.tbar-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+.tbar-btn:hover:not(:disabled):not([data-state='current']) {
+  background: var(--surface-3);
+}
+.tbar-btn[data-state='past'] {
+  color: var(--fg-muted);
+}
+.tbar-btn[data-state='locked'] {
+  color: var(--fg-subtle);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.tbar-btn[data-state='current'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: var(--shadow-1);
+  cursor: default;
+}
+.tbar-btn[data-state='next'] {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.tbar-btn:disabled {
+  cursor: not-allowed;
+}
+.tbar-btn[data-state='current']:disabled {
+  opacity: 1;
+  cursor: default;
+}
+@container (min-width: 600px) {
+  .tbar-btn {
+    min-height: 44px;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0 12px;
+    font-size: 14px;
+  }
+}
+
+/* ------------------------------ TurnStatus ------------------------------ */
+.tstat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.tstat-chips {
+  display: flex;
+  flex: 1 1 280px;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+.tchip[data-tone='open'] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.tchip[data-tone='done'] {
+  background: var(--surface-3);
+  color: var(--fg);
+}
+.tchip[data-tone='info'] {
+  color: var(--fg-muted);
+}
+.tchip[data-tone='warn'] {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.tstat-more {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+.tstat-more:hover {
+  background: var(--surface-2);
+}
+.tstat-more-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--surface-3);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.tstat-chev {
+  transition: transform var(--dur-base) var(--ease);
+}
+.tstat-more[aria-expanded='true'] .tstat-chev {
+  transform: rotate(180deg);
+}
+.tlog {
+  flex: 1 0 100%;
+  max-height: min(320px, 50dvh);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
+  animation: fade var(--dur-fast) var(--ease);
+}
+.tlog ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tlog li + li {
+  border-top: 1px solid var(--border);
+}
+.tlog li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 48px;
+}
+.tlog-empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+.tlog-row {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 14px;
+  text-align: left;
+}
+button.tlog-row {
+  cursor: pointer;
+}
+button.tlog-row:hover {
+  background: var(--surface-2);
+}
+.tlog-row > svg {
+  flex: none;
+  color: var(--fg-muted);
+}
+.tlog-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.tlog-what {
+  font-weight: 600;
+}
+.tlog-who {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+.tlog-tag {
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--fg-muted);
+  font-size: 12px;
+  line-height: 20px;
+}
+.tlog-tag[data-warn] {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.tlog-n {
+  flex: none;
+  min-width: 24px;
+  color: var(--fg-subtle);
+  font-size: 13px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------ OncePerTurnMark ------------------------------ */
+.opt-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.opt-mark {
+  --m: 24px;
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--m);
+  height: var(--m);
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.opt-mark[data-size='sm'] {
+  --m: 20px;
+}
+.opt-mark[data-state='available'] {
+  background: var(--surface-1);
+  color: var(--accent-text);
+}
+.opt-mark[data-state='used'] {
+  background: var(--fg-muted);
+  color: var(--bg);
+}
+.opt-mark[data-state='over'] {
+  background: var(--warn);
+  color: var(--bg);
+  width: auto;
+  min-width: var(--m);
+  padding: 0 6px 0 4px;
+  gap: 2px;
+  grid-auto-flow: column;
+  border-radius: calc(var(--m) / 2);
+}
+.opt-mark-i {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 2px;
+  border-radius: 7px;
+  border: 1.5px solid var(--fg-muted);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.opt-mark[data-state='over'] .opt-mark-i {
+  border-color: var(--warn);
+}
+.opt-mark-n {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ------------------------------ TargetPickerOverlay ------------------------------ */
+.tpick {
+  --tp-ring: #ffffff;
+  --tp-scrim: rgb(5 6 9 / 0.7);
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  touch-action: manipulation;
+}
+:root[data-theme='light'] .tpick {
+  --tp-ring: var(--accent);
+  --tp-scrim: rgb(20 23 31 / 0.58);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) .tpick {
+    --tp-ring: var(--accent);
+    --tp-scrim: rgb(20 23 31 / 0.58);
+  }
+}
+.tpick-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: fade var(--dur-base) var(--ease);
+}
+.tpick-scrim-fill {
+  fill: var(--tp-scrim);
+}
+.tpick-ring {
+  position: fixed;
+  box-sizing: border-box;
+  border: 2px solid var(--tp-ring);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 0 color-mix(in srgb, var(--accent-text) 55%, transparent);
+  pointer-events: none;
+  animation: tpick-breathe 2s ease-in-out infinite;
+}
+.tpick-ring[data-selected] {
+  border-width: 3px;
+  border-color: var(--accent-text);
+  box-shadow: 0 0 0 1px var(--surface-1), 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  animation: none;
+}
+@keyframes tpick-breathe {
+  50% {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent-text) 0%, transparent);
+  }
+}
+.tpick-num {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border: 2px solid var(--surface-1);
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-1);
+  animation: pop var(--dur-base) var(--ease);
+}
+.tpick-hit {
+  position: fixed;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+.tpick-hit:focus-visible {
+  outline: 3px solid var(--tp-ring);
+  outline-offset: 5px;
+}
+.tpick-panel {
+  position: fixed;
+  left: 50%;
+  z-index: 1;
+  width: min(560px, calc(100vw - 16px));
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-1);
+  color: var(--fg);
+  box-shadow: var(--shadow-3);
+  transform: translateX(-50%);
+  animation: tpick-in var(--dur-slow) var(--ease);
+}
+@keyframes tpick-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.tpick-panel[data-side='top'] {
+  animation-name: tpick-in-top;
+}
+@keyframes tpick-in-top {
+  from {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+.tpick-title {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.tpick-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 16px;
+}
+.tpick-count {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+.tpick-progress {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+.tpick-hint {
+  display: none;
+  margin: 0;
+  color: var(--fg-subtle);
+  font-size: 12px;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 640px) {
+  .tpick-hint {
+    display: block;
+  }
+}
+.tpick-off {
+  display: grid;
+  gap: 8px;
+}
+.tpick-off-label {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tpick-off-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 136px;
+  overflow-y: auto;
+}
+.tpick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 22px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.tpick-chip[data-selected] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.tpick-chip-n {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 12px;
+  font-weight: 700;
+}
+.tpick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.tpick-btn {
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+.tpick-btn[data-variant='secondary'] {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+  color: var(--fg);
+}
+.tpick-btn[data-variant='secondary']:hover {
+  background: var(--surface-3);
+}
+.tpick-btn[data-variant='primary'] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.tpick-btn[data-variant='primary']:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.tpick-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}

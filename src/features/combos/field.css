@@ -42,9 +42,24 @@
   inherits: true;
   initial-value: 0px;
 }
+@property --cw {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --hw {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --u {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 7.69;
+}
 @layer components {
   .cl-stage {
-    container-type: size;
+    container: clstage / size;
     width: 100%;
     height: 100%;
     display: grid;
@@ -52,7 +67,7 @@
     min-height: 0;
   }
   .cl-field {
-    container-type: size;
+    container: clfield / size;
     position: relative;
     width: min(100cqw, calc(100cqh * 100 / 95.19));
     aspect-ratio: 100 / 95.19;
@@ -78,13 +93,20 @@
     grid-template-rows: calc(var(--th) * 0.6) repeat(6, var(--th));
     justify-content: center;
     align-content: center;
+    --hw: calc(5 * var(--th) + var(--ts) + 5 * var(--g));
   }
   .cl-cell {
     position: relative;
     min-width: 0;
     min-height: 0;
     container-type: size;
+    grid-row: var(--dr);
+    grid-column: var(--dc);
     transition: opacity 150ms var(--ease);
+  }
+  /* una carta in DEF (ruotata) può sconfinare sulle zone vicine: la cella sta sopra le altre */
+  .cl-cell:has(.cl-def) {
+    z-index: 6;
   }
   /* contenitore a misura di carta, centrato nella cella */
   .cl-box {
@@ -139,6 +161,7 @@
     --wa: min(100cqw, calc(100cqh * 59 / 86));
     --wd: var(--wa); /* in DEF la carta ha la stessa larghezza che in ATK: ruotata occupa (altezza × larghezza) */
     position: relative;
+    flex: none;
     width: var(--wa);
     aspect-ratio: 59 / 86;
     container-type: inline-size;
@@ -209,7 +232,7 @@
     container-type: size;
   }
   .cl-hand-item ~ .cl-hand-item {
-    margin-left: min(var(--g), calc((5 * var(--th) + var(--ts) + 5 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
+    margin-left: min(var(--g), calc((var(--hw) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
   }
   /* ventaglio Cimitero/Bandite: le carte precedenti sporgono; al passaggio del mouse la carta si ingrandisce */
   .cl-fan-card .cl-fit {
@@ -224,6 +247,102 @@
   .cl-hand-item:hover,
   .cl-hand-item:focus-within {
     z-index: 40 !important;
+  }
+
+  /* ---------- telefono verticale (≤ 600 px): 5 colonne, pile in fasce orizzontali, usa tutta l'altezza ---------- */
+  @container clstage (max-width: 600px) and (orientation: portrait) {
+    .cl-field {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+    }
+  }
+  @container clfield (max-width: 600px) and (orientation: portrait) {
+    .cl-grid {
+      --g: 1.2cqw;
+      --pad: 3.4cqw; /* margine per la DEF ruotata (sconfina sulle zone vicine) anche nelle colonne esterne */
+      --u: 7.69;
+      --cw: calc((100cqw - 2 * var(--pad) - 4 * var(--g)) / 5);
+      --tw: min(var(--cw) * 0.9, calc((100cqh - 2 * var(--pad) - 8 * var(--g)) / (var(--u) * 86 / 59)));
+      --th: calc(var(--tw) * 86 / 59);
+      --hw: calc(5 * var(--cw) + 4 * var(--g));
+      grid-template-columns: repeat(5, var(--cw));
+      grid-template-rows: calc(var(--th) * 0.45) calc(var(--th) * 0.62) var(--th) var(--th) var(--th) var(--th) var(--th) calc(var(--th) * 0.62) var(--th);
+    }
+    .cl-mine .cl-grid {
+      --u: 5.07;
+      grid-template-rows: calc(var(--th) * 0.45) 0 0 0 var(--th) var(--th) var(--th) calc(var(--th) * 0.62) var(--th);
+    }
+    .cl-mine .cl-opp-main {
+      display: none;
+    }
+    .cl-cell {
+      grid-row: var(--pr);
+      grid-column: var(--pc);
+    }
+    .cl-hand-opp {
+      --hs: 0.45;
+    }
+    /* Cimitero/Bandite: solo la carta più recente (niente ventaglio) al centro della cella */
+    .cl-fan-card {
+      left: 0 !important;
+      right: 0 !important;
+      width: auto !important;
+      transform: none !important;
+    }
+    .cl-fan-card:not([data-newest]) {
+      display: none;
+    }
+    .cl-cell .cl-box {
+      left: 50% !important;
+      right: auto !important;
+      transform: translate(-50%, -50%) !important;
+    }
+  }
+
+  /* ---------- telefono orizzontale (altezza ≤ 420 px): una sola riga, usa tutta la larghezza ---------- */
+  @container clstage (max-height: 420px) and (orientation: landscape) {
+    .cl-field {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+    }
+  }
+  @container clfield (max-height: 420px) and (orientation: landscape) {
+    .cl-grid {
+      --g: 1.1cqh;
+      --pad: 1.9cqw;
+      --cw: calc((100cqw - 2 * var(--pad) - 10 * var(--g)) / 11);
+      --tw: min(var(--cw) * 0.9, calc((100cqh - 2 * var(--pad) - 3 * var(--g)) / (3.22 * 86 / 59)));
+      --th: calc(var(--tw) * 86 / 59);
+      --hw: calc(5 * var(--cw) + 4 * var(--g));
+      grid-template-columns: repeat(11, var(--cw));
+      grid-template-rows: var(--th) var(--th) calc(var(--th) * 0.62) calc(var(--th) * 0.6);
+    }
+    .cl-cell {
+      grid-row: var(--lr);
+      grid-column: var(--lc);
+    }
+    .cl-hand-opp {
+      --hs: 0.6;
+    }
+    .cl-hand {
+      --hs: 0.6;
+    }
+    .cl-fan-card {
+      left: 0 !important;
+      right: 0 !important;
+      width: auto !important;
+      transform: none !important;
+    }
+    .cl-fan-card:not([data-newest]) {
+      display: none;
+    }
+    .cl-cell .cl-box {
+      left: 50% !important;
+      right: auto !important;
+      transform: translate(-50%, -50%) !important;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .cl-cell,

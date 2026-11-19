@@ -1,5 +1,6 @@
 /** Modello puro del replay: fotogrammi (stato dopo ogni passo), catena/carta attiva, riduttore del lettore. Nessun React. */
 import { allStates, type GameState } from '@/domain/combo/state'
+import { buildOutline } from '@/features/guide/guideModel'
 import type { ComboDoc, Step, Uid } from '@/domain/combo/types'
 
 export interface Frame {
@@ -125,3 +126,55 @@ export function playerReducer(s: PlayerState, a: PlayerAction, last: number): Pl
 
 /** Dedotto da `emphasis`: insieme immutabile per Field. */
 export const chainSet = (f: Frame): ReadonlySet<Uid> => new Set(f.chain.length > 1 ? f.chain : [])
+
+/* ------------------------------------------------------------------ combo lunghe: gruppi di fotogrammi */
+export interface FrameBlock {
+  kind: 'steps' | 'chain' | 'group'
+  /** primo e ultimo fotogramma del blocco (indici in `frames`) */
+  from: number
+  to: number
+  uid?: Uid
+  links?: number
+}
+export interface FrameSection {
+  id: string
+  phase?: NonNullable<Step['phase']>
+  branch: boolean
+  from: number
+  to: number
+  blocks: FrameBlock[]
+}
+
+/** Sezioni per fase (o per gruppi di 10 passi) e blocchi di catena / ordine libero / passi della timeline; il ramo è una sezione a parte. */
+export function frameSections(tl: Timeline): FrameSection[] {
+  const main = tl.frames.slice(1, tl.branchStart).map((f) => f.step!)
+  const branch = tl.frames.slice(tl.branchStart).map((f) => f.step!)
+  const conv = (steps: Step[], offset: number, isBranch: boolean): FrameSection[] =>
+    buildOutline({ steps }).map((s, i) => ({
+      id: `${isBranch ? 'b' : 'm'}${i}`,
+      ...(s.phase ? { phase: s.phase } : {}),
+      branch: isBranch,
+      from: s.from + offset,
+      to: s.to + offset,
+      blocks: s.blocks.map((b) => ({ kind: b.kind, from: b.from + offset, to: b.to + offset, ...(b.uid ? { uid: b.uid } : {}), ...(b.links ? { links: b.links } : {}) })),
+    }))
+  const out = conv(main, 0, false)
+  if (branch.length) {
+    const sec = conv(branch, tl.branchStart - 1, true)
+    // il ramo è un'unica sezione, senza suddivisione per fase
+    out.push({ id: 'b', branch: true, from: tl.branchStart, to: tl.frames.length - 1, blocks: sec.flatMap((s) => s.blocks) })
+  }
+  return out
+}
+
+/** Fotogrammi da cui inizia un blocco (più la partenza): servono a PagSu/PagGiù. */
+export function blockStarts(sections: readonly FrameSection[]): number[] {
+  return [0, ...sections.flatMap((s) => s.blocks.map((b) => b.from))]
+}
+
+/** Prossimo (dir 1) o precedente (dir -1) inizio di blocco rispetto a `index`. */
+export function stepBlock(starts: readonly number[], index: number, dir: 1 | -1): number {
+  if (dir === 1) return starts.find((s) => s > index) ?? starts[starts.length - 1] ?? index
+  for (let i = starts.length - 1; i >= 0; i--) if (starts[i]! < index) return starts[i]!
+  return 0
+}

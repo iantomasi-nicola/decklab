@@ -484,7 +484,9 @@
       "next": "Passo successivo",
       "start": "Situazione iniziale",
       "step": "Passo {{n}} di {{total}}"
-    }
+    },
+    "mineOnlyOn": "Il mio campo: tocca per mostrare anche quello avversario",
+    "mineOnlyOff": "Mostra solo il mio campo"
   },
   "learn": {
     "title": "Impara",

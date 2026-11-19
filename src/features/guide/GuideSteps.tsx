@@ -137,7 +137,7 @@ function BranchBlock({ branch, ctx }: { branch: Branch; ctx: GuideCtx }) {
               <span aria-hidden className="grid size-6 shrink-0 place-items-center rounded-full border border-warn text-xs font-semibold text-warn">
                 {String.fromCharCode(97 + (j % 26))}
               </span>
-              <div className="w-10 shrink-0 sm:w-12">
+              <div className="hidden w-12 shrink-0 sm:block">
                 <Thumb code={s.card ? doc.cards[s.card] : undefined} name={s.card ? ctx.nameOfUid(s.card) : ''} />
               </div>
               <StepBody step={s} ctx={ctx} />

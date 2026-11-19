@@ -105,6 +105,10 @@ export function StatsView() {
 
   const header = <PageHeader title={t('statsLab.title')} lead={t('statsLab.lead')} />
 
+  const importDialog = (
+    <ImportDialog open={importing} onOpenChange={setImporting} variant={model.variant} rows={rows} canonical={model.canonical} update={update} cards={model.cards} onCreated={choose} />
+  )
+
   if (variants.loaded && archetypes.loaded && !all.length) {
     return (
       <div className="stats-lab">
@@ -114,11 +118,17 @@ export function StatsView() {
           title={t('statsLab.empty.title')}
           description={t('statsLab.empty.body')}
           action={
-            <Link to="/mazzi" className={cn(buttonBase, 'bg-accent text-accent-fg hover:bg-accent-hover shadow-1')}>
-              {t('statsLab.empty.action')}
-            </Link>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link to="/mazzi" className={cn(buttonBase, 'bg-accent text-accent-fg hover:bg-accent-hover shadow-1')}>
+                {t('statsLab.empty.action')}
+              </Link>
+              <Button variant="secondary" icon={<Upload size={18} />} onClick={() => setImporting(true)}>
+                {t('statsLab.import.open')}
+              </Button>
+            </div>
           }
         />
+        {importDialog}
       </div>
     )
   }
@@ -135,9 +145,9 @@ export function StatsView() {
   const loading = !variants.loaded || !archetypes.loaded || !model.ready || !model.variantLoaded || (!hands && !analysis.error)
 
   return (
-    <div className="stats-lab flex flex-col gap-6">
+    <div className="stats-lab">
       {header}
-
+      <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-4 rounded-lg border border-line bg-surface-1 p-4 md:p-6" aria-label={t('statsLab.setup')}>
         <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <div className="flex min-w-0 flex-col gap-1">
@@ -169,7 +179,7 @@ export function StatsView() {
             />
           </div>
         </div>
-        <div className="grid gap-4 border-t border-line pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="grid gap-4 border-t border-line pt-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="flex min-w-0 flex-col gap-2">
             <Switch
               checked={saved.settings.useAssumedDeckSize}
@@ -207,7 +217,7 @@ export function StatsView() {
         <>
           <Hero hand={hand} other={hands[handSize === 5 ? 6 : 5]} tour={tour} rounds={rounds} progress={analysis.progress} running={analysis.running} />
           <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
-            <TabsList aria-label={t('statsLab.tabsLabel')}>
+            <TabsList aria-label={t('statsLab.tabsLabel')} className="flex-wrap overflow-visible lg:flex-nowrap">
               {TABS.map((id) => (
                 <TabsTrigger key={id} value={id}>
                   {t(`statsLab.tabs.${id}`)}
@@ -243,16 +253,8 @@ export function StatsView() {
         </>
       ) : null}
 
-      <ImportDialog
-        open={importing}
-        onOpenChange={setImporting}
-        variant={model.variant}
-        rows={rows}
-        canonical={model.canonical}
-        update={update}
-        cards={model.cards}
-        onCreated={choose}
-      />
+      </div>
+      {importDialog}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import type { HandResult, TournamentPlan, TournamentResult } from '@/domain/stats'
 import { Segmented } from '@/ui/Segmented'
+import { NativeSelect } from '@/features/decks/fields'
 import { ChartCard } from './charts/ChartCard'
 import { Columns } from './charts/Columns'
 import { dec, pct } from './format'
@@ -61,7 +62,6 @@ export function TournamentTab({
             label={t('statsLab.tour.plan')}
             value={plan}
             onValueChange={onPlan}
-            className="flex-wrap"
             options={[
               { value: 'first', label: t('statsLab.tour.first') },
               { value: 'second', label: t('statsLab.tour.second') },
@@ -70,14 +70,16 @@ export function TournamentTab({
           />
         </div>
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-sm font-medium text-fg">{t('statsLab.tour.mode')}</span>
-          <Segmented
-            label={t('statsLab.tour.mode')}
-            value={mode}
-            onValueChange={onMode}
-            className="flex-wrap"
-            options={TOUR_MODES.map((m) => ({ value: m, label: t(`statsLab.tour.modes.${m}`) }))}
-          />
+          <label htmlFor="tour-mode" className="text-sm font-medium text-fg">
+            {t('statsLab.tour.mode')}
+          </label>
+          <NativeSelect id="tour-mode" value={mode} onChange={(e) => onMode(e.target.value as TourMode)} className="min-w-[200px]">
+            {TOUR_MODES.map((m) => (
+              <option key={m} value={m}>
+                {t(`statsLab.tour.modes.${m}`)}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
         {mode === 'atLeastK' ? (
           <div className="flex flex-col gap-1">

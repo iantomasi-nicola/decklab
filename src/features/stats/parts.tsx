@@ -47,9 +47,9 @@ export function Stepper({ value, min, max, onChange, label, className }: { value
 }
 
 /** Dato in evidenza con etichetta (sentence case, niente due punti). */
-export function StatTile({ label, value, hint, emphasis }: { label: string; value: ReactNode; hint?: string; emphasis?: boolean }) {
+export function StatTile({ label, value, hint, emphasis, className }: { label: string; value: ReactNode; hint?: string; emphasis?: boolean; className?: string }) {
   return (
-    <div className={cn('min-w-0 rounded-md border bg-surface-2 p-4', emphasis ? 'border-accent-text' : 'border-line')}>
+    <div className={cn('min-w-0 rounded-md border bg-surface-2 p-4', emphasis ? 'border-accent-text' : 'border-line', className)}>
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-1 text-2xl font-semibold leading-tight tabular-nums text-fg">{value}</p>
       {hint ? <p className="mt-1 text-sm text-muted">{hint}</p> : null}

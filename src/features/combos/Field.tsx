@@ -63,15 +63,57 @@ export const cardDragId = (uid: Uid) => `card:${uid}`
 export const freshDragId = (p: PlayerIdx, loc: 'deck' | 'extra') => `fresh:${p}:${loc}`
 
 /* ---------------------------------------------------------------- posizionamento */
-type Row = 'hand' | 'back' | 'front' | 'mid'
-const ROW: Record<PlayerIdx, Record<Row, number>> = {
+/**
+ * Ogni zona ha tre posizioni (variabili CSS lette da field.css): desktop/tablet (7 colonne, d*), telefono verticale
+ * (5 colonne con pile in fasce orizzontali, p*), telefono orizzontale (11 colonne in una riga, l*).
+ * Per l'avversario le colonne sono specchiate (vista dal giocatore).
+ */
+type Kind = 'm' | 's' | 'f' | 'gy' | 'extra' | 'deck' | 'banished' | 'lp' | 'hand' | 'emz'
+
+const DESK_ROW: Record<PlayerIdx, Record<'hand' | 'back' | 'front' | 'mid', number>> = {
   1: { hand: 1, back: 2, front: 3, mid: 4 },
   0: { mid: 4, front: 5, back: 6, hand: 7 },
 }
-const mirror = (p: PlayerIdx, col: number) => (p === 1 ? 8 - col : col)
+const mirror = (p: PlayerIdx, col: number, n = 7) => (p === 1 ? n + 1 - col : col)
 
-/** `col` = colonna 1–7 dal punto di vista del proprietario (l'avversario è specchiato). */
-const at = (p: PlayerIdx, row: Row, col: number): CSSProperties => ({ gridRow: ROW[p][row], gridColumn: mirror(p, col) })
+/** Colonna (1–5) delle zone di una fascia nelle pile: Terreno, Extra, Deck, Cimitero, Bandite. */
+const BAND_COL: Partial<Record<Kind, number>> = { f: 1, extra: 2, deck: 3, gy: 4, banished: 5 }
+
+function pos(p: PlayerIdx, kind: Kind, i = 0): CSSProperties {
+  const v: Record<string, string | number> = {}
+  // --- desktop
+  const dRow = (r: 'hand' | 'back' | 'front' | 'mid') => DESK_ROW[p][r]
+  const dCol: Record<Kind, [ 'hand' | 'back' | 'front' | 'mid', number ]> = {
+    m: ['front', 2 + i], s: ['back', 2 + i], f: ['front', 1], gy: ['front', 7], extra: ['back', 1], deck: ['back', 7],
+    banished: ['mid', 7], lp: ['hand', 7], hand: ['hand', 2], emz: ['mid', 3 + i * 2],
+  }
+  const [dr, dc] = dCol[kind]
+  v['--dr'] = dRow(dr)
+  v['--dc'] = kind === 'emz' ? dc : kind === 'hand' ? (p === 0 ? '1 / 7' : '2 / 8') : mirror(p, dc)
+  // --- telefono verticale (5 colonne)
+  const band = BAND_COL[kind]
+  let pr: number, pc: number | string
+  if (kind === 'm') [pr, pc] = [p === 0 ? 6 : 4, mirror(p, i + 1, 5)]
+  else if (kind === 's') [pr, pc] = [p === 0 ? 7 : 3, mirror(p, i + 1, 5)]
+  else if (band) [pr, pc] = [p === 0 ? 8 : 2, mirror(p, band, 5)]
+  else if (kind === 'lp') [pr, pc] = [5, p === 0 ? 5 : 1]
+  else if (kind === 'emz') [pr, pc] = [5, 2 + i * 2]
+  else [pr, pc] = [p === 0 ? 9 : 1, '1 / 6']
+  v['--pr'] = pr
+  v['--pc'] = pc
+  // --- telefono orizzontale (11 colonne: avversario 1–5, centro 6, giocatore 7–11)
+  const lcol = (c: number) => (p === 0 ? 6 + c : 6 - c)
+  let lr: number, lc: number | string
+  if (kind === 'm') [lr, lc] = [2, lcol(i + 1)]
+  else if (kind === 's') [lr, lc] = [1, lcol(i + 1)]
+  else if (band) [lr, lc] = [3, lcol(band)]
+  else if (kind === 'lp') [lr, lc] = [p === 0 ? 4 : 3, 6]
+  else if (kind === 'emz') [lr, lc] = [1 + i, 6]
+  else [lr, lc] = [4, p === 0 ? '7 / 12' : '1 / 6']
+  v['--lr'] = lr
+  v['--lc'] = lc
+  return v as CSSProperties
+}
 
 /* ---------------------------------------------------------------- cella */
 function Cell({
@@ -84,6 +126,7 @@ function Cell({
   occupant,
   filled,
   anchor,
+  oppMain,
   onOpen,
 }: {
   dest: Dest
@@ -98,6 +141,8 @@ function Cell({
   filled?: boolean
   /** zona più larga di una carta: la carta "in cima" sta a questa estremità */
   anchor?: 'start' | 'end'
+  /** zona principale dell'avversario: si nasconde con "Il mio campo" */
+  oppMain?: boolean
   onOpen?: () => void
 }) {
   const { highlight, onZone } = useField()
@@ -115,7 +160,7 @@ function Cell({
         if (valid) onZone(dest, e.currentTarget)
         else if (!(e.target as HTMLElement).closest('[data-card]')) onOpen?.()
       }}
-      className={cn('cl-cell', p === 0 && 'cl-own', (filled ?? occupant !== undefined) && 'cl-filled', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
+      className={cn('cl-cell', p === 0 && 'cl-own', oppMain && p === 1 && 'cl-opp-main', (filled ?? occupant !== undefined) && 'cl-filled', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
       style={style}
     >
       <div aria-hidden className="cl-box cl-zone" style={boxStyle} />
@@ -145,7 +190,7 @@ function CardBadges({ uid }: { uid: Uid }) {
 }
 
 /** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
-function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { left: string; dy: string; z: number } }) {
+function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { left: string; dy: string; z: number; newest: boolean } }) {
   const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey, readOnly, emphasis } = useField()
   const place = view.state.places[uid]
   const code = view.registry[uid] ?? 0
@@ -196,6 +241,7 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
       data-loc={place.loc}
       data-active={active || undefined}
       data-chain={inChain || undefined}
+      data-newest={fan?.newest || undefined}
       aria-label={name}
       title={name}
       style={fan ? { top: 0, bottom: 0, right: 'auto', left: fan.left, width: 'var(--tw)', transform: fan.dy, zIndex: fan.z } : undefined}
@@ -279,9 +325,10 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
     left: newestAtEnd ? `calc(${avail} - ${age} * ${step})` : `calc(${age} * ${step})`,
     dy: wide ? 'none' : `translateY(calc(${age} * var(--th) * -0.011))`,
     z: 10 - age,
+    newest: age === 0,
   })
   const anchor: 'start' | 'end' | undefined = wide || (fanPiles && (loc === 'gy')) ? (newestAtEnd ? 'end' : 'start') : undefined
-  const style2: CSSProperties = wide ? { ...style, gridColumn: p === 0 ? '6 / 8' : '1 / 3' } : style
+  const style2: CSSProperties = wide ? { ...style, ['--dc' as string]: p === 0 ? '6 / 8' : '1 / 3' } : style
   const asFan = (loc === 'gy' || loc === 'banished') && (fanPiles || wide)
   const cards = !hidden
     ? asFan
@@ -297,6 +344,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
       style={style2}
       filled={count > 0}
       anchor={anchor}
+      oppMain
       onOpen={count > 0 && pilesOpen ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
@@ -364,7 +412,7 @@ function Hand({ p }: { p: PlayerIdx }) {
   const valid = !!highlight && highlight.has(id)
   const dim = !!highlight && !valid
   const random = p === 0 ? view.randomHand : 0
-  const style = { gridRow: ROW[p].hand, gridColumn: p === 0 ? '1 / 7' : '2 / 8', ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2) } as CSSProperties
+  const style = { ...pos(p, 'hand'), ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2) } as CSSProperties
   return (
     <div
       ref={setNodeRef}
@@ -409,7 +457,7 @@ function Hand({ p }: { p: PlayerIdx }) {
 function LpBox({ p }: { p: PlayerIdx }) {
   const { t } = useTranslation()
   const { view, onLp, readOnly } = useField()
-  const style = at(p, 'hand', 7)
+  const style = pos(p, 'lp')
   return (
     <div className="cl-cell" style={style}>
       <button
@@ -443,7 +491,7 @@ function Side({ p }: { p: PlayerIdx }) {
   return (
     <>
       {seqs.map((i) => (
-        <Cell key={`m${i}`} dest={{ t: 'zone', p, loc: 'mzone', seq: i }} p={p} style={at(p, 'front', 2 + i)} occupant={occupantAt(view.state, p, 'mzone', i)}>
+        <Cell key={`m${i}`} dest={{ t: 'zone', p, loc: 'mzone', seq: i }} p={p} style={pos(p, 'm', i)} oppMain occupant={occupantAt(view.state, p, 'mzone', i)}>
           <ZoneCard p={p} loc="mzone" seq={i} />
         </Cell>
       ))}
@@ -452,20 +500,21 @@ function Side({ p }: { p: PlayerIdx }) {
           key={`s${i}`}
           dest={{ t: 'zone', p, loc: 'szone', seq: i }}
           p={p}
-          style={at(p, 'back', 2 + i)}
+          style={pos(p, 's', i)}
+          oppMain
           label={i === 0 || i === 4 ? <span className="text-accent-text">{t('combos.zone.pendulum')}</span> : undefined}
           occupant={occupantAt(view.state, p, 'szone', i)}
         >
           <ZoneCard p={p} loc="szone" seq={i} />
         </Cell>
       ))}
-      <Cell dest={{ t: 'zone', p, loc: 'fzone', seq: 0 }} p={p} style={at(p, 'front', 1)} label={t('combos.zone.field')} occupant={occupantAt(view.state, p, 'fzone', 0)}>
+      <Cell dest={{ t: 'zone', p, loc: 'fzone', seq: 0 }} p={p} style={pos(p, 'f')} oppMain label={t('combos.zone.field')} occupant={occupantAt(view.state, p, 'fzone', 0)}>
         <ZoneCard p={p} loc="fzone" seq={0} />
       </Cell>
-      <Pile p={p} loc="gy" style={at(p, 'front', 7)} />
-      <Pile p={p} loc="extra" style={at(p, 'back', 1)} />
-      <Pile p={p} loc="deck" style={at(p, 'back', 7)} />
-      <Pile p={p} loc="banished" style={at(p, 'mid', 7)} />
+      <Pile p={p} loc="gy" style={pos(p, 'gy')} />
+      <Pile p={p} loc="extra" style={pos(p, 'extra')} />
+      <Pile p={p} loc="deck" style={pos(p, 'deck')} />
+      <Pile p={p} loc="banished" style={pos(p, 'banished')} />
       <Hand p={p} />
       <LpBox p={p} />
     </>
@@ -493,6 +542,7 @@ const NO_EMPHASIS: FieldEmphasis = {}
 export function Field({
   view,
   ring,
+  mineOnly = false,
   readOnly = false,
   emphasis = NO_EMPHASIS,
   selected = null,
@@ -505,11 +555,11 @@ export function Field({
   onZone = NOOP,
   onPile,
   onLp = NOOP,
-}: { view: FieldView; ring?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
+}: { view: FieldView; ring?: boolean; mineOnly?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
   const { t } = useTranslation()
   return (
     <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile: onPile ?? NOOP, pilesOpen: !!onPile, onLp }}>
-      <FieldFrame ring={ring}>
+      <FieldFrame ring={ring} className={mineOnly ? 'cl-mine' : undefined}>
         <div className="cl-grid">
           <Side p={1} />
           {[0, 1].map((i) => {
@@ -519,7 +569,7 @@ export function Field({
                 key={`e${i}`}
                 dest={{ t: 'zone', p: 0, loc: 'emz', seq: i }}
                 p={0}
-                style={{ gridRow: 4, gridColumn: 3 + i * 2 }}
+                style={pos(0, 'emz', i)}
                 label={t('combos.zone.emz')}
                 occupant={occ}
               >

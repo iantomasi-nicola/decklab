@@ -10,6 +10,9 @@ interface FieldPrefs {
   /** Pannello laterale con Cimitero e Bandite di entrambi i giocatori. null = predefinito (acceso da 768 px, spento sul telefono) */
   pilesPanel: boolean | null
   setPilesPanel: (v: boolean) => void
+  /** "Il mio campo" (telefono verticale): solo il campo del giocatore, quello avversario ridotto. null = predefinito (acceso sul telefono) */
+  mineOnly: boolean | null
+  setMineOnly: (v: boolean) => void
 }
 
 const PANEL_KEY = 'combolab.field.pilesPanel'
@@ -35,6 +38,16 @@ function read(): boolean {
   }
 }
 
+const MINE_KEY = 'combolab.field.mineOnly'
+function readMine(): boolean | null {
+  try {
+    const v = localStorage.getItem(MINE_KEY)
+    return v === '1' ? true : v === '0' ? false : null
+  } catch {
+    return null
+  }
+}
+
 export const useFieldPrefs = create<FieldPrefs>((set) => ({
   fanPiles: read(),
   setFanPiles: (fanPiles) => {
@@ -44,6 +57,15 @@ export const useFieldPrefs = create<FieldPrefs>((set) => ({
       /* storage non disponibile */
     }
     set({ fanPiles })
+  },
+  mineOnly: readMine(),
+  setMineOnly: (mineOnly) => {
+    try {
+      localStorage.setItem(MINE_KEY, mineOnly ? '1' : '0')
+    } catch {
+      /* storage non disponibile */
+    }
+    set({ mineOnly })
   },
   pilesPanel: readPanel(),
   setPilesPanel: (pilesPanel) => {

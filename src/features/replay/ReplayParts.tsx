@@ -1,5 +1,5 @@
 /** Parti del replay: descrizione del passo, timeline a chip, elenco passi (pannello laterale), barra di controllo. */
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import ChevronDown from 'lucide-react/icons/chevron-down'
 import ChevronUp from 'lucide-react/icons/chevron-up'
@@ -12,6 +12,7 @@ import StepBack from 'lucide-react/icons/step-back'
 import StepForward from 'lucide-react/icons/step-forward'
 import { NoteText } from '@/features/guide/GuideParts'
 import type { NoteResolver } from '@/features/guide/notes'
+import { pickLoc } from '@/features/guide/guideModel'
 import { headlineText, stepHeadline } from '@/features/guide/stepText'
 import { cn } from '@/ui/cn'
 import { Tooltip } from '@/ui/Tooltip'
@@ -25,11 +26,14 @@ export interface Names {
   lang: 'it' | 'en'
 }
 
-const chipLabel = (f: Frame) => (f.inBranch ? String.fromCharCode(96 + (((f.label - 1) % 26) + 1)) : String(f.label))
+export const chipLabel = (f: Frame) => (f.inBranch ? String.fromCharCode(96 + (((f.label - 1) % 26) + 1)) : String(f.label))
 
 /* ------------------------------------------------------------------ descrizione del passo corrente */
+/** Con `clamp` (telefono/tablet) il testo è limitato a poche righe; se è lungo compare un pulsante per mostrarlo tutto (con scorrimento interno). */
 export function StepInfo({ frame, names, clamp }: { frame: Frame; names: Names; clamp?: boolean }) {
   const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  useEffect(() => setOpen(false), [frame])
   if (!frame.step)
     return (
       <div data-testid="replay-info" className="flex min-w-0 flex-col gap-0.5">
@@ -38,9 +42,12 @@ export function StepInfo({ frame, names, clamp }: { frame: Frame; names: Names; 
     )
   const h = stepHeadline(frame.step, t, names.nameOfUid)
   const chain = frame.chain.length > 1 ? frame.chain.map((u) => names.nameOfUid(u)).join(' → ') : ''
+  const note = pickLoc(frame.step.note, names.lang) ?? ''
+  const long = !!clamp && headlineText(h).length + note.length > 110
+  const clamped = !!clamp && !open
   return (
-    <div data-testid="replay-info" className="flex min-w-0 flex-col gap-0.5">
-      <p className={cn('text-[15px] leading-6', clamp && 'line-clamp-2')}>
+    <div data-testid="replay-info" className={cn('relative flex min-w-0 flex-col gap-0.5', long && 'pr-11', clamp && open && 'max-h-[34dvh] overflow-y-auto')}>
+      <p className={cn('text-[15px] leading-6', clamped && 'line-clamp-3')}>
         <span className={cn('mr-1.5 inline-grid h-6 min-w-6 place-items-center rounded-full px-1.5 align-top text-xs font-semibold tabular-nums', frame.inBranch ? 'border border-warn text-warn' : 'bg-accent text-accent-fg')}>
           {chipLabel(frame)}
         </span>
@@ -48,8 +55,20 @@ export function StepInfo({ frame, names, clamp }: { frame: Frame; names: Names; 
         {h.card ? <span className="text-fg"> {h.card}</span> : null}
         {h.sub ? <span className="text-muted"> ({h.sub})</span> : null}
       </p>
-      <NoteText note={frame.step.note} lang={names.lang} resolver={names.resolver} nameOf={names.nameOf} className={cn('text-sm leading-5', clamp && 'line-clamp-2')} />
-      {chain ? <p className="text-sm text-warn [overflow-wrap:anywhere]">{t('replay.chainOf', { cards: chain })}</p> : null}
+      <NoteText note={frame.step.note} lang={names.lang} resolver={names.resolver} nameOf={names.nameOf} className={cn('text-sm leading-5', clamped && 'line-clamp-2')} />
+      {chain ? <p className={cn('text-sm text-warn [overflow-wrap:anywhere]', clamped && 'line-clamp-1')}>{t('replay.chainOf', { cards: chain })}</p> : null}
+      {long ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-label={open ? t('replay.less') : t('replay.more')}
+          data-testid="replay-info-more"
+          onClick={() => setOpen((o) => !o)}
+          className="absolute right-0 top-0 inline-flex size-11 cursor-pointer items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-surface-3 hover:text-fg"
+        >
+          <ChevronDown aria-hidden size={20} className={cn('transition-transform duration-150', open && 'rotate-180')} />
+        </button>
+      ) : null}
     </div>
   )
 }
@@ -91,53 +110,6 @@ export function Timeline({ frames, index, branchStart, onSeek }: { frames: Frame
         )
       })}
     </div>
-  )
-}
-
-/* ------------------------------------------------------------------ elenco passi (pannello laterale) */
-export function StepList({ frames, index, branchStart, names, onSeek }: { frames: Frame[]; index: number; branchStart: number; names: Names; onSeek: (i: number) => void }) {
-  const { t } = useTranslation()
-  const box = useRef<HTMLOListElement>(null)
-  useEffect(() => {
-    const el = box.current?.querySelector<HTMLElement>('[aria-current="step"]')
-    const c = box.current
-    if (!el || !c) return
-    const top = el.offsetTop - c.clientHeight / 2 + el.clientHeight / 2
-    c.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
-  }, [index])
-  return (
-    <ol ref={box} aria-label={t('replay.timeline')} data-testid="replay-steplist" className="relative flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
-      {frames.map((f, i) => {
-        const cur = i === index
-        const h = f.step ? headlineText(stepHeadline(f.step, t, names.nameOfUid)) : t('replay.start')
-        return (
-          <li key={i}>
-            <button
-              type="button"
-              data-frame={i}
-              aria-current={cur ? 'step' : undefined}
-              onClick={() => onSeek(i)}
-              className={cn(
-                'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md border px-2 py-1.5 text-left text-[15px] leading-5 transition-colors duration-150',
-                cur ? 'border-accent-text bg-accent-soft text-fg' : 'border-transparent text-muted hover:bg-surface-2 hover:text-fg',
-                i === branchStart && 'mt-2',
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  'grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums',
-                  cur ? 'bg-accent text-accent-fg' : i > 0 && i >= branchStart ? 'border border-warn text-warn' : 'border border-line-strong text-muted',
-                )}
-              >
-                {i === 0 ? <Flag size={14} /> : chipLabel(f)}
-              </span>
-              <span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{h}</span>
-            </button>
-          </li>
-        )
-      })}
-    </ol>
   )
 }
 

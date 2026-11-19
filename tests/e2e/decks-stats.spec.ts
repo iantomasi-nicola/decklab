@@ -15,7 +15,7 @@ const smallTargets = (page: Page) =>
       .filter((r) => r.h > 0 && (r.h < 43.5 || r.w < 43.5)),
   )
 
-const SHOTS = 'test-results/stats-shots'
+const SHOTS = process.env.STATS_SHOTS ?? 'test-results/stats-shots'
 mkdirSync(SHOTS, { recursive: true })
 
 const WIDTHS = [375, 768, 1024, 1440] as const
@@ -29,33 +29,34 @@ async function seedStats(page: Page): Promise<string> {
   await expect(page.locator('h1')).toBeVisible()
   return page.evaluate(
     async ({ id, f }) => {
+      const g = (i: number) => f[i] as number
       const load = new Function('p', 'return import(p)') as (p: string) => Promise<{ repos: any }>
       const { repos } = await load('/src/data/repo.ts')
-      const a = await repos.archetypes.create({ name: { it: 'Drago Bianco', en: 'Blue-Eyes' }, keyCards: [], starters: [id.blueEyes], extenders: [f[0]] })
+      const a = await repos.archetypes.create({ name: { it: 'Drago Bianco', en: 'Blue-Eyes' }, keyCards: [], starters: [id.blueEyes], extenders: [g(0)] })
       const rep = (n: number, x: number) => Array<number>(n).fill(x)
       const main = [
-        ...rep(3, id.blueEyes), ...rep(2, id.darkMagician), ...rep(3, f[0]), ...rep(3, f[1]), ...rep(2, f[2]), ...rep(2, f[3]), f[4],
+        ...rep(3, id.blueEyes), ...rep(2, id.darkMagician), ...rep(3, g(0)), ...rep(3, g(1)), ...rep(2, g(2)), ...rep(2, g(3)), g(4),
         ...rep(3, id.ash), id.maxxC, id.nibiru, ...rep(3, id.imperm),
       ]
-      for (let i = 5; main.length < 40; i++) main.push(f[i % 100])
+      for (let i = 5; main.length < 40; i++) main.push(g(i % 100))
       const v = await repos.variants.create({
         archetypeId: a.id, name: { it: 'Versione torneo', en: 'Tournament build' }, rules: 'TCG', banlist: { format: 'TCG', id: '2026.10' },
         deck: { main, extra: [], side: [] },
       })
       const tags: Record<string, string[]> = {
-        [id.blueEyes]: ['S1', 'NS'], [id.darkMagician]: ['C2'], [f[0]]: ['C2', 'C3'], [f[1]]: ['C2', 'C3'], [f[2]]: ['C2'], [f[3]]: ['C3'], [f[4]]: ['C3'],
+        [id.blueEyes]: ['S1', 'NS'], [id.darkMagician]: ['C2'], [g(0)]: ['C2', 'C3'], [g(1)]: ['C2', 'C3'], [g(2)]: ['C2'], [g(3)]: ['C3'], [g(4)]: ['C3'],
         [id.ash]: ['NE'], [id.maxxC]: ['NE'], [id.nibiru]: ['NE'], [id.imperm]: ['NE'],
       }
       const partners = {
-        [id.darkMagician]: { combo: [f[0], f[1]], brick: [id.darkMagician], forbidden: [], draw: [], garnet: [] },
-        [f[0]]: { combo: [id.darkMagician, f[1]], brick: [f[0]], forbidden: [], draw: [], garnet: [] },
-        [f[1]]: { combo: [f[0], id.darkMagician], brick: [f[1]], forbidden: [], draw: [], garnet: [] },
-        [f[2]]: { combo: [f[1]], brick: [], forbidden: [], draw: [], garnet: [] },
+        [id.darkMagician]: { combo: [g(0), g(1)], brick: [id.darkMagician], forbidden: [], draw: [], garnet: [] },
+        [g(0)]: { combo: [id.darkMagician, g(1)], brick: [g(0)], forbidden: [], draw: [], garnet: [] },
+        [g(1)]: { combo: [g(0), id.darkMagician], brick: [g(1)], forbidden: [], draw: [], garnet: [] },
+        [g(2)]: { combo: [g(1)], brick: [], forbidden: [], draw: [], garnet: [] },
       }
       const sorted = (...x: number[]) => x.sort((p, q) => p - q).join(',')
       await repos.settings.set(`stats.v1.${v.id}`, {
         v: 1, tags, partners,
-        labels: { [sorted(f[0], f[0], f[3])]: 'PLAYABLE', [sorted(f[1], f[1], f[4])]: 'PLAYABLE' },
+        labels: { [sorted(g(0), g(0), g(3))]: 'PLAYABLE', [sorted(g(1), g(1), g(4))]: 'PLAYABLE' },
         settings: { useAssumedDeckSize: false, assumedDeckSize: 40, useSixCardHand: false, tournamentRounds: 15, tournamentMode: 'average', drawPowerMode: 'fast' },
         useCombos: true, tournament: { plan: 'mixed', k: 2 },
       })
@@ -143,7 +144,7 @@ test.describe('stats lab', () => {
     await page.goto('/statistiche')
     await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
     await page.getByRole('tab', { name: 'Torneo' }).click()
-    await page.getByRole('radio', { name: 'Almeno k brick' }).click()
+    await page.getByLabel('Risultato').selectOption('atLeastK')
     await expect(page.getByRole('group', { name: 'Soglia di brick' })).toBeVisible()
     await page.getByRole('button', { name: 'Soglia di brick +' }).click()
     await expect(page.getByTestId('chart-tournament')).toBeVisible()
@@ -177,6 +178,20 @@ test.describe('stats lab', () => {
     await expect(page.getByTestId('variant-select').locator('option:checked')).toHaveText('Deckspace Project', { timeout: 10_000 })
     // 40 carte, ruoli del file: 94,6% (mano da 5) con le etichette esplicite
     await expect(page.getByTestId('hero-playable')).toHaveText(/94[,.]6%/, { timeout: 20_000 })
+    expect(errors).toEqual([])
+  })
+
+  test('import Deckspace dallo stato vuoto: crea archetipo e variante', async ({ page }) => {
+    const errors = collectErrors(page)
+    await open(page, 375, 'dark', 'it')
+    await page.goto('/statistiche')
+    await page.getByRole('button', { name: 'Importa' }).click()
+    await page.getByTestId('deckspace-text').fill(readFileSync('tests/fixtures/deckspace-unchained.json', 'utf8'))
+    await page.getByRole('button', { name: 'Crea nuova variante' }).click()
+    await expect(page.getByTestId('hero-playable')).toHaveText(/94[,.]6%/, { timeout: 20_000 })
+    await page.evaluate(() => document.fonts.ready)
+    await expectNoHorizontalScroll(page)
+    await page.screenshot({ path: `${SHOTS}/import-vuoto-375-dark-it.png`, fullPage: true })
     expect(errors).toEqual([])
   })
 

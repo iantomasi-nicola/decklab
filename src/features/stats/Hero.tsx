@@ -34,7 +34,7 @@ export function Hero({
           </p>
           <p className="mt-2 text-base font-medium text-fg">{t('statsLab.hero.playable')}</p>
         </div>
-        <p className="max-w-[34ch] text-[15px] text-muted md:text-right">
+        <p className="max-w-[34ch] text-[15px] text-muted lg:text-right">
           {t(hand.blanks ? 'statsLab.hero.deckAssumed' : 'statsLab.hero.deck', { size: hand.deckSize, blanks: hand.blanks, count: hand.ruleCount })}
         </p>
       </div>
@@ -58,10 +58,11 @@ export function Hero({
           <Progress value={progress} active={running} />
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatTile label={t('statsLab.hero.tileHand', { count: hand.handSize })} value={pct(hand.brick, lang)} hint={t('statsLab.hero.tileBrick')} emphasis />
         {other ? <StatTile label={t('statsLab.hero.tileHand', { count: other.handSize })} value={pct(other.brick, lang)} hint={t('statsLab.hero.tileBrick')} /> : null}
         <StatTile
+          className="col-span-2 lg:col-span-1"
           label={t('statsLab.hero.tileTournament', { count: rounds })}
           value={pct(tour.pAtLeast1, lang)}
           hint={t('statsLab.hero.tileTournamentHint', { n: dec(tour.expectedBricks, lang) })}

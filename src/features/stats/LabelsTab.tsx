@@ -53,9 +53,9 @@ export function LabelsTab({
   const label = (l: Label) => (l === 'PLAYABLE' ? t('statsLab.playable') : t('statsLab.brick'))
 
   const renderRow = (r: ReturnType<typeof row>) => (
-    <li key={r.key} className="grid gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
+    <li key={r.key} className="grid gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-center">
       <p className="min-w-0 break-words text-[15px] font-medium text-fg">{r.ids.map(name).join(' + ')}</p>
-      <div className="flex items-center gap-2 md:justify-end">
+      <div className="flex items-center gap-2 lg:justify-end">
         <LabelBadge label={r.effective} text={label(r.effective)} />
         {!r.explicit ? <span className="text-sm text-muted">{t('statsLab.labels.auto')}</span> : null}
       </div>

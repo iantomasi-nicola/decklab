@@ -18,9 +18,10 @@ import { cn } from '@/ui/cn'
 import { Menu } from '@/ui/Menu'
 import { Skeleton } from '@/ui/Skeleton'
 import { Tooltip } from '@/ui/Tooltip'
-import { ControlBar, StepInfo, StepList, Timeline, type Names } from './ReplayParts'
+import { ControlBar, StepInfo, Timeline, type Names } from './ReplayParts'
+import { FrameList, PickerButton, SegmentBar, StepNavBar, StepPicker } from './ReplayNav'
 import { ReplayField } from './ReplayField'
-import { buildTimeline, initialPlayer, intervalFor, playerReducer, SPEEDS, type PlayerAction } from './replayModel'
+import { blockStarts, buildTimeline, frameSections, initialPlayer, intervalFor, playerReducer, SPEEDS, stepBlock, type PlayerAction } from './replayModel'
 
 const BAR_KEY = 'combolab.replay.expanded'
 function readExpanded(): boolean | null {
@@ -38,7 +39,7 @@ export function ReplayPage() {
 }
 
 const stageCls =
-  'flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]'
+  'flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-61px-16px)]'
 
 function ReplayView({ comboId }: { comboId: string }) {
   const { t } = useTranslation()
@@ -68,6 +69,16 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
   const [p, dispatch] = useReducer((s: typeof initialPlayer, a: PlayerAction) => playerReducer(s, a, lastRef.current), initialPlayer)
   const index = Math.min(p.index, last)
   const frame = tl.frames[index]!
+  const sections = useMemo(() => frameSections(tl), [tl])
+  const nav = useRef({ index, starts: [0] as number[] })
+  nav.current = { index, starts: blockStarts(sections) }
+  const seek = useCallback((i: number) => dispatch({ type: 'seek', index: i }), [])
+  const wide = useMediaQuery('(min-width: 768px)')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerFocus, setPickerFocus] = useState(false)
+  const [panelQuery, setPanelQuery] = useState('')
+  const longCombo = last > 24
+  const sm = useMediaQuery('(min-width: 640px)')
 
   // barra: aperta di default (il campo ha rapporto fisso: in verticale lo spazio in più è per la descrizione); la scelta si ricorda
   const [stored, setStored] = useState<boolean | null>(readExpanded)
@@ -132,6 +143,18 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
           e.preventDefault()
           dispatch({ type: 'seek', index: lastRef.current })
           break
+        case 'PageDown':
+        case 'PageUp':
+          e.preventDefault()
+          dispatch({ type: 'seek', index: stepBlock(nav.current.starts, nav.current.index, e.key === 'PageDown' ? 1 : -1) })
+          break
+        case 'g':
+        case 'G':
+          if (lastRef.current < 1) break
+          e.preventDefault()
+          setPickerFocus(true)
+          setPickerOpen(true)
+          break
         case '+':
         case '=':
           dispatch({ type: 'speed', speed: SPEEDS[Math.min(SPEEDS.indexOf(p.speed) + 1, SPEEDS.length - 1)]! })
@@ -166,6 +189,8 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
       ? t('replay.startShort')
       : t('replay.step', { n: frame.label, total: tl.branchStart - 1 })
   const hasSteps = last > 0
+  // sul telefono il contatore è breve ("24/60"): il testo completo non entra senza troncarsi
+  const counterShort = index === 0 ? t('replay.startShort') : frame.inBranch ? `${frame.label}/${tl.frames.length - tl.branchStart}` : `${frame.label}/${tl.branchStart - 1}`
 
   const lineItems = [
     { id: 'main', label: t('replay.main'), icon: branchId === null ? <Check size={18} /> : <span className="inline-block w-[18px]" />, onSelect: () => setBranchId(null) },
@@ -213,9 +238,12 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
         </div>
         {panel ? (
           <aside aria-label={t('replay.timeline')} data-testid="replay-panel" className="flex min-h-0 w-[clamp(300px,28vw,380px)] shrink-0 flex-col gap-3 rounded-lg border border-line bg-surface-1 p-3">
-            <StepInfo frame={frame} names={names} />
+            <div className="max-h-[38%] shrink-0 overflow-y-auto overscroll-contain">
+              <StepInfo frame={frame} names={names} />
+            </div>
             <div className="h-px shrink-0 bg-line" />
-            <StepList frames={tl.frames} index={index} branchStart={tl.branchStart} names={names} onSeek={(i) => dispatch({ type: 'seek', index: i })} />
+            {hasSteps ? <StepNavBar query={panelQuery} onQuery={setPanelQuery} total={last} onJump={seek} /> : null}
+            <FrameList frames={tl.frames} sections={sections} index={index} names={names} query={panelQuery} playing={p.playing} onSeek={seek} className="flex-1" />
           </aside>
         ) : null}
       </div>
@@ -224,7 +252,13 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
         {expanded && !isLg ? (
           <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-1 p-2">
             <StepInfo frame={frame} names={names} clamp />
-            {hasSteps ? <Timeline frames={tl.frames} index={index} branchStart={tl.branchStart} onSeek={(i) => dispatch({ type: 'seek', index: i })} /> : null}
+            {hasSteps && !longCombo ? <Timeline frames={tl.frames} index={index} branchStart={tl.branchStart} onSeek={seek} /> : null}
+            {hasSteps && longCombo ? (
+              <div className="flex items-center gap-2" data-testid="replay-longnav">
+                <SegmentBar sections={sections} index={index} last={last} valueText={counter} onSeek={seek} />
+                <PickerButton label={t('replay.picker.open')} onClick={() => { setPickerFocus(false); setPickerOpen(true) }} />
+              </div>
+            ) : null}
           </div>
         ) : null}
         {!hasSteps ? (
@@ -238,7 +272,7 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
           last={last}
           playing={p.playing}
           speed={p.speed}
-          label={counter}
+          label={sm ? counter : counterShort}
           expanded={expanded}
           hasSteps={hasSteps}
           onPrev={() => dispatch({ type: 'prev' })}
@@ -250,6 +284,9 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
           onExpand={() => setExpanded(!expanded)}
         />
       </div>
+      {hasSteps ? (
+        <StepPicker open={pickerOpen} onOpenChange={setPickerOpen} wide={wide} frames={tl.frames} sections={sections} index={index} names={names} onSeek={seek} focusJump={pickerFocus} />
+      ) : null}
       <p className={cn('sr-only')} aria-live="polite">{frame.step ? counter : t('replay.start')}</p>
       <p className="sr-only">{t('replay.keys')}</p>
     </div>

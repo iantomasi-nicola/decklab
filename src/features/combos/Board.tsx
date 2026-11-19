@@ -83,6 +83,7 @@ export function Board({
   readOnly,
   handle,
   pilesEl,
+  mineOnly,
 }: {
   doc: ComboDoc
   state: GameState
@@ -92,6 +93,8 @@ export function Board({
   handle?: Ref<BoardHandle>
   /** contenitore (nel pannello laterale) dove mostrare l'elenco di Cimitero e Bandite; resta nello stesso DndContext */
   pilesEl?: HTMLElement | null
+  /** telefono verticale: solo il campo del giocatore in grande */
+  mineOnly?: boolean
 }) {
   const { t } = useTranslation()
   const cards = useCards()
@@ -572,6 +575,7 @@ export function Board({
         <Field
           view={view}
           ring={mode === 'setup'}
+          mineOnly={!!mineOnly}
           selected={sel?.kind === 'uid' ? sel.uid : null}
           highlight={highlight}
           picking={pending ? { candidates, chosen: new Set(pending.chosen) } : null}

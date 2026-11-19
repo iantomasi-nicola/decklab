@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import ArrowLeft from 'lucide-react/icons/arrow-left'
 import ChevronLeft from 'lucide-react/icons/chevron-left'
 import ChevronRight from 'lucide-react/icons/chevron-right'
+import Eye from 'lucide-react/icons/eye'
+import EyeOff from 'lucide-react/icons/eye-off'
 import PanelRight from 'lucide-react/icons/panel-right'
 import Plus from 'lucide-react/icons/plus'
 import SlidersHorizontal from 'lucide-react/icons/sliders-horizontal'
@@ -73,6 +75,9 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const pilesPref = useFieldPrefs((s) => s.pilesPanel)
   const isMd = useMediaQuery('(min-width: 768px)')
   const isLg = useMediaQuery('(min-width: 1024px)')
+  const phonePortrait = useMediaQuery('(max-width: 616px) and (orientation: portrait)')
+  const minePref = useFieldPrefs((s) => s.mineOnly)
+  const mineOnly = phonePortrait && (minePref ?? true)
 
   const doc = useEditor((s) => s.doc)
   const cursor = useEditor((s) => s.cursor)
@@ -255,6 +260,20 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
           ]}
         />
+        {phonePortrait ? (
+          <Tooltip label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}>
+            <button
+              type="button"
+              aria-label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}
+              aria-pressed={mineOnly}
+              data-testid="mine-only"
+              onClick={() => useFieldPrefs.getState().setMineOnly(!mineOnly)}
+              className={cn(tool, 'cursor-pointer', mineOnly ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+            >
+              {mineOnly ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
+            </button>
+          </Tooltip>
+        ) : null}
         <Tooltip label={t('combos.modeSetup')}>
           <button
             type="button"
@@ -315,7 +334,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             data-mode={mode}
             style={{ width: inlinePanel ? `min(calc(100cqw - 328px), calc(100cqh * ${FIELD_ASPECT_RATIO}))` : '100%', flex: inlinePanel ? 'none' : '1 1 0%' }}
           >
-            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
+            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} mineOnly={mineOnly} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
             {mode === 'setup' ? (
               <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
                 {t('combos.modeSetupBadge')}
