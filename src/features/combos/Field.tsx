@@ -397,7 +397,7 @@ function Hand({ p }: { p: PlayerIdx }) {
           style={{ zIndex: uids.length + 1 }}
           title={t('combos.randomHandLong', { count: random })}
         >
-          <span aria-label={t('combos.randomHandLong', { count: random })} className="whitespace-nowrap rounded-full border border-line-strong bg-surface-1 px-2 py-0.5 text-[clamp(9px,22cqw,13px)]">
+          <span aria-label={t('combos.randomHandLong', { count: random })} className="whitespace-nowrap rounded-full border border-line-strong bg-surface-1 px-2 py-0.5 text-[clamp(9px,calc(var(--tw)*0.2),13px)]">
             {t('combos.randomHand', { count: random })}
           </span>
         </span>
@@ -423,8 +423,8 @@ function LpBox({ p }: { p: PlayerIdx }) {
           p === 0 ? 'border-accent-text/50' : 'border-line-strong/60',
         )}
       >
-        <span className="text-[clamp(8px,15cqw,12px)] font-medium text-subtle">{t('combos.lp.label')}</span>
-        <span className="mt-1 text-[clamp(11px,26cqw,22px)] font-semibold tabular-nums text-fg">{view.state.lp[p]}</span>
+        <span className="text-[clamp(8px,calc(var(--tw)*0.17),12px)] font-medium text-subtle">{t('combos.lp.label')}</span>
+        <span className="mt-1 text-[clamp(11px,calc(var(--tw)*0.3),22px)] font-semibold tabular-nums text-fg">{view.state.lp[p]}</span>
       </button>
     </div>
   )

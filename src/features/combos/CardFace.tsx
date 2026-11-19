@@ -19,7 +19,13 @@ export function CardFace({ code, name, pos, className, fit }: { code: number; na
       : undefined
   return (
     <div className={cn('relative', !style && 'w-full', className)} style={{ aspectRatio: '59 / 86', ...style }}>
-      <CardImage id={code} alt={name} className="w-full" />
+      {/* nel campo il nome sul dorso lo disegna .cl-name (a capo corretto, nascosto sulle carte piccole); altrove lo disegna CardImage */}
+      <CardImage id={code} alt={fit ? '' : name} className="w-full" />
+      {fit ? (
+        <span aria-hidden lang="it" className="cl-name">
+          {name}
+        </span>
+      ) : null}
       {down ? (
         <div
           aria-hidden

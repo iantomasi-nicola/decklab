@@ -118,7 +118,7 @@
     display: grid;
     place-items: center;
     text-align: center;
-    font-size: clamp(8px, 15cqw, 12px);
+    font-size: clamp(8px, calc(var(--tw) * 0.17), 12px); /* stessa misura per tutte le etichette, qualunque sia la larghezza della zona */
     font-weight: 500;
     line-height: 1.1;
     color: var(--fg-subtle);
@@ -131,6 +131,33 @@
     position: relative;
     width: var(--wa);
     aspect-ratio: 59 / 86;
+    container-type: inline-size;
+  }
+  /* nome sul dorso quando manca l'immagine: leggibile su 2-3 righe, mai tagliato a metà parola; sulle carte piccole sparisce (resta nel tooltip) */
+  .cl-name {
+    display: none;
+    position: absolute;
+    inset-inline: 4%;
+    bottom: 5%;
+    text-align: center;
+    font-size: clamp(8px, 15cqw, 12px);
+    font-weight: 500;
+    line-height: 1.15;
+    color: var(--fg-muted);
+    overflow: hidden;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    text-wrap: balance;
+    max-height: 3.5em;
+    pointer-events: none;
+  }
+  .cl-fit:has([role='img']) .cl-name {
+    display: block;
+  }
+  @container (max-width: 52px) {
+    .cl-name {
+      display: none !important;
+    }
   }
   .cl-fit.cl-def {
     width: calc(var(--wa) * 86 / 59);
@@ -140,14 +167,14 @@
   .cl-badge {
     position: absolute;
     z-index: 10;
-    min-width: clamp(14px, 28cqw, 22px);
+    min-width: clamp(14px, calc(var(--tw) * 0.3), 22px);
     padding-inline: 4px;
     border: 1px solid var(--border-strong);
     border-radius: 999px;
     background: var(--surface-1);
     box-shadow: var(--shadow-1);
     text-align: center;
-    font-size: clamp(9px, 17cqw, 13px);
+    font-size: clamp(9px, calc(var(--tw) * 0.19), 13px);
     font-weight: 600;
     line-height: 1.5;
     color: var(--fg);
