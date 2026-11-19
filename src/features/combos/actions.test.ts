@@ -4,7 +4,7 @@ import type { ComboDoc, Uid } from '@/domain/combo/types'
 import { validateCombo } from '@/domain/combo/validate'
 import { destinations, optionsFor, pickByModifier, type Ctx, type Src } from './actions'
 import { UNKNOWN_INFO, type CardInfo } from './cardKind'
-import { addStep, applySetupDraft, createBlankDoc, deriveDoc, moveStep, normalizeGroups, remainingPool, toggleGroup } from './model'
+import { addStep, applySetupDraft, createBlankDoc, deriveDoc, finalizeDoc, moveStep, normalizeGroups, pickText, remainingPool, toggleGroup, withNoteLang, withText } from './model'
 import { destKey } from './zones'
 
 const monster: CardInfo = { ...UNKNOWN_INFO, level: 4 }
@@ -168,5 +168,28 @@ describe('modello del documento', () => {
     expect(excl.steps).toEqual([])
     expect(excl.meta.derivedFrom).toMatchObject({ comboId: 'c1', afterStep: null })
     expect(JSON.stringify(doc)).toBe(before)
+  })
+})
+
+describe('testi a campo unico', () => {
+  it('mostra la lingua corrente, altrimenti la prima disponibile', () => {
+    expect(pickText({ it: 'ciao', en: 'hello' }, 'en')).toBe('hello')
+    expect(pickText({ it: 'ciao' }, 'en')).toBe('ciao')
+    expect(pickText({ en: 'hello' }, 'it')).toBe('hello')
+    expect(pickText({ it: 'a', en: 'b' }, 'fr', ['en'])).toBe('b')
+    expect(pickText(undefined, 'it')).toBe('')
+  })
+  it('salva sotto la lingua corrente e la mette per prima in noteLang', () => {
+    expect(withText({ it: 'ciao' }, 'en', 'hello')).toEqual({ it: 'ciao', en: 'hello' })
+    expect(withText({ it: 'ciao', en: 'x' }, 'en', '')).toEqual({ it: 'ciao' })
+    expect(withNoteLang(['it'], 'en')).toEqual(['en', 'it'])
+    expect(withNoteLang(['en', 'it'], 'en')).toEqual(['en', 'it'])
+  })
+  it('finalizeDoc mantiene l\'ordine di noteLang e toglie le lingue senza testo', () => {
+    let doc = blank()
+    doc = { ...doc, meta: { ...doc.meta, title: { it: 'T', en: 'T' }, noteLang: ['en', 'it'] } }
+    expect(finalizeDoc(doc, 'x').meta.noteLang).toEqual(['en', 'it'])
+    doc = { ...doc, meta: { ...doc.meta, title: { en: 'T' } } }
+    expect(finalizeDoc(doc, 'x').meta.noteLang).toEqual(['en'])
   })
 })

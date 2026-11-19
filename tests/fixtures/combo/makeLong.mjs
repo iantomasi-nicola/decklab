@@ -228,7 +228,9 @@ export function makeLong(N = 60, opts = {}) {
       G.anchors.chain ??= { step: ids[0], places: structuredClone(G.places) }
       for (let k = links; k >= 1; k--) {
         const c = cards[k - 1]
-        const moves = [mv(c, { loc: 'gy' }, 'send')]
+        // la trappola continua dell'anello 2 resta sul campo nelle catene dispari (board finale più ricco)
+        const stays = k === 2 && G.chainN % 2 === 1
+        const moves = stays ? [] : [mv(c, { loc: 'gy' }, 'send')]
         if (k === 2 && oppTarget && G.places[oppTarget]?.loc === 'mzone') moves.push(mv(oppTarget, { loc: 'gy' }, 'destroy'))
         if (k === 1) {
           roomM(1)
@@ -423,22 +425,22 @@ export function makeLong(N = 60, opts = {}) {
   }
   if (G.anchors.chain) {
     const a = G.anchors.chain
-    const x = bcard('xyz')
-    const mats = Object.entries(a.places).filter(([, p]) => p.p === 0 && p.loc === 'mzone').map(([u]) => u).slice(0, 2)
-    const seq = mats.length ? a.places[mats[0]].seq : 2
+    const x = bcard('xyz'), m1 = bcard('mon'), m2 = bcard('mon')
+    const taken = new Set(Object.values(a.places).filter((p) => p.p === 0 && p.loc === 'mzone').map((p) => p.seq))
+    const [q1, q2] = [2, 1, 3, 0, 4].filter((q) => !taken.has(q))
     branches.push({
       id: 'b2',
-      title: { it: 'Maxx "C" alla risoluzione', en: 'Maxx "C" on resolution' },
+      title: { it: 'Maxx "C" alla risoluzione' },
       condition: { afterStep: a.step, window: 'resolution', opponent: { code: POOL.maxx, effect: 1 } },
       steps: [
-        { id: 'b2s1', action: 'declare', card: mats[0] ?? 'u1', moves: [], note: { it: 'Dichiari di giocare attorno a @Maxx "C": niente altre Evocazioni.', en: 'You declare you play around @Maxx "C": no more Summons.' } },
-        ...(mats.length === 2
-          ? [{ id: 'b2s2', action: 'specialSummon', method: 'xyz', card: x, to: M(seq), moves: [mv(mats[0], { loc: 'overlay', seq: 0, host: x }, 'material'), mv(mats[1], { loc: 'overlay', seq: 1, host: x }, 'material'), mv(x, M(seq), 'summon')], note: { it: 'Un solo Xyz, poi passi il turno.', en: 'A single Xyz, then you pass the turn.' } }]
-          : []),
-        { id: 'b2s3', action: 'endTurn', moves: [], note: { it: 'Fine della linea: ti fermi qui.', en: 'End of the line: you stop here.' } },
+        { id: 'b2s1', action: 'declare', card: 'u1', moves: [], note: { it: 'Dichiari di giocare attorno a @Maxx "C": poche Evocazioni, nessuna in più.' } },
+        { id: 'b2s2', action: 'specialSummon', method: 'procedure', card: m1, group: 'gb2', to: M(q1 ?? 0), moves: [mv(m1, M(q1 ?? 0), 'summon')] },
+        { id: 'b2s3', action: 'specialSummon', method: 'effect', card: m2, group: 'gb2', to: M(q2 ?? 4), moves: [mv(m2, M(q2 ?? 4), 'summon')] },
+        { id: 'b2s4', action: 'specialSummon', method: 'xyz', card: x, to: M(q1 ?? 0), moves: [mv(m1, { loc: 'overlay', seq: 0, host: x }, 'material'), mv(m2, { loc: 'overlay', seq: 1, host: x }, 'material'), mv(x, M(q1 ?? 0), 'summon')], note: { it: 'Un solo Xyz, poi passi il turno.' } },
+        { id: 'b2s5', action: 'endTurn', moves: [], note: { it: 'Fine della linea: ti fermi qui.' } },
       ],
       rejoin: null,
-      note: { it: 'Linea corta e sicura contro @Maxx "C".', en: 'Short and safe line against @Maxx "C".' },
+      note: { en: 'Short and safe line against @Maxx "C".' },
     })
   }
 

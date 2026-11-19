@@ -261,19 +261,18 @@ test.describe('alternative al trascinamento', () => {
     await expect(page.locator('[data-lp="0"]')).toContainText('7000')
   })
 
-  test('annotazioni IT/EN, riordino e gruppo "ordine libero"', async ({ page }) => {
+  test('nota a campo unico, riordino e gruppo "ordine libero"', async ({ page }) => {
     await drag3(page)
     const first = page.locator('[data-steps] li').first()
     await first.getByRole('button').first().click()
-    await page.getByTestId('note-it').fill('Evoca il motore.')
-    await page.getByTestId('note-en').fill('Summon the engine.')
+    await page.getByTestId('note').fill('Summon the engine.')
     await page.getByTestId('step-menu-1').click()
     await page.getByRole('menuitem', { name: /Free order|Ordine libero/ }).click()
     await expect(page.locator('[data-steps] li').nth(1)).toContainText(/Free order|Ordine libero/)
     await page.getByTestId('step-menu-1').click()
     await page.getByRole('menuitem', { name: /Move up|Sposta su/ }).click()
     const steps = await expect.poll(async () => (await savedSteps(page)).length).toBe(3).then(() => savedSteps(page))
-    expect(steps[1]).toMatchObject({ card: 'u1', note: { it: 'Evoca il motore.', en: 'Summon the engine.' } })
+    expect(steps[1]).toMatchObject({ card: 'u1', note: { en: 'Summon the engine.' } }) // un solo campo: salva sotto la lingua corrente
     expect(steps[0]!.group).toBeDefined()
     expect(steps[0]!.group).toBe(steps[1]!.group)
     expect(steps[2]!.group).toBeUndefined()

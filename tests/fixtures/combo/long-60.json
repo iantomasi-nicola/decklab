@@ -141,7 +141,9 @@
     "u901": 66380357,
     "u902": 16719802,
     "u903": 10065487,
-    "u904": 29208536
+    "u904": 29208536,
+    "u905": 46104361,
+    "u906": 53309998
   },
   "setup": {
     "first": true,
@@ -336,13 +338,6 @@
       "action": "resolve",
       "ref": "s4",
       "moves": [
-        {
-          "uid": "u4",
-          "to": {
-            "loc": "gy"
-          },
-          "why": "send"
-        },
         {
           "uid": "o2",
           "to": {
@@ -779,13 +774,6 @@
       "ref": "s21",
       "moves": [
         {
-          "uid": "u114",
-          "to": {
-            "loc": "gy"
-          },
-          "why": "send"
-        },
-        {
           "uid": "o4",
           "to": {
             "loc": "gy"
@@ -1067,7 +1055,7 @@
           "uid": "u122",
           "to": {
             "loc": "szone",
-            "seq": 3,
+            "seq": 0,
             "pos": "FACEUP"
           },
           "why": "other"
@@ -1091,7 +1079,7 @@
           "uid": "u123",
           "to": {
             "loc": "szone",
-            "seq": 0,
+            "seq": 2,
             "pos": "FACEUP"
           },
           "why": "other"
@@ -1491,7 +1479,7 @@
           "uid": "u132",
           "to": {
             "loc": "szone",
-            "seq": 3,
+            "seq": 0,
             "pos": "FACEUP"
           },
           "why": "other"
@@ -1512,7 +1500,7 @@
           "uid": "u133",
           "to": {
             "loc": "szone",
-            "seq": 0,
+            "seq": 2,
             "pos": "FACEUP"
           },
           "why": "other"
@@ -1539,15 +1527,7 @@
       "id": "s55",
       "action": "resolve",
       "ref": "s52",
-      "moves": [
-        {
-          "uid": "u132",
-          "to": {
-            "loc": "gy"
-          },
-          "why": "send"
-        }
-      ],
+      "moves": [],
       "phase": "main2"
     },
     {
@@ -1786,8 +1766,7 @@
     {
       "id": "b2",
       "title": {
-        "it": "Maxx \"C\" alla risoluzione",
-        "en": "Maxx \"C\" on resolution"
+        "it": "Maxx \"C\" alla risoluzione"
       },
       "condition": {
         "afterStep": "s3",
@@ -1804,23 +1783,109 @@
           "card": "u1",
           "moves": [],
           "note": {
-            "it": "Dichiari di giocare attorno a @Maxx \"C\": niente altre Evocazioni.",
-            "en": "You declare you play around @Maxx \"C\": no more Summons."
+            "it": "Dichiari di giocare attorno a @Maxx \"C\": poche Evocazioni, nessuna in più."
           }
         },
         {
+          "id": "b2s2",
+          "action": "specialSummon",
+          "method": "procedure",
+          "card": "u905",
+          "group": "gb2",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "moves": [
+            {
+              "uid": "u905",
+              "to": {
+                "loc": "mzone",
+                "seq": 1,
+                "pos": "FACEUP_ATK"
+              },
+              "why": "summon"
+            }
+          ]
+        },
+        {
           "id": "b2s3",
+          "action": "specialSummon",
+          "method": "effect",
+          "card": "u906",
+          "group": "gb2",
+          "to": {
+            "loc": "mzone",
+            "seq": 3,
+            "pos": "FACEUP_ATK"
+          },
+          "moves": [
+            {
+              "uid": "u906",
+              "to": {
+                "loc": "mzone",
+                "seq": 3,
+                "pos": "FACEUP_ATK"
+              },
+              "why": "summon"
+            }
+          ]
+        },
+        {
+          "id": "b2s4",
+          "action": "specialSummon",
+          "method": "xyz",
+          "card": "u904",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "moves": [
+            {
+              "uid": "u905",
+              "to": {
+                "loc": "overlay",
+                "seq": 0,
+                "host": "u904"
+              },
+              "why": "material"
+            },
+            {
+              "uid": "u906",
+              "to": {
+                "loc": "overlay",
+                "seq": 1,
+                "host": "u904"
+              },
+              "why": "material"
+            },
+            {
+              "uid": "u904",
+              "to": {
+                "loc": "mzone",
+                "seq": 1,
+                "pos": "FACEUP_ATK"
+              },
+              "why": "summon"
+            }
+          ],
+          "note": {
+            "it": "Un solo Xyz, poi passi il turno."
+          }
+        },
+        {
+          "id": "b2s5",
           "action": "endTurn",
           "moves": [],
           "note": {
-            "it": "Fine della linea: ti fermi qui.",
-            "en": "End of the line: you stop here."
+            "it": "Fine della linea: ti fermi qui."
           }
         }
       ],
       "rejoin": null,
       "note": {
-        "it": "Linea corta e sicura contro @Maxx \"C\".",
         "en": "Short and safe line against @Maxx \"C\"."
       }
     }
@@ -1835,6 +1900,14 @@
             "loc": "overlay",
             "seq": 0,
             "host": "u106"
+          }
+        },
+        {
+          "uid": "u4",
+          "place": {
+            "loc": "szone",
+            "seq": 4,
+            "pos": "FACEUP"
           }
         },
         {
@@ -1867,6 +1940,14 @@
             "loc": "emz",
             "seq": 0,
             "pos": "FACEUP_ATK"
+          }
+        },
+        {
+          "uid": "u114",
+          "place": {
+            "loc": "szone",
+            "seq": 3,
+            "pos": "FACEUP"
           }
         },
         {
@@ -1926,6 +2007,14 @@
           }
         },
         {
+          "uid": "u132",
+          "place": {
+            "loc": "szone",
+            "seq": 0,
+            "pos": "FACEUP"
+          }
+        },
+        {
           "uid": "u134",
           "place": {
             "loc": "overlay",
@@ -1958,8 +2047,8 @@
       ]
     },
     "summary": {
-      "it": "Board finale: 4 mostri Xyz con i loro materiali, 0 carte nella zona Magie e Trappole.",
-      "en": "End board: 4 Xyz monsters with their materials, 0 cards in the Spell & Trap Zone."
+      "it": "Board finale: 4 mostri Xyz con i loro materiali, 3 carte nella zona Magie e Trappole.",
+      "en": "End board: 4 Xyz monsters with their materials, 3 cards in the Spell & Trap Zone."
     }
   }
 }

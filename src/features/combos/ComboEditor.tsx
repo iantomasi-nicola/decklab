@@ -27,7 +27,7 @@ import { Board, type BoardHandle } from './Board'
 import { FIELD_ASPECT_RATIO } from './Field'
 import { useEditor } from './editorStore'
 import { InfoPanel } from './InfoPanel'
-import { deriveDoc, finalizeDoc, pickText } from './model'
+import { deriveDoc, finalizeDoc, pickText, withText } from './model'
 import { SetupPanel } from './SetupPanel'
 import { describeStep, StepsPanel } from './StepsPanel'
 import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
@@ -175,8 +175,8 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       await saveNow()
       const id = crypto.randomUUID()
       const lang = i18n.language === 'it' ? 'it' : 'en'
-      const base = d.meta.title[lang] ?? d.meta.title.it ?? d.meta.title.en ?? t('combos.untitled')
-      const title = { it: `${d.meta.title.it ?? base} (variante)`, en: `${d.meta.title.en ?? base} (variant)` }
+      const base = pickText(d.meta.title, lang, d.meta.noteLang) || t('combos.untitled')
+      const title = withText({}, lang, `${base} ${lang === 'it' ? '(variante)' : '(variant)'}`)
       const child = deriveDoc(d, index, inclusive, { id, title, now: new Date().toISOString() })
       await repos.combos.create({ id, archetypeId: rec.archetypeId, variantId: rec.variantId, name: child.meta.title, tagIds: rec.tagIds, payload: child })
       toast(t('combos.derived'), { tone: 'ok' })
