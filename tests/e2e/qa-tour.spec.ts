@@ -45,7 +45,7 @@ function toMock<T>(doc: T): T {
   return JSON.parse(s.replace(/\b\d{5,9}\b/g, (x) => String(m.get(Number(x)) ?? x)))
 }
 
-interface Seeded { archetypeId: string; variantId: string; comboId: string; longId: string; extraArchId: string }
+interface Seeded { archetypeId: string; variantId: string; comboId: string; longId: string; autoId: string; extraArchId: string }
 
 async function seedAll(page: Page): Promise<Seeded> {
   const side = await seedSide(page)
@@ -53,10 +53,15 @@ async function seedAll(page: Page): Promise<Seeded> {
   const archetypeId = randomUUID()
   const comboId = randomUUID()
   const longId = randomUUID()
+  const autoId = randomUUID()
   const guideDoc = toMock(sampleDoc({ id: comboId, archetypeId, legal: true, now }))
   const long = toMock(longDoc)
   long.meta.id = longId
   long.meta.archetype.id = archetypeId
+  // modalità Automatica (senza motore raggiungibile in test: si vede lo stato di avviso/ripiego)
+  const autoDoc = JSON.parse(JSON.stringify(guideDoc)) as typeof guideDoc & { x?: Record<string, unknown> }
+  autoDoc.meta.id = autoId
+  autoDoc.x = { playMode: 'auto' }
   await page.evaluate(
     async ({ docs, archetypeId, now }) => {
       const db = await new Promise<IDBDatabase>((res, rej) => {
@@ -75,7 +80,7 @@ async function seedAll(page: Page): Promise<Seeded> {
       db.close()
       localStorage.setItem('combolab.stats.variant', '')
     },
-    { docs: [guideDoc, long], archetypeId, now },
+    { docs: [guideDoc, long, autoDoc], archetypeId, now },
   )
   const archId = await page.evaluate(async (vid) => {
     const load = new Function('p', 'return import(p)') as (p: string) => Promise<{ repos: any }>
@@ -84,7 +89,7 @@ async function seedAll(page: Page): Promise<Seeded> {
     localStorage.setItem('combolab.stats.variant', vid)
     return v.archetypeId as string
   }, side.variantId)
-  return { archetypeId: archId, variantId: side.variantId, comboId, longId, extraArchId: archetypeId }
+  return { archetypeId: archId, variantId: side.variantId, comboId, longId, autoId, extraArchId: archetypeId }
 }
 
 const ROUTES: [string, (s: Seeded) => string][] = [
@@ -96,6 +101,7 @@ const ROUTES: [string, (s: Seeded) => string][] = [
   ['combo-lista', () => '/combo'],
   ['combo-editor', (s) => `/combo/${s.comboId}`],
   ['combo-editor-lunga', (s) => `/combo/${s.longId}`],
+  ['combo-editor-auto', (s) => `/combo/${s.autoId}`],
   ['guida', (s) => `/combo/${s.comboId}/guida`],
   ['guida-lunga', (s) => `/combo/${s.longId}/guida`],
   ['replay', (s) => `/combo/${s.comboId}/replay`],

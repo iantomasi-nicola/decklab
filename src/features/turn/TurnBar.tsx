@@ -90,11 +90,13 @@ export function TurnBar({ phase, transitions, onPhaseChange, free, disabled, tur
               data-state={state}
               aria-current={isCur ? 'step' : undefined}
               aria-label={aria}
+              title={`${i + 1} · ${name}`}
               disabled={!isCur && !ok}
               aria-disabled={isCur ? true : undefined}
               onClick={() => go(p)}
             >
               <GameIcon name={PHASE_ICON[p]} size={20} label={false} />
+              <span className="tbar-num" aria-hidden>{i + 1}</span>
               <span className="tbar-label">{name}</span>
             </button>
           )

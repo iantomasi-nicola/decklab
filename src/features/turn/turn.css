@@ -3,15 +3,13 @@
 /* ------------------------------ TurnBar ------------------------------ */
 .tbar-wrap {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
 @media (min-width: 640px) {
   .tbar-wrap {
-    flex-direction: row;
-    align-items: center;
     gap: 16px;
   }
 }
@@ -54,6 +52,12 @@
   cursor: pointer;
   transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
+.tbar-num {
+  display: none;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
 .tbar-label {
   max-width: 100%;
   overflow: hidden;
@@ -86,6 +90,21 @@
 .tbar-btn[data-state='current']:disabled {
   opacity: 1;
   cursor: default;
+}
+/* poco spazio (telefono, pannello Passi): una riga di icone + numero della fase (nome nel tooltip e nell'etichetta ARIA), mai etichette tagliate */
+@container (max-width: 459px) {
+  .tbar-btn {
+    min-height: 44px;
+    flex-direction: row;
+    gap: 3px;
+    padding: 0 2px;
+  }
+  .tbar-label {
+    display: none;
+  }
+  .tbar-num {
+    display: inline;
+  }
 }
 @container (min-width: 700px) {
   .tbar-btn {
