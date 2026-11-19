@@ -142,6 +142,10 @@ function optPolicy(step: Step): { opt: boolean; scope: OptScope } {
   return { opt: byKind && step.effect?.index !== undefined, scope: 'card' }
 }
 
+function optKey(scope: OptScope, uid: Uid, code: number | undefined, index: number | null): string {
+  return scope === 'name' && code !== undefined ? `nome:${code}#${index ?? '?'}` : `${uid}#${index ?? '?'}`
+}
+
 const emptyActivations = (): TurnState['activations'] =>
   Object.fromEntries(EFFECT_GROUPS.map((g) => [g, { count: 0, uids: [] as Uid[] }])) as TurnState['activations']
 
@@ -231,7 +235,7 @@ function accStep(acc: Acc, step: Step, i: number, codeOf: (u: Uid) => number | u
         const index = step.effect.index ?? null
         let repeat = false
         if (opt) {
-          const key = scope === 'name' && code !== undefined ? `nome:${code}#${index ?? '?'}` : `${step.card}#${index ?? '?'}`
+          const key = optKey(scope, step.card, code, index)
           const prev = a.uses.get(key)
           if (prev) {
             prev.count++
@@ -359,4 +363,15 @@ export function phaseWarnings(doc: ComboDoc, options?: TurnOptions): PhaseWarnin
     }
   }
   return out
+}
+
+/** Quanti effetti OPT distinti usa in tutto la linea principale (per mostrare "usati / totali" e quanti restano da usare). */
+export function optTotalInDoc(doc: ComboDoc): number {
+  const keys = new Set<string>()
+  for (const st of doc.steps) {
+    if ((st.action !== 'activate' && st.action !== 'chainActivate') || !st.card || !st.effect) continue
+    const { opt, scope } = optPolicy(st)
+    if (opt) keys.add(optKey(scope, st.card, doc.cards[st.card], st.effect.index ?? null))
+  }
+  return keys.size
 }

@@ -79,3 +79,50 @@ for (const n of SIZES) {
     }
   }
 }
+
+test('guida lunga: catena comprimibile, ricerca senza risultati, scorciatoie / e G, TOC per fasi', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 800 })
+  await prepare(page, 'light', 'en')
+  const id = await seedLong(page, 60)
+  await page.goto(`/combo/${id}/guida`)
+  await expect(page.locator('[data-step]')).toHaveCount(60)
+  await page.waitForTimeout(500)
+  const header = page.locator('[data-chain-header]').first()
+  const cid = (await header.getAttribute('data-chain-header'))!
+  await header.scrollIntoViewIfNeeded()
+  await page.evaluate(() => window.scrollBy(0, -140))
+  const before = await page.locator('[data-step]').count()
+  await header.getByRole('button').click()
+  await expect(header.getByRole('button')).toHaveAttribute('aria-expanded', 'false')
+  expect(await page.locator('[data-step]').count()).toBeLessThan(before)
+  await page.screenshot({ path: `${OUT}/guida-chain-collapsed-375-light-en.png` })
+  await header.getByRole('button').click()
+  await expect(page.locator('[data-step]')).toHaveCount(before)
+  expect(cid).toMatch(/^c\d+$/)
+  // un passo dentro una catena compressa: il salto la riapre
+  await header.getByRole('button').click()
+  await page.getByTestId('guide-jump').fill('4')
+  await page.getByTestId('guide-jump').press('Enter')
+  await expect(page.locator('[data-step="4"]')).toBeVisible()
+  // ricerca senza risultati
+  await page.getByTestId('guide-search').fill('zzzzqq')
+  await expect(page.getByTestId('guide-results')).toContainText('No step matches')
+  await page.screenshot({ path: `${OUT}/guida-noresults-375-light-en.png` })
+  await page.getByTestId('guide-search').fill('')
+  // scorciatoie
+  await page.locator('h1').click()
+  await page.keyboard.press('g')
+  await expect(page.getByTestId('guide-jump')).toBeFocused()
+  await page.keyboard.press('Escape')
+  await page.locator('h1').click()
+  await page.keyboard.press('/')
+  await expect(page.getByTestId('guide-search')).toBeFocused()
+  // sommario: fasi comprimibili
+  await page.getByTestId('guide-toc-button').click()
+  const sec = page.getByTestId('guide-toc').getByRole('button', { name: /Main Phase 1/ })
+  await expect(sec).toHaveAttribute('aria-expanded', 'true')
+  await sec.click()
+  await expect(sec).toHaveAttribute('aria-expanded', 'false')
+  await page.getByTestId('guide-toc').getByRole('button', { name: 'End board' }).click()
+  await expect(page.getByRole('heading', { name: 'End board' })).toBeInViewport()
+})

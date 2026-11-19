@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fixtureJson from '../../../tests/fixtures/combo/v1.json'
 import longJson from '../../../tests/fixtures/combo/long-60.json'
-import { canTransition, effectAvailability, legalTransitions, phaseWarnings, turnStateAt, turnTimeline, usesOfCard } from './turn'
+import { canTransition, effectAvailability, legalTransitions, optTotalInDoc, phaseWarnings, turnStateAt, turnTimeline, usesOfCard } from './turn'
 import type { ComboDoc, Step } from './types'
 
 const base = () => structuredClone(fixtureJson) as unknown as ComboDoc
@@ -194,6 +194,17 @@ describe('turnStateAt', () => {
     const t1 = turnStateAt(d, 0, undefined, 'b1')
     expect(t1.optUsedCount).toBe(1)
     expect(() => turnStateAt(d, 0, undefined, 'nope')).toThrow()
+  })
+
+  it('optTotalInDoc conta gli effetti OPT distinti della combo', () => {
+    const e = { kind: 'ignition' as const, index: 1 }
+    const d = doc([
+      { action: 'activate', card: 'u1', effect: e },
+      { action: 'activate', card: 'u1', effect: e },
+      { action: 'activate', card: 'u3', effect: e },
+      { action: 'activate', card: 'u2', effect: { kind: 'continuous', index: 1 } },
+    ])
+    expect(optTotalInDoc(d)).toBe(2)
   })
 
   it('combo lunga (60 passi): coerente e veloce', () => {
