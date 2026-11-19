@@ -1,0 +1,1 @@
+{"name":"spike-engine","private":true,"type":"module","dependencies":{"@n1xx1/ocgcore-wasm":"npm:@jsr/n1xx1__ocgcore-wasm@^0.1.6"}}
