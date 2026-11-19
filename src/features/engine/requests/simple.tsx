@@ -94,7 +94,7 @@ export function PositionRequest({ req, onAnswer }: P<'position'>) {
                     <CardBox code={req.code} name={nameOf(req.code)} width={52} pos={p === 'FACEDOWN_DEF' ? 'FACEDOWN_DEF' : 'FACEUP_ATK'} />
                   </span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[15px] font-semibold"><GameIcon name={POS_ICON[p]!} size={20} label={false} />{POS_LABEL[p]![lang]}</span>
+                <span className="flex flex-col items-center gap-1 text-center text-[15px] font-semibold leading-tight"><GameIcon name={POS_ICON[p]!} size={20} label={false} />{POS_LABEL[p]![lang]}</span>
               </button>
             </li>
           )

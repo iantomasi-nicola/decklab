@@ -32,7 +32,7 @@ import { banlistImpact, checkCoherence } from '@/domain/smart'
 import { playSound } from '@/features/sound'
 import Ellipsis from 'lucide-react/icons/ellipsis'
 import { PracticeHandDialog } from './PracticeHandDialog'
-import { AutoDock, AutoNotices, transitionsOf, usePhaseGo } from '@/features/engine/AutoDock'
+import { AutoDock, AutoNotices, DuelSettings, transitionsOf, usePhaseGo } from '@/features/engine/AutoDock'
 import { AutoStage } from '@/features/engine/AutoStage'
 import { useDuel } from '@/features/engine/duelStore'
 import { ModeSwitch } from '@/features/engine/ModeSwitch'
@@ -237,6 +237,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const [checkOn, setCheckOn] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [practiceOpen, setPracticeOpen] = useState(false)
+  const [duelSettingsOpen, setDuelSettingsOpen] = useState(false)
   const issues = useMemo(() => (checkOn && doc ? checkCoherence(doc, cards.nameOf) : []), [checkOn, doc, cards.nameOf])
   const hits = useMemo(() => {
     if (!doc || cardsData.status !== 'ready') return []
@@ -349,6 +350,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       }),
     },
     { id: 'practice', label: t('combos.menu.practice'), onSelect: run(() => setPracticeOpen(true)) },
+    ...(auto ? [{ id: 'duel-settings', label: te('settings.open'), onSelect: run(() => setDuelSettingsOpen(true)) }] : []),
     ...(doc.engine?.responses.length && !readOnly
       ? [{
           id: 'replay-engine',
@@ -508,6 +510,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       ) : null}
 
       {shareOpen ? <ShareDialog open onOpenChange={(o) => !o && setShareOpen(false)} doc={finalizeDoc(doc, new Date().toISOString())} /> : null}
+      {duelSettingsOpen ? <DuelSettings onClose={() => setDuelSettingsOpen(false)} /> : null}
       {practiceOpen ? <PracticeHandDialog doc={doc} records={all} onClose={() => setPracticeOpen(false)} /> : null}
 
       {!isMd ? (
