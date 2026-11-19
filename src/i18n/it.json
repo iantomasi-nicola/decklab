@@ -23,7 +23,8 @@
     "loading": "Caricamento in corso",
     "search": "Cerca",
     "clear": "Cancella",
-    "dismiss": "Nascondi"
+    "dismiss": "Nascondi",
+    "notifications": "Notifiche"
   },
   "home": {
     "title": "Home",

@@ -23,7 +23,8 @@
     "loading": "Loading",
     "search": "Search",
     "clear": "Clear",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "notifications": "Notifications"
   },
   "home": {
     "title": "Home",
