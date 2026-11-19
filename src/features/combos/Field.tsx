@@ -28,6 +28,15 @@ export interface FieldView {
   randomHand: number
 }
 
+/** Larghezza / altezza del blocco campo + mano (mano propria SEMPRE sotto il campo). */
+export const FIELD_ASPECT_RATIO = 100 / 132.8
+
+/** Evidenziazione per replay/guida: carta attiva e carte della catena. */
+export interface FieldEmphasis {
+  active?: Uid
+  chain?: ReadonlySet<Uid>
+}
+
 export interface FieldHandlers {
   selected: Uid | null
   highlight: ReadonlySet<string> | null
@@ -41,7 +50,7 @@ export interface FieldHandlers {
   onLp: (p: PlayerIdx) => void
 }
 
-interface Ctx extends FieldHandlers { view: FieldView }
+interface Ctx extends FieldHandlers { view: FieldView; readOnly: boolean; emphasis: FieldEmphasis }
 const FieldCtx = createContext<Ctx | null>(null)
 const useField = () => {
   const c = useContext(FieldCtx)
@@ -125,51 +134,61 @@ function CardBadges({ uid }: { uid: Uid }) {
 
 /** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
 function FieldCard({ uid, inPile }: { uid: Uid; inPile?: boolean }) {
-  const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey } = useField()
+  const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey, readOnly, emphasis } = useField()
   const place = view.state.places[uid]
   const code = view.registry[uid] ?? 0
   const name = view.nameOf(code)
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: cardDragId(uid), data: { uid } })
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: cardDragId(uid), data: { uid }, disabled: readOnly })
   const lastTap = useRef(0)
   if (!place) return null
   const isSel = selected === uid
   const cand = picking?.candidates.has(uid)
   const chosen = picking?.chosen.has(uid)
   const def = isDefPos(place.pos)
+  const active = emphasis.active === uid
+  const inChain = emphasis.chain?.has(uid)
+  const interactive = readOnly
+    ? {}
+    : {
+        ...attributes,
+        ...listeners,
+        role: 'button',
+        tabIndex: 0,
+        'aria-roledescription': '',
+        'aria-pressed': isSel,
+        onClick: () => {
+          if (inPile && highlight) return // il clic spetta alla pila (destinazione)
+          const now = Date.now()
+          if (now - lastTap.current < 350) {
+            lastTap.current = 0
+            onCardDouble(uid)
+          } else {
+            lastTap.current = now
+            onCardClick(uid)
+          }
+        },
+        onContextMenu: (e: React.MouseEvent) => {
+          e.preventDefault()
+          onCardMenu(uid, e.clientX, e.clientY)
+        },
+        onKeyDown: (e: React.KeyboardEvent) => {
+          listeners?.onKeyDown?.(e)
+          onCardKey(uid, e)
+        },
+      }
   return (
     <div
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
+      ref={readOnly ? undefined : setNodeRef}
+      {...interactive}
       data-card={uid}
       data-loc={place.loc}
-      role="button"
-      tabIndex={0}
-      aria-roledescription=""
+      data-active={active || undefined}
+      data-chain={inChain || undefined}
       aria-label={name}
-      aria-pressed={isSel}
       title={name}
-      onClick={() => {
-        if (inPile && highlight) return // il clic spetta alla pila (destinazione)
-        const now = Date.now()
-        if (now - lastTap.current < 350) {
-          lastTap.current = 0
-          onCardDouble(uid)
-        } else {
-          lastTap.current = now
-          onCardClick(uid)
-        }
-      }}
-      onContextMenu={(e) => {
-        e.preventDefault()
-        onCardMenu(uid, e.clientX, e.clientY)
-      }}
-      onKeyDown={(e) => {
-        listeners?.onKeyDown?.(e)
-        onCardKey(uid, e)
-      }}
       className={cn(
-        'absolute inset-0 flex touch-none select-none items-center justify-center outline-none',
+        'absolute inset-0 flex select-none items-center justify-center outline-none',
+        readOnly ? 'pointer-events-none' : 'touch-none',
         isDragging && 'opacity-30',
         picking && !cand && 'opacity-45',
       )}
@@ -185,6 +204,8 @@ function FieldCard({ uid, inPile }: { uid: Uid; inPile?: boolean }) {
             isSel && 'shadow-[0_0_0_3px_var(--accent-text)]',
             cand && !chosen && 'shadow-[0_0_0_3px_var(--ok)]',
             chosen && 'shadow-[0_0_0_4px_var(--ok)]',
+            inChain && 'shadow-[0_0_0_3px_var(--warn)]',
+            active && 'shadow-[0_0_0_4px_var(--accent-text),0_0_16px_2px_var(--accent-text)]',
           )}
         />
         {!inPile && <CardBadges uid={uid} />}
@@ -218,14 +239,14 @@ function PileBack({ loc }: { loc: PileLoc }) {
 
 function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSProperties }) {
   const { t } = useTranslation()
-  const { view, onPile } = useField()
+  const { view, onPile, readOnly } = useField()
   const placed = zoneCards(view.state, p, loc)
   const unrevealed = p === 0 ? (loc === 'deck' ? view.unrevealed.deck : loc === 'extra' ? view.unrevealed.extra : 0) : 0
   const count = placed.length + unrevealed
   const top = placed[placed.length - 1]
   const hidden = loc === 'deck' || loc === 'extra'
   const Icon = loc === 'gy' ? Skull : loc === 'banished' ? Ban : loc === 'deck' ? Layers : Sparkles
-  const draggableFresh = hidden && p === 0 && unrevealed > 0
+  const draggableFresh = !readOnly && hidden && p === 0 && unrevealed > 0
   // un id per pila (anche se disattivata): ids duplicati si sovrascriverebbero nel registro di dnd-kit
   const fresh = useDraggable({ id: hidden ? freshDragId(p, loc as 'deck' | 'extra') : `none:${p}:${loc}`, data: { fresh: loc }, disabled: !draggableFresh })
   const name = t(`combos.pile.${loc}`)
@@ -331,17 +352,18 @@ function Hand({ p }: { p: PlayerIdx }) {
 
 function LpBox({ p }: { p: PlayerIdx }) {
   const { t } = useTranslation()
-  const { view, onLp } = useField()
+  const { view, onLp, readOnly } = useField()
   const style = at(p, 'hand', 7)
   return (
     <div className="cl-cell" style={style}>
       <button
         type="button"
         data-lp={p}
+        disabled={readOnly}
         onClick={() => onLp(p)}
         aria-label={t(p === 0 ? 'combos.lp.own' : 'combos.lp.opponent', { lp: view.state.lp[p] })}
         className={cn(
-          'cl-box pointer-events-auto flex cursor-pointer flex-col items-center justify-center rounded-[6px] border bg-surface-2 leading-none hover:border-accent-text',
+          'pointer-events-auto absolute inset-0 flex flex-col items-center justify-center rounded-[6px] border bg-surface-2 leading-none enabled:cursor-pointer enabled:hover:border-accent-text',
           p === 0 ? 'border-accent-text/50' : 'border-line-strong/60',
         )}
       >
@@ -394,13 +416,44 @@ function Side({ p }: { p: PlayerIdx }) {
   )
 }
 
-export function Field({ view, ring, ...handlers }: { view: FieldView; ring?: boolean } & FieldHandlers) {
+/**
+ * Contenitore del blocco campo + mano: rapporto fisso FIELD_ASPECT_RATIO, scalato per riempire il minimo tra larghezza e
+ * altezza disponibili e centrato. Il genitore deve avere un'altezza definita (es. `h-full` in un flex con `min-h-0`).
+ */
+export function FieldFrame({ children, ring, className }: { children: ReactNode; ring?: boolean; className?: string }) {
   const { t } = useTranslation()
   return (
-    <FieldCtx.Provider value={{ view, ...handlers }}>
-      <div className="cl-stage">
-      <div data-field role="group" aria-label={t('combos.field')} className={cn('cl-field', ring && 'outline outline-2 outline-offset-2 outline-accent-text')}>
-        <div aria-hidden className="cl-seam" />
+    <div className="cl-stage">
+      <div data-field role="group" aria-label={t('combos.field')} className={cn('cl-field', ring && 'outline outline-2 outline-offset-2 outline-accent-text', className)}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+const NOOP = () => undefined
+const NO_EMPHASIS: FieldEmphasis = {}
+
+export function Field({
+  view,
+  ring,
+  readOnly = false,
+  emphasis = NO_EMPHASIS,
+  selected = null,
+  highlight = null,
+  picking = null,
+  onCardClick = NOOP,
+  onCardDouble = NOOP,
+  onCardMenu = NOOP,
+  onCardKey = NOOP,
+  onZone = NOOP,
+  onPile = NOOP,
+  onLp = NOOP,
+}: { view: FieldView; ring?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
+  const { t } = useTranslation()
+  return (
+    <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile, onLp }}>
+      <FieldFrame ring={ring}>
         <div className="cl-grid">
           <Side p={1} />
           {[0, 1].map((i) => {
@@ -420,8 +473,7 @@ export function Field({ view, ring, ...handlers }: { view: FieldView; ring?: boo
           })}
           <Side p={0} />
         </div>
-      </div>
-      </div>
+      </FieldFrame>
     </FieldCtx.Provider>
   )
 }

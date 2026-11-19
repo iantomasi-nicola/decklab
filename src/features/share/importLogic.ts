@@ -5,7 +5,7 @@ import { decodeLink } from '@/domain/share/link'
 import { readCombo, type ReadResult } from '@/domain/combo/migrate'
 import type { Issue } from '@/domain/combo/validate'
 import type { ComboDoc } from '@/domain/combo/types'
-import type { DeckLists, Localized, Rules } from '@/domain/types'
+import type { DeckLists, Localized, Rules, Variant } from '@/domain/types'
 import type { Repos } from '@/data/repo'
 import { BACKUP_APP } from '@/data/backup'
 
@@ -116,7 +116,7 @@ export interface DeckTarget {
   newArchetypeName?: Localized
   name: Localized
   rules: Rules
-  banlist: { format: 'TCG' | 'OCG'; id: string } | { format: string; id: string }
+  banlist: Variant['banlist']
 }
 
 /** Salva un mazzo importato come nuova variante. */
@@ -131,7 +131,7 @@ export async function saveImportedDeck(r: Repos, deck: DeckLists, target: DeckTa
     name: target.name,
     deck,
     rules: target.rules,
-    banlist: target.banlist as never,
+    banlist: target.banlist,
   })
   return { variantId: v.id, archetypeId }
 }

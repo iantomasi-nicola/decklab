@@ -45,7 +45,7 @@ export function openCdb(path = CDB) {
 // --- scripts ---------------------------------------------------------------
 // Sync cache in memory. Misses are recorded; caller fetches async and replays.
 export class ScriptStore {
-  constructor() { this.map = new Map(); this.missing = new Set(); this.notFound = new Set(); this.requested = [] ; this.bytes = 0; this.fetchMs = 0; this.requests = 0 }
+  constructor() { this.map = new Map(); this.missing = new Set(); this.notFound = new Set(); this.requested = [] ; this.bytes = 0; this.fetchMs = 0; this.statuses = {}; this.nf = {}; this.requests = 0 }
   urlFor(name) {
     const n = name.replace(/^\.\/script\//, '').replace(/^script\//, '')
     return n.match(/^c\d+\.lua$/) ? `official/${n}` : n
@@ -68,7 +68,7 @@ export class ScriptStore {
         this.requests++
         const r = await fetch(BASE + k)
         if (r.status === 200) { const t = await r.text(); this.map.set(k, t); this.bytes += Buffer.byteLength(t) }
-        else if (r.status === 404) this.notFound.add(k)
+        else if (r.status === 404 || r.status === 403) { this.notFound.add(k); this.statuses[r.status] = (this.statuses[r.status] ?? 0) + 1; this.nf[k] = r.status }
         else throw new Error(`${k}: HTTP ${r.status}`)
       }
     }
