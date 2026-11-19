@@ -7,6 +7,7 @@ import { exportBackup, importBackup } from './backup'
 
 let db: DecklabDB
 let r: Repos
+let clock: ReturnType<typeof fakeClock>
 
 const planInput = (variantId: string, name = 'Snake-Eye') => ({
   variantId,
@@ -24,7 +25,8 @@ const variantInput = (archetypeId: string) => ({
 
 beforeEach(() => {
   db = createTestDb()
-  r = createRepos(db, fakeClock())
+  clock = fakeClock()
+  r = createRepos(db, clock)
 })
 
 describe('sidePlans', () => {
@@ -56,6 +58,7 @@ describe('sidePlans', () => {
     const v = await r.variants.create(variantInput(a.id))
     const gone = await r.sidePlans.create(planInput(v.id, 'Gia cancellato'))
     await r.sidePlans.softDelete(gone.id)
+    clock.advance(5000)
     await r.sidePlans.create(planInput(v.id, 'Vivo'))
     await r.variants.softDelete(v.id)
     expect(await listSidePlans(v.id, r)).toHaveLength(0)
