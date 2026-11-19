@@ -73,7 +73,7 @@ export function banlistImpact(doc: ComboDoc, banlist: Banlist, index: CardIndex)
 
 export interface Replacement { card: Card; score: number }
 
-const KIND_MASK = 0x7 // monstro 0x1, magia 0x2, trappola 0x4
+const KIND_MASK = 0x7 // mostro 0x1, magia 0x2, trappola 0x4
 
 export function suggestReplacements(cardId: number, index: CardIndex, opts: { banlist?: Banlist; limit?: number } = {}): Replacement[] {
   const src = index.byId(index.canonicalId(cardId))

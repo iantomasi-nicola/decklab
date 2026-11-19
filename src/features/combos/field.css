@@ -5,6 +5,33 @@
  * Righe: mano avversaria (compatta) · M/T · mostri · EMZ (+ Bandite) · mostri · M/T · mano propria (sotto il campo).
  * Le zone centrali sono larghe quanto l'altezza della carta: la carta in DEF ruotata ha la stessa grandezza di quella in ATK.
  */
+/* lunghezze registrate: si calcolano sul .cl-grid (container = campo) e le celle ereditano il valore già risolto, invece di
+   rivalutare i `cqw` rispetto al proprio contenitore */
+@property --g {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --pad {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --th {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --tw {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+@property --ts {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
 @layer components {
   .cl-stage {
     container-type: size;
