@@ -6,7 +6,7 @@
 import {
   OcgDuelMode, OcgLocation, OcgMessageType, OcgPosition, OcgProcessResult, OcgResponseType, type OcgCoreSync,
 } from './core'
-import type { OcgCardData, OcgMessage, OcgResponse } from '@n1xx1/ocgcore-wasm'
+import type { OcgCardData, OcgLocation as OcgLoc, OcgMessage, OcgPosition as OcgPos, OcgResponse } from '@n1xx1/ocgcore-wasm'
 import type { Board, Loc, Place, Position, Uid } from '@/domain/combo/types'
 import { FILLER_CODE } from './cards'
 import { PRELOADED_SCRIPTS } from './constants'
@@ -22,9 +22,9 @@ export interface PlanCard {
   idx: number
   code: number
   team: 0 | 1
-  location: number
+  location: OcgLoc
   sequence: number
-  position: number
+  position: OcgPos
   /** `main`/`extra` del giocatore, `board` = piazzata da setup.own/opponent, `filler` = riempitivo avversario */
   origin: 'main' | 'extra' | 'board' | 'filler'
   /** uid noto dal setup (mano richiesta, board); gli altri li assegna il normalizzatore */
@@ -44,7 +44,7 @@ export interface DuelPlan {
 
 const MZONE_EMZ_BASE = 5 // il core numera le EMZ come mzone 5 e 6
 
-export function locToCore(p: Place): { location: number; sequence: number } {
+export function locToCore(p: Place): { location: OcgLoc; sequence: number } {
   const seq = p.seq ?? 0
   switch (p.loc) {
     case 'deck': return { location: OcgLocation.DECK, sequence: 1 } // indifferente: l'ordine lo dà il piano
@@ -60,7 +60,7 @@ export function locToCore(p: Place): { location: number; sequence: number } {
   }
 }
 
-export function posToCore(pos: Position | undefined, loc: Loc): number {
+export function posToCore(pos: Position | undefined, loc: Loc): OcgPos {
   switch (pos) {
     case 'FACEUP_ATK': return OcgPosition.FACEUP_ATTACK
     case 'FACEUP_DEF': return OcgPosition.FACEUP_DEFENSE
@@ -139,8 +139,6 @@ export function buildPlan(req: StartDuelRequest): DuelPlan {
   // ordine di aggiunta: le carte del mazzo si aggiungono dal fondo alla cima (sequence 0 = cima)
   const inDeck = (i: number) => mainCard[i]!.location === OcgLocation.DECK
   const finalOrder = [...requiredIdx, ...order.filter((i) => !requiredIdx.includes(i))].filter(inDeck)
-  const placedMain = mainCard.filter((c) => !inDeck(deck.main.indexOf(c.code) >= 0 ? mainCard.indexOf(c) : -1))
-  void placedMain
   const physical: PlanCard[] = []
   const idxOfMain = new Map<number, number>()
   const addPhys = (c: PlanCard): number => { c.idx = physical.length; physical.push(c); return c.idx }
