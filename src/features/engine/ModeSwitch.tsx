@@ -32,7 +32,7 @@ export function ModeSwitch({ auto, onChange, disabled, compact }: { auto: boolea
       disabled={disabled}
       data-testid={id}
       onClick={() => auto !== on && onChange(on)}
-      className={cn('inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-sm px-3 text-[15px] font-medium transition-colors duration-150 disabled:opacity-50', auto === on ? 'bg-accent text-accent-fg' : 'text-muted hover:text-fg')}
+      className={cn('inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-sm px-3 text-[15px] font-medium transition-colors duration-150 disabled:opacity-50', auto === on ? 'bg-accent text-accent-fg' : 'text-muted hover:text-fg')}
     >
       <Icon size={16} aria-hidden />
       {label}
