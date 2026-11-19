@@ -180,7 +180,7 @@ test('backup: esporta, cancella, ripristina, annulla', async ({ page }) => {
 test('sync disabilitata: messaggio chiaro e campi bloccati', async ({ page }) => {
   await page.goto('/impostazioni')
   const s = page.getByTestId('account-section')
-  await expect(s).toContainText('VITE_SUPABASE_URL')
+  await expect(s).toContainText(/non è configurato|is not configured/)
   await expect(page.getByTestId('account-send')).toBeDisabled()
   await expect(page.getByTestId('account-google')).toBeDisabled()
 })
