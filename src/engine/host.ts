@@ -11,7 +11,7 @@ import { DuelSession, EngineError } from './session'
 import { ScriptStore } from './scripts'
 import type { EngineEvent, EngineRequest, InitOptions, InitResult } from './protocol'
 import type { ComboDoc } from '@/domain/combo/types'
-import { encodeAnswers } from './codec'
+import { encodeEntries } from './codec'
 
 const MAX_CANDIDATES = 4000
 
@@ -79,7 +79,7 @@ export class EngineHost {
     return {
       core: CORE_ID, scriptsCommit: SCRIPTS_COMMIT, cdbVersion: this.cdbVersion, mode: ENGINE_MODE,
       seed: [s.startRequest.seed, ...s.deckOrder()],
-      responses: encodeAnswers(s.appliedAnswers),
+      responses: encodeEntries(s.applied),
     }
   }
 
@@ -96,7 +96,8 @@ export class EngineHost {
       case 'respond': return this.sess().respond(req.answer)
       case 'undo': return this.sess().undo()
       case 'redo': return this.sess().redo()
-      case 'replay': return this.sess().replay(req.answers)
+      case 'replay': return this.sess().replay(req.answers, req.auto)
+      case 'engineBlock': return this.engineBlock()
       case 'snapshot': return this.sess().snapshot()
       case 'preload': await this.ensure().scripts.preload(req.codes); return null
       case 'dispose': this.session = null; return null

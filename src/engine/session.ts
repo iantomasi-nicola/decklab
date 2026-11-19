@@ -1,7 +1,8 @@
 /**
  * Sessione di duello: `duello = seed + setup + risposte`.
- * - risposte = solo quelle del giocatore (quelle automatiche dell'avversario sono funzione pura dei messaggi e si rigiocano);
- * - undo/redo spostano un indice (nessun core necessario: lo stato viene dal log dei messaggi);
+ * - risposte = quelle del giocatore + quelle AUTOMATICHE (registrate con flag `auto`: scelte uniche, finestre vuote…), così i
+ *   replay non dipendono dalle impostazioni; quelle dell'avversario sono funzione pura dei messaggi e si rigiocano da sole;
+ * - undo/redo spostano un indice saltando le risposte automatiche; non serve il core: lo stato viene dal log dei messaggi;
  * - ogni `respond` ricrea il duello e rigioca (25-40 ms); se uno script manca lo scarica e rigioca da capo, in modo trasparente.
  */
 import type { OcgCardData } from '@n1xx1/ocgcore-wasm'
@@ -9,10 +10,13 @@ import type { OcgCoreSync } from './core'
 import { sameAnswer } from './codec'
 import { buildPlan, isRequest, runDuel, type DuelPlan, type RunResult } from './duel'
 import { normalizeDuel } from './normalize'
-import { passOpponent } from './policy'
-import { describeRequest } from './requests'
+import { autoAnswer, passOpponent } from './policy'
 import { shuffleDeck } from './prng'
-import type { Answer, DuelSnapshot, DuelState, EngineErrorCode, EngineEvent, EngineMessage, StartDuelRequest } from './protocol'
+import { describeRequest } from './requests'
+import {
+  DEFAULT_AUTO, type Answer, type AutoSettings, type DuelSnapshot, type DuelState, type EngineErrorCode, type EngineEvent, type EngineMessage,
+  type StartDuelRequest,
+} from './protocol'
 import type { ScriptStore } from './scripts'
 
 const MAX_PASSES = 40
@@ -33,12 +37,17 @@ export interface SessionDeps {
   matchCodes?: (opcodes: unknown[]) => { codes: number[]; truncated: boolean }
 }
 
+interface Entry { answer: Answer; auto: boolean }
+
 export class DuelSession {
   private req: StartDuelRequest | null = null
   private plan: DuelPlan | null = null
-  private answers: Answer[] = []
-  /** log completo (anche della parte annullata): logAll.length === answers.length + 1 */
+  private auto: AutoSettings = DEFAULT_AUTO
+  /** cronologia completa (anche la parte annullata) */
+  private entries: Entry[] = []
+  /** logAll.length === entries.length + 1 */
   private logAll: EngineMessage[][] = [[]]
+  /** risposte applicate; sta sempre su un confine: la prossima risposta (se c'è) è dell'utente */
   private pos = 0
   private endedFull = false
   private errors: string[] = []
@@ -50,8 +59,8 @@ export class DuelSession {
 
   get started(): boolean { return this.req !== null }
   get startRequest(): StartDuelRequest | null { return this.req }
-  get appliedAnswers(): Answer[] { return this.answers.slice(0, this.pos) }
   get duelPlan(): DuelPlan | null { return this.plan }
+  get applied(): { answer: Answer; auto: boolean }[] { return this.entries.slice(0, this.pos) }
   /** Ordine effettivo del mazzo (indici di `deck.main`, 0 = cima) usato dal duello. */
   deckOrder(): number[] {
     const { req } = this.need()
@@ -67,65 +76,65 @@ export class DuelSession {
 
   async start(req: StartDuelRequest): Promise<DuelState> {
     const plan = buildPlan(req) // lancia su setup incoerente, prima di toccare lo stato
+    this.auto = { ...DEFAULT_AUTO, ...(req.auto ?? {}) }
     await this.d.scripts.preload(DuelSession.codesOf(req))
     const run = await this.play(plan, [])
     this.req = req
     this.plan = plan
-    this.answers = []
-    this.logAll = run.result.log
-    this.pos = 0
-    this.endedFull = run.result.ended
-    this.errors = run.result.errors
-    return this.state(run.replays, run.result.log[0] ?? [])
+    this.setEntries(run.result, [])
+    this.pos = this.entries.length
+    return this.state(run.replays, run.result.log[0] ?? [], this.entries.length)
   }
 
   /** Ricrea il duello (stesso seed/setup) e rigioca `answers`; sostituisce la cronologia. */
-  async replay(answers: readonly Answer[]): Promise<DuelState> {
+  async replay(answers: readonly Answer[], auto: readonly boolean[] = []): Promise<DuelState> {
     const { plan } = this.need()
     const run = await this.play(plan, answers)
     if (run.result.diverged || run.result.consumed < answers.length) throw new EngineError('Le risposte non sono più valide per questo duello (script o motore cambiati)', 'invalid-answer')
-    this.answers = [...answers]
-    this.logAll = run.result.log
-    this.pos = answers.length
-    this.endedFull = run.result.ended
-    this.errors = run.result.errors
-    return this.state(run.replays, run.result.log[this.pos] ?? [])
+    this.setEntries(run.result, answers.map((_, i) => auto[i] === true))
+    this.pos = this.entries.length
+    return this.state(run.replays, [], this.entries.length - answers.length)
   }
 
   async respond(answer: Answer): Promise<DuelState> {
     const { plan } = this.need()
     // risposta uguale alla prossima annullata = ripeti, senza toccare il core
-    if (this.pos < this.answers.length && sameAnswer(this.answers[this.pos]!, answer)) return this.redo()
-    const next = [...this.answers.slice(0, this.pos), answer]
+    if (this.pos < this.entries.length && !this.entries[this.pos]!.auto && sameAnswer(this.entries[this.pos]!.answer, answer)) return this.redo()
+    const keep = this.entries.slice(0, this.pos)
+    const next = [...keep.map((e) => e.answer), answer]
     const run = await this.play(plan, next)
     if (run.result.diverged || run.result.consumed < next.length) throw new EngineError('Risposta non valida per la richiesta corrente', 'invalid-answer')
-    this.answers = next
-    this.logAll = run.result.log
-    this.pos = next.length
-    this.endedFull = run.result.ended
-    this.errors = run.result.errors
-    return this.state(run.replays, run.result.log[this.pos] ?? [])
+    this.setEntries(run.result, [...keep.map((e) => e.auto), false])
+    this.pos = this.entries.length
+    return this.state(run.replays, run.result.log[next.length] ?? [], this.entries.length - next.length)
   }
 
   undo(): DuelState {
     this.need()
-    if (this.pos > 0) this.pos--
-    return this.state(0, [])
+    for (let j = this.pos - 1; j >= 0; j--) if (!this.entries[j]!.auto) { this.pos = j; break }
+    return this.state(0, [], 0)
   }
 
   redo(): DuelState {
     this.need()
-    if (this.pos < this.answers.length) this.pos++
-    return this.state(0, this.logAll[this.pos] ?? [])
+    if (this.pos < this.entries.length) {
+      const from = this.pos
+      let p = from + 1
+      while (p < this.entries.length && this.entries[p]!.auto) p++
+      this.pos = p
+      return this.state(0, this.logAll.slice(from + 1, p + 1).flat(), 0)
+    }
+    return this.state(0, [], 0)
   }
 
   snapshot(): DuelSnapshot {
     const { req } = this.need()
     return {
       seed: req.seed,
-      answers: this.answers.slice(0, this.pos),
+      answers: this.entries.slice(0, this.pos).map((e) => e.answer),
+      auto: this.entries.slice(0, this.pos).map((e) => e.auto),
       log: this.logAll.slice(0, this.pos + 1),
-      redo: this.answers.slice(this.pos).reverse(),
+      redo: this.entries.slice(this.pos).map((e) => ({ answer: e.answer, auto: e.auto })),
     }
   }
 
@@ -136,6 +145,14 @@ export class DuelSession {
     return { req: this.req, plan: this.plan }
   }
 
+  /** Registra il risultato di un passaggio: `flags` = flag auto delle risposte date, le prodotte in più sono automatiche. */
+  private setEntries(r: RunResult, flags: boolean[]): void {
+    this.entries = r.entries.map((answer, i) => ({ answer, auto: i < flags.length ? flags[i]! : true }))
+    this.logAll = r.log
+    this.endedFull = r.ended
+    this.errors = r.errors
+  }
+
   /** Un passaggio con "rigioca da capo" automatico finché gli script mancanti non sono stati scaricati. */
   private async play(plan: DuelPlan, answers: readonly Answer[]): Promise<{ result: RunResult; replays: number }> {
     const { scripts } = this.d
@@ -143,7 +160,8 @@ export class DuelSession {
     for (let pass = 0; pass < MAX_PASSES; pass++) {
       scripts.clearMissing()
       const result = runDuel({
-        lib: this.d.core, plan, cardReader: this.d.cardReader, scripts, answers, opponentPolicy: this.policy,
+        lib: this.d.core, plan, cardReader: this.d.cardReader, scripts, answers,
+        opponentPolicy: this.policy, autoPolicy: (m) => autoAnswer(m, this.auto),
       })
       const missing = scripts.missing
       if (missing.length === 0) return { result, replays }
@@ -158,11 +176,11 @@ export class DuelSession {
     throw new EngineError('Troppe passate per caricare gli script', 'script-fetch')
   }
 
-  private state(replays: number, delta: EngineMessage[]): DuelState {
+  private state(replays: number, delta: EngineMessage[], autoApplied: number): DuelState {
     const { req, plan } = this.need()
     const log = this.logAll.slice(0, this.pos + 1)
-    const answers = this.answers.slice(0, this.pos)
-    const atEnd = this.pos === this.answers.length
+    const answers = this.entries.slice(0, this.pos).map((e) => e.answer)
+    const atEnd = this.pos === this.entries.length
     const last = log[log.length - 1] ?? []
     const ended = atEnd && this.endedFull
     const raw = ended ? null : [...last].reverse().find(isRequest) ?? null
@@ -172,9 +190,10 @@ export class DuelSession {
       delta,
       pending,
       position: this.pos,
-      total: this.answers.length,
-      canUndo: this.pos > 0,
-      canRedo: this.pos < this.answers.length,
+      total: this.entries.length,
+      autoApplied,
+      canUndo: this.entries.slice(0, this.pos).some((e) => !e.auto),
+      canRedo: this.pos < this.entries.length,
       ended,
       steps: norm.steps,
       cards: norm.cards,

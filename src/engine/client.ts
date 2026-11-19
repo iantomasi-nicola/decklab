@@ -1,4 +1,5 @@
 /** Client tipizzato del motore (main thread): promesse sopra il protocollo del Worker. Nessun lavoro pesante qui. */
+import type { ComboDoc } from '@/domain/combo/types'
 import type {
   Answer, DuelSnapshot, DuelState, EngineErrorCode, EngineEvent, EngineOut, EngineRequest, InitOptions, InitResult, StartDuelRequest,
 } from './protocol'
@@ -13,7 +14,9 @@ export interface EngineClient {
   respond(answer: Answer): Promise<DuelState>
   undo(): Promise<DuelState>
   redo(): Promise<DuelState>
-  replay(answers: Answer[]): Promise<DuelState>
+  replay(answers: Answer[], auto?: boolean[]): Promise<DuelState>
+  /** Blocco `engine` del combo (core, scriptsCommit, seed+ordine mazzo, risposte) per il duello corrente. */
+  engineBlock(): Promise<NonNullable<ComboDoc['engine']>>
   snapshot(): Promise<DuelSnapshot>
   preload(codes: number[]): Promise<void>
   dispose(): Promise<void>
@@ -63,7 +66,8 @@ export function createEngineClient(worker: Worker = new Worker(new URL('../worke
     respond: (answer) => call<DuelState>({ op: 'respond', answer }),
     undo: () => call<DuelState>({ op: 'undo' }),
     redo: () => call<DuelState>({ op: 'redo' }),
-    replay: (answers) => call<DuelState>({ op: 'replay', answers }),
+    replay: (answers, auto) => call<DuelState>({ op: 'replay', answers, ...(auto ? { auto } : {}) }),
+    engineBlock: () => call<NonNullable<ComboDoc['engine']>>({ op: 'engineBlock' }),
     snapshot: () => call<DuelSnapshot>({ op: 'snapshot' }),
     preload: (codes) => call<null>({ op: 'preload', codes }).then(() => undefined),
     dispose: () => call<null>({ op: 'dispose' }).then(() => undefined),

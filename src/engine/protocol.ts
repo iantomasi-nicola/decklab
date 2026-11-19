@@ -14,6 +14,21 @@ export type Answer = OcgResponse
 /** Messaggio del core (richieste `SELECT_*`/`ANNOUNCE_*` comprese). */
 export type EngineMessage = OcgMessage
 
+/** Politica automatica del giocatore (le risposte automatiche vengono REGISTRATE: i replay non dipendono dalle impostazioni). */
+export interface AutoSettings {
+  /**
+   * Finestre di risposta in catena/fasi (`SELECT_CHAIN` facoltativo):
+   * 'always' = chiedi sempre (anche senza effetti attivabili, per "passa priorità"); 'ifCanRespond' = chiedi solo se hai effetti
+   * attivabili; 'never' = passa sempre (restano le scelte obbligatorie). Default 'ifCanRespond'.
+   */
+  pause: 'always' | 'ifCanRespond' | 'never'
+  /** Risolve da solo le scelte uniche (una sola carta/zona/posizione/opzione/dichiarazione valida). Default true. */
+  single: boolean
+  /** Accetta l'ordine proposto per `SORT_CARD`/`SORT_CHAIN`. Default true. */
+  sort: boolean
+}
+export const DEFAULT_AUTO: AutoSettings = { pause: 'ifCanRespond', single: true, sort: true }
+
 export interface StartDuelRequest {
   /** Mazzo del giocatore (passcode; l'indice nella lista identifica la copia fisica per `deckOrder`). */
   deck: { main: number[]; extra: number[] }
@@ -28,6 +43,8 @@ export interface StartDuelRequest {
    * Le carte di `setup.hand.required` vengono comunque portate in cima.
    */
   deckOrder?: number[]
+  /** Politica automatica (default `DEFAULT_AUTO`). */
+  auto?: Partial<AutoSettings>
 }
 
 export type { PendingRequest } from './requests'
@@ -38,10 +55,12 @@ export interface DuelState {
   delta: EngineMessage[]
   /** Richiesta a cui il giocatore deve rispondere (null se il duello è finito). */
   pending: PendingRequest | null
-  /** Numero di risposte applicate (posizione corrente nella cronologia). */
+  /** Risposte applicate (utente + automatiche) = posizione nella cronologia. */
   position: number
   /** Risposte totali nella cronologia (applicate + ripristinabili con `redo`). */
   total: number
+  /** Risposte automatiche appena prodotte dall'ultima operazione (per un avviso/toast "saltato: …"). */
+  autoApplied: number
   canUndo: boolean
   canRedo: boolean
   ended: boolean
@@ -62,12 +81,14 @@ export interface DuelState {
 
 export interface DuelSnapshot {
   seed: number
-  /** Risposte applicate (le sole che servono a rigiocare). */
+  /** Risposte applicate (utente + automatiche), in ordine: sono tutto ciò che serve a rigiocare. */
   answers: Answer[]
+  /** `auto[i]` = la risposta i è stata data dalla politica automatica (undo/redo la saltano). */
+  auto: boolean[]
   /** log[0] = messaggi di avvio, log[i] = messaggi dopo la risposta i (i ≥ 1). */
   log: EngineMessage[][]
-  /** Risposte annullate, ripristinabili con `redo` (ordine: la prossima in fondo). */
-  redo: Answer[]
+  /** Risposte annullate, ripristinabili con `redo` (la prossima per prima). */
+  redo: { answer: Answer; auto: boolean }[]
 }
 
 export interface InitOptions {
@@ -94,7 +115,9 @@ export type EngineRequest =
   | { op: 'undo' }
   | { op: 'redo' }
   /** Ricrea il duello (stesso seed/setup dell'ultimo `startDuel`) e rigioca le risposte date. */
-  | { op: 'replay'; answers: Answer[] }
+  | { op: 'replay'; answers: Answer[]; auto?: boolean[] }
+  /** Blocco `engine` del combo per il duello corrente. */
+  | { op: 'engineBlock' }
   | { op: 'snapshot' }
   /** Scarica in anticipo gli script (file di base + carte indicate) senza avviare un duello. */
   | { op: 'preload'; codes: number[] }
@@ -105,6 +128,7 @@ export type EngineRequestEnvelope = EngineRequest & { id: number }
 export type EngineResultOf<R extends EngineRequest> =
   R extends { op: 'init' } ? InitResult
   : R extends { op: 'snapshot' } ? DuelSnapshot
+  : R extends { op: 'engineBlock' } ? NonNullable<ComboDoc['engine']>
   : R extends { op: 'preload' | 'dispose' } ? null
   : DuelState
 

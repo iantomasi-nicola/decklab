@@ -15,3 +15,10 @@ export const decodeAnswers = (l: readonly string[]): Answer[] => l.map(decodeAns
 
 /** Uguaglianza strutturale di due risposte (supporta bigint). */
 export const sameAnswer = (a: Answer, b: Answer): boolean => JSON.stringify(a, replacer) === JSON.stringify(b, replacer)
+
+/** Voce di cronologia ⇄ stringa di `engine.responses`: le risposte automatiche hanno il prefisso `a.`. */
+export const encodeEntries = (l: readonly { answer: Answer; auto: boolean }[]): string[] => l.map((e) => (e.auto ? 'a.' : '') + encodeAnswer(e.answer))
+export const decodeEntries = (l: readonly string[]): { answers: Answer[]; auto: boolean[] } => ({
+  answers: l.map((s) => decodeAnswer(s.startsWith('a.') ? s.slice(2) : s)),
+  auto: l.map((s) => s.startsWith('a.')),
+})

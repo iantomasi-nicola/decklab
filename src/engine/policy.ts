@@ -8,6 +8,7 @@ import {
 } from './core'
 import { SelectBattleCMDAction, SelectIdleCMDAction } from '@n1xx1/ocgcore-wasm'
 import type { OcgMessage, OcgResponse } from '@n1xx1/ocgcore-wasm'
+import type { AutoSettings } from './protocol'
 
 /** Risposta "passa" a una richiesta dell'avversario; null se non esiste una risposta neutra sicura. */
 export function passOpponent(m: OcgMessage): OcgResponse | null {
@@ -67,6 +68,50 @@ export function firstLegalAnswer(m: OcgMessage, step = 0): OcgResponse | null {
     case T.ANNOUNCE_ATTRIB: return { type: R.ANNOUNCE_ATTRIB, attributes: [1 as never] }
     case T.ANNOUNCE_NUMBER: return { type: R.ANNOUNCE_NUMBER, value: 0 }
     case T.ROCK_PAPER_SCISSORS: return { type: R.ROCK_PAPER_SCISSORS, value: 1 as never }
+    default: return null
+  }
+}
+
+const popcount = (n: number): number => { let c = 0; for (let x = n >>> 0; x; x &= x - 1) c++; return c }
+
+/**
+ * Politica automatica del GIOCATORE a strati: 1) scelte uniche, 2) finestre senza azioni (secondo `pause`), 3) il resto alla UI.
+ * Funzione pura del messaggio: le risposte prodotte vengono comunque registrate (vedi session.ts).
+ */
+export function autoAnswer(m: OcgMessage, s: AutoSettings): OcgResponse | null {
+  switch (m.type) {
+    case T.SELECT_CHAIN: {
+      if (m.forced) return s.single && m.selects.length === 1 ? { type: R.SELECT_CHAIN, index: 0 } : null
+      if (s.pause === 'never') return { type: R.SELECT_CHAIN, index: null }
+      if (s.pause === 'ifCanRespond' && m.selects.length === 0) return { type: R.SELECT_CHAIN, index: null }
+      return null
+    }
+    case T.SELECT_CARD:
+      return s.single && m.min > 0 && m.selects.length === m.min ? { type: R.SELECT_CARD, indicies: m.selects.map((_, i) => i) } : null
+    case T.SELECT_TRIBUTE:
+      return s.single && m.min > 0 && m.selects.length === m.min ? { type: R.SELECT_TRIBUTE, indicies: m.selects.map((_, i) => i) } : null
+    case T.SELECT_PLACE:
+    case T.SELECT_DISFIELD: {
+      if (!s.single) return null
+      const free: { player: number; location: number; sequence: number }[] = []
+      for (const team of [0, 1]) {
+        const b = team * 16
+        for (let i = 0; i < 7; i++) if (!((m.field_mask >>> (b + i)) & 1)) free.push({ player: team, location: OcgLocation.MZONE, sequence: i })
+        for (let i = 0; i < 5; i++) if (!((m.field_mask >>> (b + 8 + i)) & 1)) free.push({ player: team, location: OcgLocation.SZONE, sequence: i })
+        if (!((m.field_mask >>> (b + 13)) & 1)) free.push({ player: team, location: OcgLocation.SZONE, sequence: 5 })
+      }
+      if (free.length !== m.count) return null
+      return m.type === T.SELECT_PLACE ? { type: R.SELECT_PLACE, places: free as never } : { type: R.SELECT_DISFIELD, places: free as never }
+    }
+    case T.SELECT_POSITION: {
+      if (!s.single || popcount(m.positions) !== 1) return null
+      return { type: R.SELECT_POSITION, position: m.positions as never }
+    }
+    case T.SELECT_OPTION: return s.single && m.options.length === 1 ? { type: R.SELECT_OPTION, index: 0 } : null
+    case T.SORT_CARD:
+    case T.SORT_CHAIN: return s.sort ? { type: R.SORT_CARD, order: null } : null
+    case T.ANNOUNCE_ATTRIB: return s.single && popcount(m.available) === m.count ? { type: R.ANNOUNCE_ATTRIB, attributes: [1, 2, 4, 8, 16, 32, 64].filter((b) => m.available & b) as never } : null
+    case T.ANNOUNCE_NUMBER: return s.single && m.options.length === 1 ? { type: R.ANNOUNCE_NUMBER, value: Number(m.options[0]) } : null
     default: return null
   }
 }
