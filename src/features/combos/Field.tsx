@@ -29,7 +29,7 @@ export interface FieldView {
 }
 
 /** Larghezza / altezza del blocco campo + mano (mano propria SEMPRE sotto il campo). */
-export const FIELD_ASPECT_RATIO = 100 / 132.8
+export const FIELD_ASPECT_RATIO = 100 / 103.07
 
 /** Evidenziazione per replay/guida: carta attiva e carte della catena. */
 export interface FieldEmphasis {
@@ -310,7 +310,7 @@ function Hand({ p }: { p: PlayerIdx }) {
   const valid = !!highlight && highlight.has(id)
   const dim = !!highlight && !valid
   const random = p === 0 ? view.randomHand : 0
-  const style = { gridRow: ROW[p].hand, gridColumn: '2 / 7', ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2) } as CSSProperties
+  const style = { gridRow: ROW[p].hand, gridColumn: p === 0 ? '1 / 7' : '2 / 8', ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2) } as CSSProperties
   return (
     <div
       ref={setNodeRef}
@@ -411,7 +411,7 @@ function Side({ p }: { p: PlayerIdx }) {
       <Pile p={p} loc="gy" style={at(p, 'front', 7)} />
       <Pile p={p} loc="extra" style={at(p, 'back', 1)} />
       <Pile p={p} loc="deck" style={at(p, 'back', 7)} />
-      <Pile p={p} loc="banished" style={at(p, 'hand', 1)} />
+      <Pile p={p} loc="banished" style={at(p, 'mid', 7)} />
       <Hand p={p} />
       <LpBox p={p} />
     </>

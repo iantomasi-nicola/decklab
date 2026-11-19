@@ -2,7 +2,8 @@
  * Campo di gioco a proporzioni naturali (carte 59:86, nessuna zona stirata). Il blocco "campo + mano" ha un rapporto
  * fisso e si scala per riempire il minimo tra larghezza e altezza disponibili, centrato; lo spazio che avanza
  * resta ai pannelli riducibili. Tutto è in `cqw` del campo: nessun JavaScript, nessuna carta può uscire dal campo.
- * Righe: mano avversaria (compatta) · M/T · mostri · EMZ · mostri · M/T · mano propria (sotto il campo).
+ * Righe: mano avversaria (compatta) · M/T · mostri · EMZ (+ Bandite) · mostri · M/T · mano propria (sotto il campo).
+ * Le zone centrali sono larghe quanto l'altezza della carta: la carta in DEF ruotata ha la stessa grandezza di quella in ATK.
  */
 @layer components {
   .cl-stage {
@@ -16,24 +17,26 @@
   .cl-field {
     container-type: size;
     position: relative;
-    width: min(100cqw, calc(100cqh * 100 / 132.8));
-    aspect-ratio: 100 / 132.8;
+    width: min(100cqw, calc(100cqh * 100 / 103.07));
+    aspect-ratio: 100 / 103.07;
     overflow: hidden;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     background: linear-gradient(180deg, var(--surface-1) 0%, var(--surface-1) 42%, color-mix(in srgb, var(--accent-soft) 55%, var(--surface-1)) 100%);
   }
   .cl-grid {
-    --g: 1.5cqw;
-    --pad: 1.9cqw;
-    --tw: calc((100cqw - 2 * var(--pad) - 6 * var(--g)) / 7);
-    --th: calc(var(--tw) * 86 / 59);
+    --g: 1.6cqw;
+    --pad: 2cqw;
+    /* le 5 colonne centrali sono larghe quanto l'ALTEZZA della carta: ci sta anche la carta in DEF (ruotata) a grandezza piena;
+       le 2 colonne laterali (Terreno/Cimitero/Extra/Deck/LP) hanno la larghezza della carta */
+    --th: calc((100cqw - 2 * var(--pad) - 6 * var(--g)) / 6.3721);
+    --tw: calc(var(--th) * 59 / 86);
     position: absolute;
     inset: 0;
     display: grid;
     gap: var(--g);
     padding: var(--pad);
-    grid-template-columns: repeat(7, var(--tw));
+    grid-template-columns: var(--tw) repeat(5, var(--th)) var(--tw);
     grid-template-rows: calc(var(--th) * 0.6) repeat(6, var(--th));
     justify-content: center;
     align-content: center;
@@ -92,14 +95,14 @@
   /* carta che entra nel box fittizio (ATK o DEF) */
   .cl-fit {
     --wa: min(100cqw, calc(100cqh * 59 / 86));
-    --wd: min(100cqh, calc(100cqw * 59 / 86));
+    --wd: var(--wa); /* in DEF la carta ha la stessa larghezza che in ATK: ruotata occupa (altezza × larghezza) */
     position: relative;
     width: var(--wa);
     aspect-ratio: 59 / 86;
   }
   .cl-fit.cl-def {
-    width: calc(var(--wd) * 86 / 59);
-    height: var(--wd);
+    width: calc(var(--wa) * 86 / 59);
+    height: var(--wa);
     aspect-ratio: auto;
   }
   .cl-badge {
@@ -137,7 +140,7 @@
     container-type: size;
   }
   .cl-hand-item:not(:first-child) {
-    margin-left: min(var(--g), calc((5 * var(--tw) + 4 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
+    margin-left: min(var(--g), calc((5 * var(--th) + var(--tw) + 5 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
   }
   .cl-hand-item:hover,
   .cl-hand-item:focus-within {

@@ -6,9 +6,9 @@ import { C, openCombo, openPanel, seedCombo, type SeedCombo } from './helpers/co
 const OUT = 'test-results/visual'
 mkdirSync(OUT, { recursive: true })
 
-const RATIO = 100 / 132.8
+const RATIO = 100 / 103.07
 const RICH: SeedCombo = {
-  cards: { u1: C.tengu, u2: C.rooklord, u3: C.spell, u4: C.trap, u5: C.field, u6: C.equip, u7: C.pendulum, u8: C.ash, u9: C.xyz, u10: C.tengu, u11: C.link, u12: C.trap, u13: C.ash, o1: C.ash, o2: C.rooklord, o3: C.trap, o4: C.spell },
+  cards: { u1: C.tengu, u2: C.rooklord, u3: C.spell, u4: C.trap, u5: C.field, u6: C.equip, u7: C.pendulum, u8: C.ash, u9: C.xyz, u10: C.tengu, u11: C.link, u12: C.trap, u13: C.ash, u14: C.spell, u15: C.trap, u16: C.rooklord, o1: C.ash, o2: C.rooklord, o3: C.trap, o4: C.spell, o5: C.equip, o6: C.ash, o7: C.tengu },
   hand: ['u1', 'u2', 'u3', 'u4', 'u7', 'u6', 'u13'],
   own: [
     { uid: 'u8', place: { loc: 'gy' } },
@@ -18,12 +18,18 @@ const RICH: SeedCombo = {
     { uid: 'u12', place: { loc: 'szone', seq: 2, pos: 'FACEDOWN' } },
     { uid: 'u5', place: { loc: 'fzone', pos: 'FACEUP' } },
     { uid: 'u13', place: { loc: 'overlay', seq: 0, host: 'u9' } },
+    { uid: 'u14', place: { loc: 'banished' } },
+    { uid: 'u15', place: { loc: 'banished' } },
+    { uid: 'u16', place: { loc: 'mzone', seq: 2, pos: 'FACEUP_DEF' } },
   ],
   opp: [
     { uid: 'o1', place: { loc: 'mzone', seq: 1, pos: 'FACEDOWN_DEF' } },
     { uid: 'o2', place: { loc: 'mzone', seq: 3, pos: 'FACEUP_ATK' } },
     { uid: 'o3', place: { loc: 'szone', seq: 1, pos: 'FACEDOWN' } },
     { uid: 'o4', place: { loc: 'hand', seq: 0 } },
+    { uid: 'o5', place: { loc: 'banished' } },
+    { uid: 'o6', place: { loc: 'mzone', seq: 0, pos: 'FACEUP_DEF' } },
+    { uid: 'o7', place: { loc: 'mzone', seq: 4, pos: 'FACEUP_DEF' } },
   ],
   counters: { u9: { spell: 2 } },
   deck: { main: [C.tengu, C.rooklord, C.spell, C.trap, C.field, C.equip, C.pendulum, C.ash, C.tengu, C.ash], extra: [C.xyz, C.link] },
