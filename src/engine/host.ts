@@ -3,7 +3,8 @@
  * Neutro rispetto all'ambiente: il Worker (src/workers/engine.worker.ts) e i test in Node lo istanziano con sorgenti diverse.
  */
 import type { Card } from '@/domain/types'
-import { makeCardReader } from './cards'
+import { cardMatchesOpcode } from '@n1xx1/ocgcore-wasm'
+import { cardToOcg, makeCardReader } from './cards'
 import { CORE_API, CORE_ID, ENGINE_MODE, SCRIPTS_COMMIT } from './constants'
 import { loadCore, type OcgCoreSync } from './core'
 import { DuelSession, EngineError } from './session'
@@ -11,6 +12,8 @@ import { ScriptStore } from './scripts'
 import type { EngineEvent, EngineRequest, InitOptions, InitResult } from './protocol'
 import type { ComboDoc } from '@/domain/combo/types'
 import { encodeAnswers } from './codec'
+
+const MAX_CANDIDATES = 4000
 
 export interface HostSources {
   /** binario wasm (nel Worker: fetch cache-first dell'asset di build) */
@@ -53,6 +56,18 @@ export class EngineHost {
       core, scripts,
       cardReader: makeCardReader(this.cards),
       cardType: (code) => this.cards.get(code)?.type ?? 0,
+      matchCodes: (opcodes) => {
+        const codes: number[] = []
+        let truncated = false
+        for (const c of this.cards.values()) {
+          if (c.alias !== 0) continue
+          if (cardMatchesOpcode(cardToOcg(c), opcodes as never)) {
+            if (codes.length >= MAX_CANDIDATES) { truncated = true; break }
+            codes.push(c.id)
+          }
+        }
+        return { codes, truncated }
+      },
       ...(this.src.onEvent ? { onEvent: this.src.onEvent } : {}),
     })
   }

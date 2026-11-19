@@ -35,6 +35,9 @@ export interface DuelPlan {
   cards: PlanCard[]
   /** ordine finale del mazzo del giocatore: indici fisici (`PlanCard.idx`), 0 = cima */
   deckTop: number[]
+  /** team del core del giocatore: 0 se gioca per primo, altrimenti 1 (l'avversario, team 0, apre il duello) */
+  userTeam: 0 | 1
+  /** indicati per team del core */
   startingDraw: [number, number]
   lp: [number, number]
   coreSeed: [bigint, bigint, bigint, bigint]
@@ -79,6 +82,8 @@ const OPPONENT_DECK_SIZE = 40
  */
 export function buildPlan(req: StartDuelRequest): DuelPlan {
   const { deck, setup } = req
+  const ut: 0 | 1 = setup.first ? 0 : 1
+  const ot: 0 | 1 = ut === 0 ? 1 : 0
   const cardsByUid = req.cards ?? {}
   const mainIdx = deck.main.map((_, i) => i)
   const order = req.deckOrder ?? shuffleDeck(req.seed, deck.main.length)
@@ -124,8 +129,8 @@ export function buildPlan(req: StartDuelRequest): DuelPlan {
   }
 
   // carte fisiche del giocatore: main (indice = posizione nella lista), poi extra
-  const mainCard: PlanCard[] = deck.main.map((code, i) => ({ idx: -1, code, team: 0, location: OcgLocation.DECK, sequence: 1, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'main', ...(requiredUid.has(i) ? { uid: requiredUid.get(i)! } : {}) }))
-  const extraCard: PlanCard[] = deck.extra.map((code) => ({ idx: -1, code, team: 0, location: OcgLocation.EXTRA, sequence: 0, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'extra' }))
+  const mainCard: PlanCard[] = deck.main.map((code, i) => ({ idx: -1, code, team: ut, location: OcgLocation.DECK, sequence: 1, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'main', ...(requiredUid.has(i) ? { uid: requiredUid.get(i)! } : {}) }))
+  const extraCard: PlanCard[] = deck.extra.map((code) => ({ idx: -1, code, team: ut, location: OcgLocation.EXTRA, sequence: 0, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'extra' }))
   for (const o of ownPlaced) {
     const target = o.from === 'main' ? mainCard[o.i]! : extraCard[o.i]!
     const loc = locToCore(o.place)
@@ -152,16 +157,15 @@ export function buildPlan(req: StartDuelRequest): DuelPlan {
   const deckTop = finalOrder.map((i) => idxOfMain.get(i)!)
 
   // avversario: riempitivo + board
-  const oppDraw = 0
   for (let i = 0; i < OPPONENT_DECK_SIZE; i++) {
-    cards.push({ idx: cards.length, code: FILLER_CODE, team: 1, location: OcgLocation.DECK, sequence: 1, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'filler' })
+    cards.push({ idx: cards.length, code: FILLER_CODE, team: ot, location: OcgLocation.DECK, sequence: 1, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'filler' })
   }
   for (const bp of setup.opponent?.board?.places ?? []) {
     const code = cardsByUid[bp.uid]
     if (code === undefined) throw new Error(`Setup: uid ${bp.uid} non presente in cards`)
     const loc = locToCore({ ...bp.place, p: 1 })
     uidCodes[bp.uid] = code
-    cards.push({ idx: cards.length, code, team: 1, location: loc.location, sequence: loc.sequence, position: posToCore(bp.place.pos, bp.place.loc), origin: 'board', uid: bp.uid })
+    cards.push({ idx: cards.length, code, team: ot, location: loc.location, sequence: loc.sequence, position: posToCore(bp.place.pos, bp.place.loc), origin: 'board', uid: bp.uid })
   }
 
   const handSize = setup.hand.fill === 'none' ? requiredIdx.length : Math.max(setup.hand.size, requiredIdx.length)
@@ -169,8 +173,9 @@ export function buildPlan(req: StartDuelRequest): DuelPlan {
   return {
     cards,
     deckTop,
-    startingDraw: [Math.min(handSize, finalOrder.length), oppDraw],
-    lp: [lpOf(setup.own), lpOf(setup.opponent?.board)],
+    userTeam: ut,
+    startingDraw: ut === 0 ? [Math.min(handSize, finalOrder.length), 0] : [0, Math.min(handSize, finalOrder.length)],
+    lp: ut === 0 ? [lpOf(setup.own), lpOf(setup.opponent?.board)] : [lpOf(setup.opponent?.board), lpOf(setup.own)],
     coreSeed: coreSeedFrom(req.seed),
     uidCodes,
   }
@@ -255,7 +260,7 @@ export function runDuel(inp: RunInput): RunResult {
         if (msgs.some((m) => m.type === OcgMessageType.RETRY)) { diverged = true; break }
         throw new Error('WAITING senza richiesta')
       }
-      const auto = req.type !== OcgMessageType.RETRY && 'player' in req && req.player === 1 ? inp.opponentPolicy?.(req) ?? null : null
+      const auto = req.type !== OcgMessageType.RETRY && 'player' in req && req.player !== plan.userTeam ? inp.opponentPolicy?.(req) ?? null : null
       let resp: OcgResponse
       if (auto) resp = auto
       else if (consumed < inp.answers.length) {

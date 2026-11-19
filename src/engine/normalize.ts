@@ -21,6 +21,7 @@ import type {
   ActionKind, Board, BoardPlacement, EffectKind, Endboard, Loc, Move, MoveWhy, Place, PlayerIdx, Position, Step, SummonMethod, Uid,
 } from '@/domain/combo/types'
 import type { DuelPlan } from './duel'
+import type { CardRef } from './requests'
 import { isRequest } from './duel'
 
 // ------------------------------------------------------------------ tipi carta (bitmask cdb)
@@ -212,11 +213,16 @@ export interface NormalizeResult {
   /** board a fine duello (stato del core), nel formato combo */
   endboard: Endboard
   lp: [number, number]
+  /** Risolve una posizione del core (come nelle richieste) in uid + Place, allo stato finale. */
+  ref(l: { controller: number; location: number; sequence: number; overlay_sequence?: number }, code?: number): CardRef
+  outP(team: number): PlayerIdx
 }
 
 export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const { plan, log, answers } = inp
   const tr = new Tracker(plan)
+  /** team del core → giocatore del formato combo (0 = utente) */
+  const outP = (c: number): PlayerIdx => (c === plan.userTeam ? 0 : 1)
   const cardType = inp.cardType ?? (() => 0)
   const cards: Record<Uid, number> = { ...(inp.cards ?? {}) }
 
@@ -229,7 +235,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const uid = (k: Key, p: PlayerIdx = 0): Uid => {
     let u = uidOfKey.get(k)
     if (u) return u
-    const pref = (tr.where.get(k)?.p ?? p) === 1 ? 'o' : 'u'
+    const pref = outP(tr.where.get(k)?.p ?? p) === 1 ? 'o' : 'u'
     const ci = pref === 'o' ? 1 : 0
     do u = `${pref}${counters[ci]!++}`
     while (used.has(u))
@@ -259,7 +265,7 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
 
   const placeOf = (k: Key, withSeq = true): Place => {
     const w = tr.where.get(k)!
-    const p: Place['p'] = w.p === 1 ? 1 : undefined
+    const p: Place['p'] = outP(w.p) === 1 ? 1 : undefined
     const base = (loc: Loc): Place => ({ ...(p ? { p } : {}), loc })
     switch (w.z) {
       case 'deck': return base('deck')
@@ -292,7 +298,8 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
     return s
   }
 
-  const lpDelta = (s: Step | null, p: PlayerIdx, delta: number) => {
+  const lpDelta = (s: Step | null, core: number, delta: number) => {
+    const p = outP(core)
     if (!s || !delta) return
     const e = (s.lp ??= []).find((x) => x.p === p)
     if (e) e.delta += delta
@@ -660,7 +667,8 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   }
 
   // endboard dallo stato del core
-  const boardOfPlayer = (p: PlayerIdx): Board => {
+  const boardOfPlayer = (pOut: PlayerIdx): Board => {
+    const p = pOut === 0 ? plan.userTeam : ((1 - plan.userTeam) as 0 | 1)
     const places: BoardPlacement[] = []
     const add = (k: Key | null) => { if (k != null) { places.push({ uid: uid(k), place: placeOf(k) }); for (const m of tr.ov.get(k) ?? []) places.push({ uid: uid(m), place: placeOf(m) }) } }
     for (const k of tr.mz[p]) add(k)
@@ -673,5 +681,18 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   const endboard: Endboard = opp.places.length === 0 && opp.lp === 8000 ? { own } : { own, opponent: opp }
   void TYPE_TOKEN
 
-  return { steps, cards, requiredHand, endboard, lp: [tr.lp[0], tr.lp[1]] }
+  const ref: NormalizeResult['ref'] = (l, code) => {
+    const k = tr.find(l.controller as 0 | 1, l.location, l.sequence, code, l.overlay_sequence)
+    if (k !== undefined && tr.where.has(k)) return { uid: uid(k), code: tr.codes.get(k) ?? code ?? 0, place: placeOf(k) }
+    // carta che non conosciamo (coperta dell'avversario, creata dal core): uid nuovo con la posizione grezza
+    const nk = tr.create(code ?? 0)
+    const z = coreToZone(l.location)
+    const slot = slotOf(l.location, l.sequence)
+    if (z && z !== 'ov' && slot) tr.place(nk, l.controller as 0 | 1, slot.z, slot.i)
+    else if (z && z !== 'ov') tr.place(nk, l.controller as 0 | 1, z, -1)
+    const u = uid(nk, l.controller as 0 | 1)
+    return { uid: u, code: code ?? 0, place: tr.where.has(nk) ? placeOf(nk) : { loc: 'hand' } }
+  }
+
+  return { steps, cards, requiredHand, endboard, lp: [tr.lp[plan.userTeam], tr.lp[(1 - plan.userTeam) as 0 | 1]], ref, outP }
 }

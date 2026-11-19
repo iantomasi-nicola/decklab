@@ -63,6 +63,24 @@ registerRoute(
 )
 
 /**
+ * Motore EDOPro: i chunk JS del core (`assets/ocgcore.*.js`, il glue sync da ~21 KB; i chunk JSPI e base64 da 1,28 MB non si
+ * scaricano mai) sono fuori dal precache e si salvano alla prima apertura del motore: cache-first (hash nel nome).
+ * Il binario .wasm lo mette in cache il worker stesso (Cache Storage 'combolab-engine-wasm-v1').
+ */
+const ENGINE_CACHE = 'combolab-engine-v1'
+registerRoute(
+  ({ url, request }) => request.method === 'GET' && url.origin === sw.location.origin && /\/assets\/ocgcore[^/]*\.js$/.test(url.pathname),
+  async ({ request }) => {
+    const cache = await caches.open(ENGINE_CACHE)
+    const hit = await cache.match(request)
+    if (hit) return hit
+    const res = await fetch(request)
+    if (res.ok) await cache.put(request, res.clone())
+    return res
+  },
+)
+
+/**
  * Web Share Target (Android, app installata): POST multipart su /share-target con file .ydk e/o testo/URL.
  * Il contenuto viene messo nella Cache "combolab-share" (letto dall'import nelle fasi successive)
  * e l'utente viene portato su /mazzi?share=1.

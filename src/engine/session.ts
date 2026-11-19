@@ -10,6 +10,7 @@ import { sameAnswer } from './codec'
 import { buildPlan, isRequest, runDuel, type DuelPlan, type RunResult } from './duel'
 import { normalizeDuel } from './normalize'
 import { passOpponent } from './policy'
+import { describeRequest } from './requests'
 import { shuffleDeck } from './prng'
 import type { Answer, DuelSnapshot, DuelState, EngineErrorCode, EngineEvent, EngineMessage, StartDuelRequest } from './protocol'
 import type { ScriptStore } from './scripts'
@@ -28,6 +29,8 @@ export interface SessionDeps {
   scripts: ScriptStore
   onEvent?: (e: EngineEvent) => void
   opponentPolicy?: (req: EngineMessage) => Answer | null
+  /** passcode che soddisfano gli opcode di ANNOUNCE_CARD */
+  matchCodes?: (opcodes: unknown[]) => { codes: number[]; truncated: boolean }
 }
 
 export class DuelSession {
@@ -162,8 +165,9 @@ export class DuelSession {
     const atEnd = this.pos === this.answers.length
     const last = log[log.length - 1] ?? []
     const ended = atEnd && this.endedFull
-    const pending = ended ? null : [...last].reverse().find(isRequest) ?? null
+    const raw = ended ? null : [...last].reverse().find(isRequest) ?? null
     const norm = normalizeDuel({ plan, log, answers, cards: req.cards ?? {}, cardType: this.d.cardType })
+    const pending = raw ? describeRequest(raw, { outP: norm.outP, ref: norm.ref, matchCodes: this.d.matchCodes ?? (() => ({ codes: [], truncated: false })) }) : null
     return {
       delta,
       pending,

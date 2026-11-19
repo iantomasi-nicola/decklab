@@ -77,6 +77,8 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // worker come moduli ES: il core carica i suoi chunk con import() dinamico (con il formato iife verrebbero inlinati: 2,6 MB)
+  worker: { format: 'es' },
   build: { target: 'es2022' },
   test: { environment: 'node', include: ['tests/**/*.test.ts', 'src/**/*.test.ts', 'workers/**/*.test.ts'] },
 })

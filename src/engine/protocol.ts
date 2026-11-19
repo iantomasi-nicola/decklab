@@ -30,8 +30,8 @@ export interface StartDuelRequest {
   deckOrder?: number[]
 }
 
-/** Richiesta in sospeso del core (tipi `SELECT_*`, `SORT_*`, `ANNOUNCE_*`, `ROCK_PAPER_SCISSORS`). */
-export type PendingRequest = EngineMessage
+export type { PendingRequest } from './requests'
+import type { PendingRequest } from './requests'
 
 export interface DuelState {
   /** Messaggi prodotti dall'ultima operazione (per animazioni/log incrementali). */
