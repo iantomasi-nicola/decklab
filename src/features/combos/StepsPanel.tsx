@@ -18,6 +18,7 @@ import { Button } from '@/ui/Button'
 import { cn } from '@/ui/cn'
 import { IconButton } from '@/ui/IconButton'
 import { Menu, type MenuItem } from '@/ui/Menu'
+import { Select } from '@/ui/Select'
 import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
 import { incoherentSteps } from './incoherence'
@@ -392,49 +393,37 @@ function StepEditor({ step }: { step: Step }) {
         {t('combos.step.note')}
         <textarea className={textareaCls} value={pickText(step.note, lang, noteLang)} onChange={(e) => note(e.target.value)} data-testid="note" />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
-        {t('combos.step.phase')}
-        <select
-          className="min-h-11 w-full rounded-md border border-line-strong bg-surface-1 px-3 text-[15px] font-normal text-fg"
-          value={step.phase ?? ''}
-          onChange={(e) => {
-            const v = e.target.value
-            const { phase: _p, ...rest } = step
-            void _p
-            store.edit((d) => ({
-              doc: { ...d, steps: d.steps.map((x) => (x.id === step.id ? (v ? { ...rest, phase: v as Step['phase'] } : rest) : x)) },
-            }))
-          }}
-        >
-          <option value="">{t('combos.step.phaseNone')}</option>
-          {PHASES.map((p) => (
-            <option key={p} value={p}>
-              {t(`combos.phase.${p}`)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Select
+        label={t('combos.step.phase')}
+        value={step.phase ?? ''}
+        data-testid="step-phase"
+        options={[{ value: '', label: t('combos.step.phaseNone') }, ...PHASES.map((p) => ({ value: p, label: t(`combos.phase.${p}`) }))]}
+        onValueChange={(v) => {
+          const { phase: _p, ...rest } = step
+          void _p
+          store.edit((d) => ({
+            doc: { ...d, steps: d.steps.map((x) => (x.id === step.id ? (v ? { ...rest, phase: v as Step['phase'] } : rest) : x)) },
+          }))
+        }}
+      />
       {step.effect || step.action === 'activate' || step.action === 'chainActivate' ? (
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t('combos.step.opt')}
-          <select
-            className="min-h-11 w-full rounded-md border border-line-strong bg-surface-1 px-3 text-[15px] font-normal text-fg"
-            value={step.x?.opt === undefined ? 'auto' : String(step.x.opt)}
-            data-testid="step-opt"
-            onChange={(e) => {
-              const v = e.target.value
-              const x: Record<string, unknown> = { ...step.x }
-              if (v === 'auto') delete x.opt
-              else x.opt = v === 'true' ? true : v === 'false' ? false : v
-              store.patchStep(step.id, { x: Object.keys(x).length ? x : (undefined as never) })
-            }}
-          >
-            <option value="auto">{t('combos.step.optAuto')}</option>
-            <option value="true">{t('combos.step.optCard')}</option>
-            <option value="name">{t('combos.step.optName')}</option>
-            <option value="false">{t('combos.step.optNo')}</option>
-          </select>
-        </label>
+        <Select
+          label={t('combos.step.opt')}
+          value={step.x?.opt === undefined ? 'auto' : String(step.x.opt)}
+          data-testid="step-opt"
+          options={[
+            { value: 'auto', label: t('combos.step.optAuto') },
+            { value: 'true', label: t('combos.step.optCard') },
+            { value: 'name', label: t('combos.step.optName') },
+            { value: 'false', label: t('combos.step.optNo') },
+          ]}
+          onValueChange={(v) => {
+            const x: Record<string, unknown> = { ...step.x }
+            if (v === 'auto') delete x.opt
+            else x.opt = v === 'true' ? true : v === 'false' ? false : v
+            store.patchStep(step.id, { x: Object.keys(x).length ? x : (undefined as never) })
+          }}
+        />
       ) : null}
       <Switch label={t('combos.step.optional')} checked={!!step.optional} onCheckedChange={(v) => store.patchStep(step.id, { optional: v })} />
     </div>

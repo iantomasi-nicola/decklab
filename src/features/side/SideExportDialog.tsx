@@ -8,6 +8,7 @@ import type { CardIndex } from '@/domain/deck/cardIndex'
 import type { Lang } from '@/domain/types'
 import { cardImageUrl } from '@/features/cards/api'
 import { cardName } from '@/features/decks/cardData'
+import { Banner } from '@/ui/Banner'
 import { Button } from '@/ui/Button'
 import { Dialog } from '@/ui/Dialog'
 import { Segmented } from '@/ui/Segmented'
@@ -46,6 +47,22 @@ export function SideExportDialog({ open, onOpenChange, title, subtitle, rows, ou
   const [failed, setFailed] = useState(false)
   const sorted = useSortedRows(rows, index, lang)
   const run = useRef(0)
+  const outN = outs.reduce((n, c) => n + c.count, 0)
+  const inN = ins.reduce((n, c) => n + c.count, 0)
+  const unbalanced = outN !== inN
+  const [pending, setPending] = useState<(() => void) | null>(null)
+  const [confirmed, setConfirmed] = useState(false)
+  useEffect(() => {
+    if (!open) {
+      setPending(null)
+      setConfirmed(false)
+    }
+  }, [open])
+  // chiede conferma una sola volta per apertura se OUT ≠ IN
+  const guard = (fn: () => void) => () => {
+    if (unbalanced && !confirmed) setPending(() => fn)
+    else fn()
+  }
 
   const input = useMemo<ExportInput>(() => {
     const nameOf = (id: number) => cardName(index.byId(id), lang, id)
@@ -59,9 +76,10 @@ export function SideExportDialog({ open, onOpenChange, title, subtitle, rows, ou
       ins: lines(ins),
       labels: { out: t('side.export.outTitle'), in: t('side.export.inTitle'), main: t('side.export.mainTitle'), noSwaps: t('side.export.noSwaps'), footer: t('side.export.footer') },
       orientation,
+      ...(unbalanced ? { warning: t('side.export.unbalancedImage', { out: outN, in: inN }) } : {}),
       imageUrl: (id) => cardImageUrl(id, 'small'),
     }
-  }, [title, subtitle, sorted, rows, outs, ins, index, lang, orientation, t])
+  }, [title, subtitle, sorted, rows, outs, ins, index, lang, orientation, t, unbalanced, outN, inN])
 
   useEffect(() => {
     if (!open) return
@@ -133,24 +151,49 @@ export function SideExportDialog({ open, onOpenChange, title, subtitle, rows, ou
       description={t('side.export.lead')}
       className="max-w-2xl"
       footer={
-        <>
-          <Button icon={<Download size={18} />} variant="primary" disabled={!url || busy} onClick={download} data-testid="export-download">
-            {t('side.export.download')}
-          </Button>
-          {canCopy ? (
-            <Button icon={<Copy size={18} />} disabled={!blob || busy} onClick={() => void copy()} data-testid="export-copy">
-              {t('side.export.copy')}
+        pending ? (
+          <>
+            <Button
+              variant="primary"
+              onClick={() => {
+                const fn = pending
+                setConfirmed(true)
+                setPending(null)
+                fn()
+              }}
+              data-testid="export-confirm"
+            >
+              {t('side.export.confirm')}
             </Button>
-          ) : null}
-          {canShare ? (
-            <Button icon={<Share2 size={18} />} disabled={busy} onClick={() => void share()} data-testid="export-share">
-              {t('side.export.share')}
+            <Button onClick={() => onOpenChange(false)} data-testid="export-back">
+              {t('side.export.back')}
             </Button>
-          ) : null}
-        </>
+          </>
+        ) : (
+          <>
+            <Button icon={<Download size={18} />} variant="primary" disabled={!url || busy} onClick={guard(download)} data-testid="export-download">
+              {t('side.export.download')}
+            </Button>
+            {canCopy ? (
+              <Button icon={<Copy size={18} />} disabled={!blob || busy} onClick={guard(() => void copy())} data-testid="export-copy">
+                {t('side.export.copy')}
+              </Button>
+            ) : null}
+            {canShare ? (
+              <Button icon={<Share2 size={18} />} disabled={busy} onClick={guard(() => void share())} data-testid="export-share">
+                {t('side.export.share')}
+              </Button>
+            ) : null}
+          </>
+        )
       }
     >
       <div className="flex flex-col gap-4">
+        {unbalanced ? (
+          <Banner tone="warn" title={pending ? t('side.export.confirmTitle') : t('side.export.unbalancedTitle')} className="border-warn">
+            {t('side.export.unbalancedBody', { out: outN, in: inN })}
+          </Banner>
+        ) : null}
         <Segmented
           label={t('side.export.orientation')}
           fill

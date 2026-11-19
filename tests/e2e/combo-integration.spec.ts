@@ -49,9 +49,11 @@ test.describe('integrazioni (desktop)', () => {
     await mouseDrag(page, card(page, 'u3'), zone(page, 'z:0:szone:2'))
     await chooseMenu(page, 'activate')
     await page.locator('[data-steps] li[data-step-id] button').first().click()
-    await page.getByTestId('step-opt').selectOption('name')
+    await page.getByTestId('step-opt').click()
+    await page.locator('[data-option="name"]').click()
     await expect.poll(async () => ((await savedSteps(page))[0]?.x as { opt?: unknown } | undefined)?.opt).toBe('name')
-    await page.getByTestId('step-opt').selectOption('auto')
+    await page.getByTestId('step-opt').click()
+    await page.locator('[data-option="auto"]').click()
     await expect.poll(async () => (((await savedSteps(page))[0]?.x as { opt?: unknown } | undefined) ?? { opt: undefined }).opt).toBeUndefined()
   })
 

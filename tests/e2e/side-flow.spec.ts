@@ -81,7 +81,11 @@ for (const vp of [{ w: 375, h: 812 }, { w: 1440, h: 900 }]) {
       const dims = () => img.evaluate((el: HTMLImageElement) => [el.naturalWidth, el.naturalHeight])
       await expect.poll(dims).toEqual([1080, 1920])
       await page.screenshot({ path: `test-results/side/flow-${vp.w}-export-portrait.png` })
-      const [dl] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-download').click()])
+      // piano non bilanciato (2 OUT ≠ 3 IN): avviso nella finestra e conferma prima di esportare
+      await expect(page.getByRole('alert').filter({ hasText: 'Piano non bilanciato' })).toBeVisible()
+      await page.getByTestId('export-download').click()
+      await expect(page.getByText('Esportare comunque?')).toBeVisible()
+      const [dl] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-confirm').click()])
       expect(dl.suggestedFilename()).toMatch(/^side-plan-snake-eye-portrait\.png$/)
       await dl.saveAs(`test-results/side/export-${vp.w}-portrait.png`)
       await page.getByRole('radio', { name: 'Orizzontale' }).click()

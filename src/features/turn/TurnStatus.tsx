@@ -83,9 +83,11 @@ export function TurnStatus({ turn, optTotal, cardName, onJumpToStep, defaultOpen
             {multi && turn.normalSummonsDone > 0 ? t('status.normalDoneCount', { n: turn.normalSummonsDone, m: turn.normalSummonsMax }) : t('status.normalOpen')}
           </Chip>
         )}
-        <Chip tone={turn.optUsedCount > 0 ? 'done' : 'open'} icon="once" title={t('status.optTitle')}>
-          {optTotal !== undefined ? t('status.optOf', { n: turn.optUsedCount, m: Math.max(optTotal, turn.optUsedCount) }) : t('status.opt', { n: turn.optUsedCount })}
-        </Chip>
+        {turn.optUsedCount > 0 || (optTotal ?? 0) > 0 ? (
+          <Chip tone={turn.optUsedCount > 0 ? 'done' : 'open'} icon="once" title={t('status.optTitle')}>
+            {optTotal !== undefined ? t('status.optOf', { n: turn.optUsedCount, m: Math.max(optTotal, turn.optUsedCount) }) : t('status.opt', { n: turn.optUsedCount })}
+          </Chip>
+        ) : null}
         {turn.optOverused.length > 0 ? <Chip tone="warn" icon="negate">{t('status.optOver', { n: turn.optOverused.length })}</Chip> : null}
         {turn.pendulumSummonUsed ? <Chip tone="done" icon="pendulum">{t('status.pendulum')}</Chip> : null}
         {turn.specialSummons > 0 ? <Chip tone="info" icon="specialSummon">{t('status.specials', { n: turn.specialSummons })}</Chip> : null}

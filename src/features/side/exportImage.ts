@@ -29,6 +29,8 @@ export interface ExportInput {
   ins: ExportLine[]
   labels: { out: string; in: string; main: string; noSwaps: string; footer: string }
   orientation: Orientation
+  /** Piano non bilanciato (OUT ≠ IN): testo dell'avviso disegnato nell'immagine (fascia rossa + cornice). */
+  warning?: string
   imageUrl?: (id: number) => string | null
   /** Per i test: salta il caricamento delle immagini. */
   skipImages?: boolean
@@ -252,6 +254,36 @@ function drawList(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   return headH + 12 + items.length * lineH
 }
 
+/** Fascia di avviso a tutta larghezza: ritorna l'altezza occupata. */
+function drawWarning(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, text: string, px: number): number {
+  ctx.font = font(800, px)
+  const lines = wrap(ctx, text, w - 40 - px * 1.6, 2)
+  const lh = Math.round(px * 1.3)
+  const h = lines.length * lh + 28
+  ctx.fillStyle = C.dangerSolid
+  rr(ctx, x, y, w, h, 16)
+  ctx.fill()
+  // triangolo di attenzione
+  const ix = x + 24 + px * 0.55
+  const iy = y + h / 2
+  const r = px * 0.8
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  ctx.moveTo(ix, iy - r * 0.62)
+  ctx.lineTo(ix + r * 0.62, iy + r * 0.5)
+  ctx.lineTo(ix - r * 0.62, iy + r * 0.5)
+  ctx.closePath()
+  ctx.fill()
+  ctx.fillStyle = C.dangerSolid
+  ctx.fillRect(ix - r * 0.06, iy - r * 0.22, r * 0.12, r * 0.38)
+  ctx.fillRect(ix - r * 0.06, iy + r * 0.24, r * 0.12, r * 0.12)
+  ctx.fillStyle = '#ffffff'
+  ctx.textBaseline = 'alphabetic'
+  ctx.textAlign = 'left'
+  lines.forEach((l, i) => ctx.fillText(l, x + 24 + px * 1.6, y + 14 + px + i * lh))
+  return h
+}
+
 const LIST_HEAD = 52 + 12
 /** Altezza di riga: 44 px se c'è spazio, altrimenti si stringe (mai sotto 26). */
 const lineHeightFor = (free: number, rows: number) => Math.max(26, Math.min(44, Math.floor((free - LIST_HEAD * 2) / Math.max(2, rows))))
@@ -306,6 +338,7 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
   if (portrait) {
     const contentW = W - pad * 2
     let y = header(pad, pad - 8, contentW)
+    if (input.warning) y += drawWarning(ctx, pad, y - 8, contentW, input.warning, 34) + 20
     const colW = (contentW - 24) / 2
     const lh = Math.max(26, Math.min(44, Math.floor(680 / Math.max(1, Math.min(maxLines, 15)))))
     const listH = Math.max(
@@ -325,6 +358,7 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
     const gridW = W - pad * 2 - rightW - 48
     const rx = W - pad - rightW
     let y = header(rx, pad - 8, rightW)
+    if (input.warning) y += drawWarning(ctx, rx, y - 8, rightW, input.warning, 28) + 20
     const free = H - y - footerH - 24 - 24
     const lh = lineHeightFor(free, Math.max(1, input.outs.length) + Math.max(1, input.ins.length))
     const outH = drawList(ctx, rx, y, rightW, lh, input.labels.out, input.outs, 'out', input.labels.noSwaps)
@@ -345,6 +379,11 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
   ctx.fillText(input.labels.footer, pad, H - 36)
   ctx.fillStyle = C.accent
   ctx.fillRect(pad, H - footerH - 14, 56, 4)
+  if (input.warning) {
+    ctx.strokeStyle = C.dangerSolid
+    ctx.lineWidth = 14
+    ctx.strokeRect(7, 7, W - 14, H - 14)
+  }
   return canvas
 }
 
