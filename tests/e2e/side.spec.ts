@@ -116,6 +116,8 @@ for (const { w, h } of SIZES) {
         // un tocco su una carta del Main completa il piano
         await page.locator('[data-testid="tile-out"][data-card-id="80000005"] button').first().click()
         await expect(page.getByTestId('balance-bar')).toHaveAttribute('data-ok', 'true')
+        await page.waitForTimeout(900) // oltre il ritardo di scrittura: lo stato deve restare quello scelto
+        await expect(page.getByTestId('balance-bar')).toHaveAttribute('data-ok', 'true')
         await page.screenshot({ path: `test-results/side/${tag}-3-valid.png`, fullPage: true })
 
         // preview (su schermo stretto è una scheda)
