@@ -1,14 +1,14 @@
 {
  "schema": 1,
- "version": "147.89-21102153",
- "builtAt": "2026-11-19T02:42:51.999Z",
+ "version": "147.89-a5e66408",
+ "builtAt": "2026-11-19T02:43:08.917Z",
  "files": {
-  "cards": "cards.147.89-21102153.json",
-  "banlists": "banlists.147.89-21102153.json",
-  "archetypes": "archetypes.147.89-21102153.json",
+  "cards": "cards.147.89-a5e66408.json",
+  "banlists": "banlists.147.89-a5e66408.json",
+  "archetypes": "archetypes.147.89-a5e66408.json",
   "texts": {
-   "en": "texts.en.147.89-21102153.json",
-   "it": "texts.it.147.89-21102153.json"
+   "en": "texts.en.147.89-a5e66408.json",
+   "it": "texts.it.147.89-a5e66408.json"
   }
  },
  "sources": {
@@ -131,10 +131,24 @@
   },
   {
    "format": "OCG",
-   "id": "2023.1",
+   "id": "2023.01",
    "date": "2023-01-28",
    "commit": "3cad7bf141",
    "cards": 185
+  },
+  {
+   "format": "OCG",
+   "id": "2023.04",
+   "date": "2023-04-01",
+   "commit": "1d2026c701",
+   "cards": 190
+  },
+  {
+   "format": "OCG",
+   "id": "2023.07",
+   "date": "2023-07-03",
+   "commit": "8ff4dbdff0",
+   "cards": 188
   },
   {
    "format": "OCG",
@@ -142,20 +156,6 @@
    "date": "2023-10-01",
    "commit": "5f51ced598",
    "cards": 190
-  },
-  {
-   "format": "OCG",
-   "id": "2023.4",
-   "date": "2023-04-01",
-   "commit": "1d2026c701",
-   "cards": 190
-  },
-  {
-   "format": "OCG",
-   "id": "2023.7",
-   "date": "2023-07-03",
-   "commit": "8ff4dbdff0",
-   "cards": 188
   },
   {
    "format": "OCG",

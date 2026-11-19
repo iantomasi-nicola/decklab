@@ -178,10 +178,14 @@ function buildBanlists(cards, ygoMain, dbVersion) {
   const byKey = new Map()
   const skippedNames = new Map()
   const duplicates = []
+  const normalizedIds = new Set()
   for (const [file, format] of sources) {
     for (const v of fileVersions(repo, file, head)) {
       for (const list of parseLflist(v.text)) {
         if (list.name !== format) { skippedNames.set(list.name, (skippedNames.get(list.name) ?? 0) + 1); continue }
+        // alcune testate storiche non hanno lo zero iniziale nel mese ("2023.1", "2023.4", "2023.7")
+        const nid = list.id.replace(/^(\d{4})\.(\d)$/, '$1.0$2')
+        if (nid !== list.id) { normalizedIds.add(`${list.id}->${nid}`); list.id = nid }
         const key = `${format}/${list.id}`
         const prev = byKey.get(key)
         if (prev) duplicates.push(`${key} (${prev.commit.slice(0, 7)} -> ${v.commit.slice(0, 7)})`)
@@ -211,7 +215,7 @@ function buildBanlists(cards, ygoMain, dbVersion) {
   }
   banlists.push({ format: 'GENESYS', id: dbVersion, limits: {}, points })
   meta.push({ format: 'GENESYS', id: dbVersion, date: null, commit: null, cards: Object.keys(points).length })
-  return { banlists, meta, head, skippedNames, duplicates, unknownIds, aliasHits }
+  return { banlists, meta, head, skippedNames, duplicates, unknownIds, aliasHits, normalizedIds }
 }
 
 // ---------- 5. archetipi ----------
@@ -312,6 +316,7 @@ async function main() {
   log(`banlist: ${bl.banlists.length} (OCG ${bl.banlists.filter((b) => b.format === 'OCG').length}, TCG ${bl.banlists.filter((b) => b.format === 'TCG').length}, GENESYS 1)`)
   log(`  testate ignorate (nome != OCG/TCG): ${[...bl.skippedNames].map(([k, v]) => `${k}x${v}`).join(', ') || 'nessuna'}`)
   log(`  testate duplicate in commit diversi (vince la più recente): ${bl.duplicates.length}`, bl.duplicates.slice(0, 6).join('; '))
+  log(`  id di testata normalizzati (mese a 2 cifre): ${[...bl.normalizedIds].join(', ') || 'nessuno'}`)
   log(`  passcode in banlist assenti dal dataset: ${bl.unknownIds.size}`, [...bl.unknownIds].slice(0, 6).map(([k, v]) => `${k}@${v.length}`).join(' '))
   log(`  passcode di banlist che sono alias (riportati alla base): ${bl.aliasHits.size}`)
   log(`archetipi: ${arch.list.length} (setcode usati dalle carte senza nome: ${arch.unnamed.length})`)
