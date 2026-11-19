@@ -1,6 +1,6 @@
 /** Un componente per ogni `kind` di richiesta del core. idle/battle/place vivono sul campo (AutoBoard). */
 import { useEffect } from 'react'
-import { answerCards } from '@/engine/answers'
+import { answerCards, answerPlace } from '@/engine/answers'
 import type { Answer } from '@/engine/protocol'
 import type { PendingRequest } from '@/engine/requests'
 import { toast } from '@/ui/Toast'
@@ -57,7 +57,7 @@ export function RequestHost() {
     const o = pending.available.find((a) => `z:${a.loc === 'emz' ? 0 : a.p}:${a.loc}:${a.seq ?? 0}` === hint.zone)
     if (o) {
       setHint(null)
-      void import('@/engine/answers').then((m) => respond(m.answerPlace(pending, [o])))
+      void respond(answerPlace(pending, [o]))
     }
   }, [pending, hint, respond, setHint])
 

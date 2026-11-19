@@ -22,6 +22,7 @@ import { CardOptMarks } from '@/features/turn'
 import { toast } from '@/ui/Toast'
 import { GameIcon } from '@/ui/gameIcons'
 import { useDuel } from './duelStore'
+import { refsOf } from './view'
 import { actionsAt, actionsForCard, destsForCard, legalActions, whyNot, type LegalAction, type LegalKind } from './legal'
 import { PileView } from './PileView'
 import { RequestHost } from './RequestHost'
@@ -326,6 +327,8 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   }, [zones])
 
   if (!fieldView || !state) return null
+  // telefono verticale: il campo dell'avversario serve quando si attacca o si scelgono sue carte
+  const needOpp = pending?.kind === 'battle' || refsOf(pending).some((r) => r.place.p === 1)
   const selInfo = sel ? actionsForCard(legal, sel) : []
   const overlayCode = dragUid ? (registry?.[dragUid] ?? 0) : 0
 
@@ -355,7 +358,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={onDragCancel} autoScroll={false}>
         <Field
           view={fieldView}
-          mineOnly={!!mineOnly}
+          mineOnly={!!mineOnly && !needOpp}
           selected={sel}
           highlight={highlight}
           picking={null}
