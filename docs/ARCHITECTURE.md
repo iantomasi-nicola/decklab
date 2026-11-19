@@ -258,7 +258,7 @@ Comportamento:
 
 Richiesta: sezione con tutte le statistiche e le probabilità sul modello di *thedeckspace.com*, ma più intelligente.
 
-**Stato**: dal sito riesco a leggere solo la navigazione, non le funzioni (decisione **D2**: dammi un elenco o degli screenshot delle schermate che ti interessano e allineo l'elenco sotto; non ne copio grafica o contenuti, ne riproduco le *funzioni*). Intanto propongo questo insieme, coerente con quello che fanno i migliori strumenti di analisi YGO e con i dati che l'app ha già:
+**Stato**: dal sito riesco a leggere solo la navigazione, ma l'utente mi ha fornito un file di export reale: vedi §11.1 (D2 risolta per l'essenziale; potrò affinare se arrivano screenshot). Non ne copio grafica o contenuti, ne riproduco le *funzioni*. Propongo questo insieme, coerente con quello che fanno i migliori strumenti di analisi YGO e con i dati che l'app ha già:
 
 1. **Mano iniziale (esatta)**: ipergeometrica multivariata per gruppi di carte (es. "almeno 1 starter e 0 brick"), primo/secondo (5/6 carte), per turno `N`, con più condizioni E/O/NON.
 2. **Simulatore di mani** (Monte Carlo in worker, 100k+ mani/secondo in JS): condizioni arbitrarie, tasso di successo con intervallo di confidenza, tasso di "brick".
@@ -272,6 +272,29 @@ Richiesta: sezione con tutte le statistiche e le probabilità sul modello di *th
 10. **Opzionale (con il motore, fase 5+)**: simulazione reale di N mani campione con EDOPro per misurare quante producono davvero il board target, non solo "hanno le carte giuste". Più lenta; esposta come analisi in background con barra di avanzamento.
 
 Piazzamento in roadmap: fase 8, con le parti 1, 3, 4 anticipabili alla fine della fase 2 se vuoi (sono poco costose e molto utili con il deck editor).
+
+### 11.1 Cosa ho capito di Deckspace dal file `YGO_DECKSPACE` v1 che mi hai dato
+
+Il file mostra il modello del sito (interpretazione mia dai campi; le parti marcate *(ipotesi)* vanno confermate da te):
+
+| Campo | Significato dedotto | In Combo Lab |
+|---|---|---|
+| `project_settings.assumed_deck_size`, `use_assumed_deck_size` | Simula un mazzo di N carte riempiendo con carte "vuote" | Stesso concetto: "mazzo ipotetico di 40" per confrontare ratio senza modificare la lista |
+| `use_six_card_hand` | Mano da 6 (giocare secondo) invece di 5 | Interruttore Primo/Secondo |
+| `tournament_rounds` (15), `tournament_mode` ("average") | Probabilità su un torneo di N round: media / rischio di brickare almeno una volta *(ipotesi)* | Stessa analisi, con più modalità (media, almeno 1 brick, almeno k brick, distribuzione completa) |
+| `draw_power_mode` ("fast") | Quanto contano le carte che pescano (es. Pot of Prosperity): modalità veloce/approssimata vs esatta *(ipotesi)* | Calcolo esatto sempre; modalità "veloce" solo per mazzi enormi |
+| `deck[].tags` (`S1`, `C2`, `C3`, `NS`, `NE`, `GARNET`) | Ruoli: **S1** = da sola gioca (starter); **C2/C3** = pezzo di combo che funziona in coppia/tris; **NS** = Evocabile Normalmente; **NE** = non-engine (handtrap, ecc.); **GARNET** = ruolo speciale legato a `garnet_links` *(ipotesi)* | Tag ruolo liberi + preset (Starter, Extender, Combo-2, Combo-3, Non-engine, Normal Summonable, …) |
+| `combo_strings` / `brick_strings` / `forbidden_strings` / `draw_strings` | Per ogni carta: con quali carte fa combo, con quali è brick (a coppie ripetute = es. "due copie di sé stessa"), combinazioni vietate, combinazioni che pescano | Li generiamo **dalle combo salvate** (vedi sotto) e restano modificabili |
+| `combo_labels` | Tabella precalcolata: ogni coppia/tris di carte della mano → `PLAYABLE` o `BRICK` (inserita a mano dall'utente nel sito) | **Etichettatura automatica** da combo salvate + override manuale |
+
+**Come lo rendo più smart** (senza copiarne grafica né contenuti):
+1. **Import del file `.json` di Deckspace** (e export nello stesso formato, per interoperabilità): il progetto diventa una variante con ruoli e etichette.
+2. **Etichette automatiche**: invece di etichettare a mano centinaia di coppie/tris, una mano è `PLAYABLE` se contiene le "carte necessarie" (`setup.hand.required`) di almeno una combo salvata (con grado di rischio se la combo ha un ramo che fallisce contro un handtrap). Le coppie/tris che non copre nessuna combo sono suggerite come `BRICK` da confermare. Le correzioni manuali vincono sempre.
+3. **Calcolo esatto** per enumerazione multivariata (mani da 5 o 6) tenendo conto di copie e `alias`; il Monte Carlo serve solo per condizioni complesse.
+4. **Torneo**: probabilità di non brickare in N round, almeno k brick, valore atteso, distribuzione; confronto fra varianti.
+5. **Sensibilità**: "se passo da 3 a 2 copie di X o aggiungo un handtrap, di quanto cambiano playable% e brick%?" in un solo grafico a barre.
+6. **Mano 5 vs 6, mazzo ipotetico, carte che pescano** come nel sito, più scenari "dopo handtrap" (una carta in meno in mano).
+7. Il calcolo gira in un Web Worker; con 40 carte e mano da 6 le combinazioni sono ~3,8 milioni: gestibili esatte con raggruppamento per tipo di carta.
 
 ---
 

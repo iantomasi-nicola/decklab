@@ -146,6 +146,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 
 ## Fase 8 — Stats Lab, calcolatore di probabilità e rifiniture finali
 **Contenuto** (dettaglio in `ARCHITECTURE.md` §11)
+- Import/export del formato `YGO_DECKSPACE` v1 (`ARCHITECTURE.md` §11.1); etichette PLAYABLE/BRICK automatiche dalle combo salvate; modalità torneo.
 - Mano iniziale esatta (ipergeometrica) e per turno, condizioni E/O/NON, primo/secondo.
 - Simulatore Monte Carlo in worker con intervallo di confidenza.
 - Ruoli delle carte (starter, extender, handtrap, brick…), composizione, indice di consistenza.
@@ -157,7 +158,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 - I valori esatti coincidono con casi noti calcolati a mano (suite di test); il simulatore converge verso il valore esatto entro l'intervallo dichiarato.
 - Tutte le schermate rispettano il budget prestazionale e passano l'audit visivo e di accessibilità finale.
 
-**Nota su thedeckspace.com**: finché non ho la lista delle funzioni che ti interessano (D2), questa fase segue l'elenco proposto nell'architettura.
+**Nota su thedeckspace.com**: D2 risolta con il file di export fornito (§11.1 dell'architettura); screenshot aggiuntivi possono affinare i dettagli.
 
 ---
 
