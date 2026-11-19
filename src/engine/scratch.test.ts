@@ -1,5 +1,5 @@
 import { it } from 'vitest'
-import { loadDataset, loadNodeCore, nodeScriptStore } from '../../tests/engine/helpers'
+import { loadDataset, nodeScriptStore } from '../../tests/engine/helpers'
 import { SCRIPTS_COMMIT } from './constants'
 import { EngineHost } from './host'
 import { firstLegalAnswer } from './policy'
