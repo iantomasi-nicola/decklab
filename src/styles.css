@@ -1,2 +1,299 @@
 @import 'tailwindcss';
-:root { color-scheme: dark; }
+
+/* Inter variabile, solo sottoinsieme latin (copre le lettere accentate italiane). Self-hosted. */
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ------------------------------------------------------------------ */
+/* Token. Tema scuro = predefinito. Ogni valore di colore è esadecimale */
+/* a 6 cifre: tests/ui verifica il contrasto AA leggendo questo file.   */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: dark;
+
+  /* Neutri (inchiostro freddo, leggermente bluastro) */
+  --bg: #0e1015;
+  --surface-1: #14171d;
+  --surface-2: #191d26;
+  --surface-3: #212633;
+  --border: #2a3040;
+  --border-strong: #5a6379;
+  --fg: #eceef5;
+  --fg-muted: #a3abbd;
+  --fg-subtle: #8891a5;
+
+  /* Un solo accento: indaco/viola */
+  --accent: #5b4bf0; /* fondo di bottoni pieni, testo bianco sopra */
+  --accent-hover: #6e60f5;
+  --accent-fg: #ffffff;
+  --accent-text: #a89dff; /* accento usato come testo/icona su fondi neutri */
+  --accent-soft: #241f4d;
+  --focus: #a89dff;
+
+  /* Stati (usati con parsimonia, mai solo il colore a trasmettere significato) */
+  --ok: #5fd39a;
+  --warn: #f2b45a;
+  --danger: #ff8a8a;
+  --danger-solid: #c93a3a;
+  --danger-fg: #ffffff;
+
+  --scrim: rgb(5 6 9 / 0.62);
+
+  /* Ombre a 3 livelli (su scuro: più marcate) */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-3: 0 16px 40px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.35);
+
+  /* Scala griglia 8px */
+  --space-0: 4px;
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-8: 64px;
+
+  /* Raggi */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  /* Movimento: 150–250 ms */
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout */
+  --tap: 44px;
+  --sidebar-w: 248px;
+  --bottomnav-h: 64px;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f5f6fa;
+  --surface-1: #ffffff;
+  --surface-2: #eef0f6;
+  --surface-3: #e3e6ef;
+  --border: #d9dde8;
+  --border-strong: #7b849a;
+  --fg: #14171f;
+  --fg-muted: #4a5367;
+  --fg-subtle: #5d667a;
+
+  --accent: #5443e6;
+  --accent-hover: #4636d0;
+  --accent-fg: #ffffff;
+  --accent-text: #4536cf;
+  --accent-soft: #e9e6ff;
+  --focus: #4536cf;
+
+  --ok: #0c7a4a;
+  --warn: #8a5300;
+  --danger: #b4232a;
+  --danger-solid: #b4232a;
+  --danger-fg: #ffffff;
+
+  --scrim: rgb(20 23 31 / 0.4);
+
+  --shadow-1: 0 1px 2px rgb(20 23 31 / 0.08);
+  --shadow-2: 0 4px 12px rgb(20 23 31 / 0.1), 0 1px 3px rgb(20 23 31 / 0.06);
+  --shadow-3: 0 16px 40px rgb(20 23 31 / 0.18), 0 4px 12px rgb(20 23 31 / 0.08);
+}
+
+/* Senza JS: segue il sistema. Con JS data-theme è sempre impostato. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --bg: #f5f6fa;
+    --surface-1: #ffffff;
+    --surface-2: #eef0f6;
+    --surface-3: #e3e6ef;
+    --border: #d9dde8;
+    --border-strong: #7b849a;
+    --fg: #14171f;
+    --fg-muted: #4a5367;
+    --fg-subtle: #5d667a;
+    --accent: #5443e6;
+    --accent-hover: #4636d0;
+    --accent-text: #4536cf;
+    --accent-soft: #e9e6ff;
+    --focus: #4536cf;
+    --ok: #0c7a4a;
+    --warn: #8a5300;
+    --danger: #b4232a;
+    --danger-solid: #b4232a;
+    --scrim: rgb(20 23 31 / 0.4);
+    --shadow-1: 0 1px 2px rgb(20 23 31 / 0.08);
+    --shadow-2: 0 4px 12px rgb(20 23 31 / 0.1), 0 1px 3px rgb(20 23 31 / 0.06);
+    --shadow-3: 0 16px 40px rgb(20 23 31 / 0.18), 0 4px 12px rgb(20 23 31 / 0.08);
+  }
+}
+
+/* Tailwind: i nomi di utility puntano ai token (cambiano col tema) */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-danger-solid: var(--danger-solid);
+  --color-danger-fg: var(--danger-fg);
+  --color-scrim: var(--scrim);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  --font-sans: var(--font-sans);
+  --ease-out: var(--ease);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    scrollbar-gutter: stable;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.015em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+
+  /* Focus visibile ovunque, uniforme */
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Scrollbar discreta */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}
+
+@layer components {
+  /* Animazioni di apertura (solo risposta a un'azione dell'utente) */
+  .anim-pop {
+    animation: pop var(--dur-base) var(--ease);
+  }
+  .anim-fade {
+    animation: fade var(--dur-fast) var(--ease);
+  }
+  .anim-sheet {
+    animation: sheet var(--dur-slow) var(--ease);
+  }
+  .anim-toast {
+    animation: toast var(--dur-base) var(--ease);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+    border-radius: var(--radius-sm);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes toast {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    background: var(--surface-2);
+  }
+}
