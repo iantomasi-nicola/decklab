@@ -145,7 +145,7 @@ const Row = memo(function Row({ i, cur, text, frame, onSeek }: { i: number; cur:
       aria-current={cur ? 'step' : undefined}
       onClick={() => onSeek(i)}
       className={cn(
-        'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md border px-2 py-1.5 text-left text-[15px] leading-5 transition-colors duration-150 [contain-intrinsic-size:auto_2.75rem] [content-visibility:auto]',
+        'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md border px-2 py-1.5 text-left text-[15px] leading-5 transition-colors duration-150',
         cur ? 'border-accent-text bg-accent-soft text-fg' : 'border-transparent text-muted hover:bg-surface-2 hover:text-fg',
       )}
     >
@@ -196,17 +196,25 @@ export function FrameList({
     return matchSteps(hay, query, normalizeName)
   }, [searching, frames, texts, query, names, t])
 
-  // scroll automatico al passo attivo (solo se esce dalla fascia centrale; istantaneo mentre gira)
+  // scroll automatico al passo attivo (solo se esce dalla fascia centrale; istantaneo mentre gira o per salti lunghi)
   useEffect(() => {
     const c = box.current
-    const el = c?.querySelector<HTMLElement>('[aria-current="step"]')
-    if (!c || !el) return
-    const cr = c.getBoundingClientRect()
-    const er = el.getBoundingClientRect()
-    const margin = cr.height * 0.2
-    if (er.top >= cr.top + margin && er.bottom <= cr.bottom - margin) return
-    const delta = er.top - cr.top - (cr.height / 2 - er.height / 2)
-    c.scrollTo({ top: c.scrollTop + delta, behavior: playing || prefersReducedMotion() ? 'auto' : 'smooth' })
+    if (!c) return
+    const center = (): boolean => {
+      const el = c.querySelector<HTMLElement>('[aria-current="step"]')
+      if (!el) return false
+      const cr = c.getBoundingClientRect()
+      const er = el.getBoundingClientRect()
+      const margin = cr.height * 0.2
+      if (er.top >= cr.top + margin && er.bottom <= cr.bottom - margin) return false
+      const delta = er.top - cr.top - (cr.height / 2 - er.height / 2)
+      const smooth = !playing && !prefersReducedMotion() && Math.abs(delta) < cr.height
+      c.scrollTo({ top: c.scrollTop + delta, behavior: smooth ? 'smooth' : 'auto' })
+      return smooth
+    }
+    const smooth = center()
+    const h = smooth ? 0 : requestAnimationFrame(() => center())
+    return () => cancelAnimationFrame(h)
   }, [index, playing, matches])
 
   const row = (i: number) => <Row key={i} i={i} cur={i === index} text={texts[i]!} frame={frames[i]!} onSeek={onSeek} />
@@ -232,7 +240,7 @@ export function FrameList({
                 <div key={b.from} className={cn('flex flex-col gap-1 border-l-2 pl-1.5', chain ? 'border-warn' : 'border-dashed border-accent-text')}>
                   <p className={cn('flex min-h-6 items-center gap-1.5 px-1 text-xs font-medium', chain ? 'text-warn' : 'text-accent-text')}>
                     {chain ? <Link2 aria-hidden size={14} /> : <Shuffle aria-hidden size={14} />}
-                    {chain ? t('replay.picker.chain', { count: b.links ?? 0 }) : t('replay.picker.free')}
+                    {chain ? ((b.links ?? 0) > 0 ? t('replay.picker.chain', { count: b.links }) : t('replay.picker.chainResolve')) : t('replay.picker.free')}
                   </p>
                   {rows}
                 </div>

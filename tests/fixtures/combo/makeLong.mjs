@@ -203,6 +203,7 @@ export function makeLong(N = 60, opts = {}) {
     },
     chain(links) {
       roomS(links)
+      roomM(1) // spazio per il mostro ricevuto alla risoluzione: prima della catena, così le risoluzioni restano contigue
       const cid = `c${++G.chainN}`
       const ids = []
       const cards = []
@@ -233,7 +234,6 @@ export function makeLong(N = 60, opts = {}) {
         const moves = stays ? [] : [mv(c, { loc: 'gy' }, 'send')]
         if (k === 2 && oppTarget && G.places[oppTarget]?.loc === 'mzone') moves.push(mv(oppTarget, { loc: 'gy' }, 'destroy'))
         if (k === 1) {
-          roomM(1)
           const m = fresh('mon')
           const seq = freeM()
           moves.push(mv(m, M(seq), 'summon'))

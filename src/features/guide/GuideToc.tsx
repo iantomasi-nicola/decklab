@@ -33,7 +33,7 @@ export function TocBody({
   const range = (from: number, to: number) => (from === to ? String(from) : t('guide.nav.range', { from, to }))
   const label = (b: OutlineBlock) => {
     const card = b.uid ? nameOfUid(b.uid) : ''
-    const kind = b.kind === 'chain' ? t('guide.nav.chain', { count: b.links ?? 0 }) : b.kind === 'group' ? t('guide.nav.free') : ''
+    const kind = b.kind === 'chain' ? ((b.links ?? 0) > 0 ? t('guide.nav.chain', { count: b.links }) : t('guide.nav.chainResolve')) : b.kind === 'group' ? t('guide.nav.free') : ''
     return [kind, card].filter(Boolean).join(' · ') || t('guide.nav.plain')
   }
   return (
