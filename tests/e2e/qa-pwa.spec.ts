@@ -77,6 +77,9 @@ test.describe('senza dati', () => {
   test.use({ serviceWorkers: 'block' }) // page.route non intercetta le richieste fatte dal service worker
 
 test('senza rete e senza cache: errore chiaro con "Riprova" nell\'editor del mazzo', async ({ page }) => {
+  const errs: string[] = []
+  page.on('pageerror', (e) => errs.push(String(e)))
+  page.on('console', (m) => m.type() === 'error' && errs.push(m.text()))
   await page.route('**/data/**', (r) => r.abort())
   await page.goto('/archetipi')
   await expect(page.locator('h1')).toBeVisible()
@@ -103,6 +106,8 @@ test('senza rete e senza cache: errore chiaro con "Riprova" nell\'editor del maz
     return v
   })
   await page.goto(`/mazzi/${id}`)
+  await page.waitForTimeout(3000)
+  console.log('ERRS', JSON.stringify(errs).slice(0, 1500))
   await expect(page.getByRole('button', { name: /Riprova|Retry/ })).toBeVisible({ timeout: 20_000 })
   await page.screenshot({ path: 'test-results/pwa/no-data-error.png' })
 })

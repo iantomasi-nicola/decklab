@@ -290,7 +290,7 @@ describe.skipIf(!available)('motore EDOPro (core reale)', () => {
     const mats = sy!.moves.filter((m) => m.why === 'material')
     expect(mats.map((m) => m.uid).sort()).toEqual(['u1', 'u2'])
     expect(mats.every((m) => m.to.loc === 'gy')).toBe(true)
-    expect(st.endboard.own.places.map((p) => p.uid)).toEqual([sy!.card])
+    expect(st.endboard.own.places.map((p) => p.uid), JSON.stringify([st.steps, st.pending])).toEqual([sy!.card])
     expectValid(r, st)
   })
 
