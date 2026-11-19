@@ -17,6 +17,8 @@ const alias = [
 ]
 
 export default defineConfig({
+  // cache di pre-bundle separata: due server Vite sullo stesso node_modules (dev + e2e con mock) si rovinavano a vicenda ("Invalid hook call")
+  ...(mockCards ? { cacheDir: 'node_modules/.vite-e2e-mock' } : {}),
   resolve: { alias },
   plugins: [
     react(),

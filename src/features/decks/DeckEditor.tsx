@@ -50,17 +50,18 @@ const isTextTarget = (t: EventTarget | null) => {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
 }
 
-function useWide(ref: React.RefObject<HTMLElement | null>) {
+/** Larghezza del contenitore (non della finestra): l'editor passa da tab a pannelli affiancati. `setEl` è un ref a callback perché il nodo compare solo a dati caricati. */
+function useWide() {
+  const [el, setEl] = useState<HTMLElement | null>(null)
   const [wide, setWide] = useState(false)
   useEffect(() => {
-    const el = ref.current
     if (!el) return
     const ro = new ResizeObserver(([e]) => setWide((e?.contentRect.width ?? 0) >= WIDE_PX))
     ro.observe(el)
     setWide(el.clientWidth >= WIDE_PX)
     return () => ro.disconnect()
-  }, [ref])
-  return wide
+  }, [el])
+  return { wide, setEl }
 }
 
 function EditorSkeleton() {
@@ -86,8 +87,7 @@ export function DeckEditor({ variantId }: { variantId: string }) {
   const { value: variant, loaded } = useObservable(() => repos.variants.watch(variantId), [variantId])
   const { value: archetype } = useObservable(() => repos.archetypes.watch(variant?.archetypeId ?? ''), [variant?.archetypeId])
 
-  const rootRef = useRef<HTMLDivElement>(null)
-  const wide = useWide(rootRef)
+  const { wide, setEl } = useWide()
 
   const [hist, setHist] = useState(() => newHistory<DeckLists>({ main: [], extra: [], side: [] }))
   const [rules, setRules] = useState<Rules>('TCG')
@@ -106,6 +106,8 @@ export function DeckEditor({ variantId }: { variantId: string }) {
   deckRef.current = deck
   const initialised = useRef(false)
   const savedKey = useRef('')
+  /** liste scritte da questo editor: le loro emissioni di ritorno dal database non sono modifiche esterne */
+  const ownWrites = useRef(new Set<string>())
   const lastSingle = useRef<{ id: number; section: Section } | null>(null)
 
   /* ---- sincronizzazione con il database ---- */
@@ -118,7 +120,7 @@ export function DeckEditor({ variantId }: { variantId: string }) {
       initialised.current = true
       savedKey.current = key
       setHist(newHistory(variant.deck))
-    } else if (key !== savedKey.current && deckKey(deckRef.current) === savedKey.current) {
+    } else if (!ownWrites.current.has(key) && key !== savedKey.current && deckKey(deckRef.current) === savedKey.current) {
       // modifica arrivata da fuori (sync) e nessuna modifica locale in sospeso
       savedKey.current = key
       setHist(newHistory(variant.deck))
@@ -131,6 +133,7 @@ export function DeckEditor({ variantId }: { variantId: string }) {
     const key = deckKey(d)
     if (key === savedKey.current) return
     savedKey.current = key
+    ownWrites.current.add(key)
     await repos.variants.update(variantId, { deck: d })
     setSave('saved')
   }, [variantId])
@@ -289,7 +292,7 @@ export function DeckEditor({ variantId }: { variantId: string }) {
   const countsLine = SECTIONS.map((s) => `${t(`deck.section.${s}`)} ${deck[s].length}/${SECTION_LIMITS[s].max}`).join(' · ')
 
   return (
-    <div ref={rootRef} className="@container flex flex-col gap-4" data-testid="deck-editor" data-wide={wide}>
+    <div ref={setEl} className="@container flex flex-col gap-4" data-testid="deck-editor" data-wide={wide}>
       <div>
         {archetype ? (
           <Link

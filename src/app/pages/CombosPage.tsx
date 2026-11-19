@@ -1,4 +1,3 @@
-import Workflow from 'lucide-react/icons/workflow'
-import { PlaceholderPage } from './PlaceholderPage'
+import { ComboList } from '@/features/combos/ComboList'
 
-export const CombosPage = () => <PlaceholderPage ns="combos" icon={<Workflow size={28} />} />
+export const CombosPage = () => <ComboList />

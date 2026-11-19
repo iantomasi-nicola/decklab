@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { mkdirSync } from 'node:fs'
 import { serializeYdk } from '../../src/domain/deck/ydk'
 import { serializeYdke } from '../../src/domain/deck/ydke'
@@ -8,6 +8,9 @@ import { collectErrors, expectNoHorizontalScroll, prepare, seed, smallTargets } 
 
 const SHOTS = 'test-results/decks/shots'
 mkdirSync(SHOTS, { recursive: true })
+
+/** Pulsante "aggiungi al mazzo" di un risultato di ricerca (esclude quello del Side). */
+const addBtn = (page: Page | Locator, name: string) => page.getByRole('button', { name: new RegExp(`^(Aggiungi|Add) ${name}.*(al mazzo|to the deck)$`) })
 
 const search = (page: Page) => page.getByRole('searchbox', { name: /^(cerca carte|search cards)$/i })
 
@@ -149,18 +152,19 @@ test.describe('editor (PC, pannelli affiancati)', () => {
     await expect(page.getByTestId('search-result')).toHaveCount(1)
 
     // un tocco: +1 Main
-    const ash = page.getByRole('button', { name: /^Aggiungi Fioritura di Cenere/ })
+    const ash = addBtn(page, 'Fioritura di Cenere')
     await ash.click()
     await expect(page.getByTestId('counter-main')).toHaveAttribute('data-count', '41')
     await expect(page.getByTestId('in-deck')).toHaveText('1 nel mazzo')
-    // doppio tocco: +1 nel Side al posto del Main
-    await page.getByTestId('search-result').getByRole('button', { name: /^Aggiungi Fioritura/ }).dblclick()
+    // doppio tocco (dopo la finestra del tocco singolo): +1 nel Side al posto del Main
+    await page.waitForTimeout(400)
+    await addBtn(page.getByTestId('search-result'), 'Fioritura').dblclick()
     await expect(page.getByTestId('counter-side')).toHaveAttribute('data-count', '1')
     await expect(page.getByTestId('counter-main')).toHaveAttribute('data-count', '41')
     await expect(page.getByTestId('announce')).toContainText('Side')
 
     // annulla (un solo passo per il gesto doppio) e ripeti
-    await page.getByTestId('deck-editor').click({ position: { x: 5, y: 5 } })
+    await page.getByTestId('deck-title').click()
     await page.keyboard.press('Control+z')
     await expect(page.getByTestId('counter-side')).toHaveAttribute('data-count', '0')
     await expect(page.getByTestId('counter-main')).toHaveAttribute('data-count', '41')
@@ -173,7 +177,7 @@ test.describe('editor (PC, pannelli affiancati)', () => {
 
     // Pentola dell'Avidità è Proibita in TCG 2026.10: banner + carta evidenziata
     await search(page).fill('pentola dell')
-    await page.getByRole('button', { name: /^Aggiungi Pentola dell'Avidità/ }).click()
+    await addBtn(page, "Pentola dell'Avidità").click()
     const banner = page.getByTestId('legality-banner')
     await expect(banner).toHaveAttribute('data-legal', 'false')
     await expect(banner).toContainText("Pentola dell'Avidità è Proibita")
@@ -190,7 +194,7 @@ test.describe('editor (PC, pannelli affiancati)', () => {
     // Limitata: 2 copie di Raigeki con la banlist TCG
     await page.getByLabel('Banlist').first().selectOption('TCG|2026.10')
     await search(page).fill('raigeki')
-    const raigeki = page.getByRole('button', { name: /^Aggiungi Raigeki/ })
+    const raigeki = addBtn(page, 'Raigeki')
     await raigeki.click()
     await expect(page.getByTestId('ban-status')).toHaveText('Limitata')
     await page.waitForTimeout(400) // fuori dalla finestra del doppio tocco
@@ -201,7 +205,7 @@ test.describe('editor (PC, pannelli affiancati)', () => {
     // salvataggio automatico: ricarica e ritrova le modifiche
     await expect(page.getByTestId('save-state')).toHaveAttribute('data-state', 'saved')
     await page.reload()
-    await expect(page.getByTestId('counter-main')).toHaveAttribute('data-count', '42')
+    await expect(page.getByTestId('counter-main')).toHaveAttribute('data-count', '43') // 40 + Pentola + 2 Raigeki
     expect(errors).toEqual([])
   })
 
@@ -230,7 +234,7 @@ test.describe('editor (PC, pannelli affiancati)', () => {
     const s = await seed(page)
     await page.goto(`/mazzi/${s.variantId}`)
     await search(page).fill('talker')
-    const add = page.getByRole('button', { name: /^Aggiungi Accesscode Talker/ })
+    const add = addBtn(page, 'Accesscode Talker')
     for (let i = 0; i < 3; i++) {
       await add.click()
       await page.waitForTimeout(350)
@@ -295,7 +299,7 @@ test.describe('editor (telefono: tab + bottom sheet)', () => {
     await page.getByTestId('open-search').click()
     const sheet = page.getByRole('dialog')
     await sheet.getByRole('searchbox', { name: 'Cerca carte' }).fill('nibiru')
-    await sheet.getByRole('button', { name: /^Aggiungi Nibiru/ }).click()
+    await addBtn(sheet, 'Nibiru').click()
     await expect(sheet).toContainText('Main 41/60')
     await sheet.getByRole('button', { name: 'Chiudi' }).click()
     await page.getByTestId('tab-main').click()
@@ -476,6 +480,8 @@ test('target ≥ 44 px su telefono in archetipi, mazzi e dialog', async ({ page 
   }
   await page.goto(`/archetipi/${s.archetypeId}`)
   await page.getByTestId('new-variant').click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.waitForTimeout(500) // fine animazione di apertura (scala 0.98 → misure sfalsate)
   expect(await smallTargets(page), 'dialog variante').toEqual([])
 })
 
@@ -514,7 +520,7 @@ for (const width of SHOT_WIDTHS) {
         // Pentola (Proibita) + 2 Raigeki (Limitata) per avere carte evidenziate
         if (width >= 1024) {
           await search(page).fill('pot of')
-          await page.getByRole('button', { name: /^(Aggiungi|Add) Pot of Greed|^(Aggiungi|Add) Pentola dell/ }).first().click()
+          await addBtn(page, '(Pot of Greed|Pentola dell)').first().click()
         }
         await page.getByLabel(/Banlist/).first().selectOption('TCG|2026.10')
         await expect(page.getByTestId('legality-banner')).toHaveAttribute('data-legal', 'false')

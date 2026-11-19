@@ -90,7 +90,7 @@ export function NewBanlistNotice({ variants, archetypes, cards, lang }: Props) {
                     params={{ variantId: variant.id }}
                     className="inline-flex min-h-11 max-w-full items-center font-medium text-accent-text underline-offset-2 hover:underline"
                   >
-                    <span className="truncate">
+                    <span className="[overflow-wrap:anywhere]">
                       {archName(variant.archetypeId)} / {localized(variant.name, lang, t('decks.defaultVariantName'))}
                     </span>
                   </Link>

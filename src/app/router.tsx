@@ -19,6 +19,7 @@ const routeTree = root.addChildren([
   page('/mazzi', () => import('./pages/DecksPage'), 'DecksPage'),
   page('/mazzi/$variantId', () => import('./pages/DeckEditorPage'), 'DeckEditorPage'),
   page('/combo', () => import('./pages/CombosPage'), 'CombosPage'),
+  page('/combo/$comboId', () => import('./pages/ComboEditorPage'), 'ComboEditorPage'),
   page('/impara', () => import('./pages/LearnPage'), 'LearnPage'),
   page('/statistiche', () => import('./pages/StatsPage'), 'StatsPage'),
   page('/impostazioni', () => import('./pages/SettingsPage'), 'SettingsPage'),

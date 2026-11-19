@@ -114,7 +114,7 @@ export function Shell() {
   const secondary = NAV.filter((n) => !n.primary)
   const moreActive = secondary.some((n) => n.to === pathname)
   // l'editor di mazzo ha bisogno di più larghezza (pannelli affiancati)
-  const wide = /^\/mazzi\/[^/]+/.test(pathname)
+  const wide = /^\/(mazzi|combo)\/[^/]+/.test(pathname)
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]">
