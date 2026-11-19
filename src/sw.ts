@@ -14,6 +14,55 @@ cleanupOutdatedCaches()
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
 
 /**
+ * Dataset carte (/data/*): fuori dal precache, a runtime.
+ * - manifest.json: network-first (è l'unico file mutabile), ripiega sulla copia in cache se offline.
+ *   La chiave di cache ignora la query (?t=...) con cui il client evita la cache HTTP.
+ * - tutti gli altri file hanno la versione nel nome (immutabili): cache-first.
+ * Quando il manifest nuovo arriva, i file di versioni precedenti vengono eliminati dalla cache.
+ */
+const DATA_CACHE = 'combolab-data-v1'
+
+async function pruneData(cache: Cache, manifestText: string) {
+  try {
+    const m = JSON.parse(manifestText) as { files?: { cards?: string; banlists?: string; archetypes?: string; texts?: Record<string, string> } }
+    const keep = new Set(
+      [m.files?.cards, m.files?.banlists, m.files?.archetypes, ...Object.values(m.files?.texts ?? {})].filter(Boolean).map((f) => `/data/${f}`),
+    )
+    keep.add('/data/manifest.json')
+    for (const req of await cache.keys()) if (!keep.has(new URL(req.url).pathname)) await cache.delete(req)
+  } catch {
+    /* manifest illeggibile: non si pota nulla */
+  }
+}
+
+registerRoute(
+  ({ url, request }) => request.method === 'GET' && url.origin === sw.location.origin && url.pathname.startsWith('/data/'),
+  async ({ request, url }) => {
+    const cache = await caches.open(DATA_CACHE)
+    if (url.pathname === '/data/manifest.json') {
+      const key = new Request(url.origin + url.pathname)
+      try {
+        const res = await fetch(request)
+        if (res.ok) {
+          await cache.put(key, res.clone())
+          void res.clone().text().then((t) => pruneData(cache, t))
+        }
+        return res
+      } catch (err) {
+        const cached = await cache.match(key)
+        if (cached) return cached
+        throw err
+      }
+    }
+    const hit = await cache.match(request)
+    if (hit) return hit
+    const res = await fetch(request)
+    if (res.ok) await cache.put(request, res.clone())
+    return res
+  },
+)
+
+/**
  * Web Share Target (Android, app installata): POST multipart su /share-target con file .ydk e/o testo/URL.
  * Il contenuto viene messo nella Cache "combolab-share" (letto dall'import nelle fasi successive)
  * e l'utente viene portato su /mazzi?share=1.
