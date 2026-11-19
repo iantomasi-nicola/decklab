@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { Page } from '@playwright/test'
 
 /** Passcode reali del dataset. */
@@ -99,21 +100,28 @@ export function sampleDoc(opts: { id: string; archetypeId: string; legal: boolea
 export interface Seeded { motherId: string; variantId: string; illegalId: string; emptyId: string }
 
 /** Scrive in IndexedDB: combo madre (legale), variante derivata dal passo 3, combo con carta proibita e combo vuota. */
+export const newIds = (): Seeded => ({ motherId: randomUUID(), variantId: randomUUID(), illegalId: randomUUID(), emptyId: randomUUID() })
+
 export async function seedGuide(page: Page): Promise<Seeded> {
+  const ids = newIds()
+  await seedGuideWithIds(page, ids)
+  return ids
+}
+
+/** Stessi documenti con id dati (ogni test Playwright ha un IndexedDB nuovo). */
+export async function seedGuideWithIds(page: Page, ids: Seeded): Promise<void> {
+  const now = new Date().toISOString()
+  const archetypeId = randomUUID()
+  const docs = [
+    sampleDoc({ id: ids.motherId, archetypeId, legal: true, now }),
+    sampleDoc({ id: ids.variantId, archetypeId, legal: true, now, derivedFrom: { comboId: ids.motherId, afterStep: 's3' }, title: { it: 'Variante senza Impermanenza', en: 'Variant without Impermanence' } }),
+    sampleDoc({ id: ids.illegalId, archetypeId, legal: false, now, title: { it: 'Con carta proibita', en: 'With a forbidden card' } }),
+    { ...sampleDoc({ id: ids.emptyId, archetypeId, legal: true, now, title: { it: 'Combo vuota', en: 'Empty combo' } }), steps: [], branches: [] },
+  ]
   await page.goto('/combo')
   await page.getByTestId('new-combo').waitFor()
-  return page.evaluate(
-    async ({ build }) => {
-      const sample = new Function(`return (${build})`)() as (o: Record<string, unknown>) => Record<string, unknown>
-      const now = new Date().toISOString()
-      const archetypeId = crypto.randomUUID()
-      const ids = { motherId: crypto.randomUUID(), variantId: crypto.randomUUID(), illegalId: crypto.randomUUID(), emptyId: crypto.randomUUID() }
-      const docs = [
-        sample({ id: ids.motherId, archetypeId, legal: true, now }),
-        sample({ id: ids.variantId, archetypeId, legal: true, now, derivedFrom: { comboId: ids.motherId, afterStep: 's3' }, title: { it: 'Variante senza Impermanenza', en: 'Variant without Impermanence' } }),
-        sample({ id: ids.illegalId, archetypeId, legal: false, now, title: { it: 'Con carta proibita', en: 'With a forbidden card' } }),
-        { ...sample({ id: ids.emptyId, archetypeId, legal: true, now, title: { it: 'Combo vuota', en: 'Empty combo' } }), steps: [], branches: [] },
-      ] as { meta: { id: string; title: unknown } }[]
+  await page.evaluate(
+    async ({ docs, archetypeId, now }) => {
       const db = await new Promise<IDBDatabase>((res, rej) => {
         const r = indexedDB.open('decklab')
         r.onsuccess = () => res(r.result)
@@ -122,13 +130,13 @@ export async function seedGuide(page: Page): Promise<Seeded> {
       await new Promise<void>((res, rej) => {
         const tx = db.transaction(['archetypes', 'combos'], 'readwrite')
         tx.objectStore('archetypes').put({ id: archetypeId, name: { it: 'Prova', en: 'Test' }, keyCards: [], starters: [], extenders: [], updatedAt: now, deletedAt: null })
-        for (const d of docs) tx.objectStore('combos').put({ id: d.meta.id, archetypeId, variantId: null, name: d.meta.title, tagIds: [], payload: d, updatedAt: now, deletedAt: null })
+        for (const d of docs as { meta: { id: string; title: unknown } }[])
+          tx.objectStore('combos').put({ id: d.meta.id, archetypeId, variantId: null, name: d.meta.title, tagIds: [], payload: d, updatedAt: now, deletedAt: null })
         tx.oncomplete = () => res()
         tx.onerror = () => rej(tx.error)
       })
       db.close()
-      return ids
     },
-    { build: sampleDoc.toString().replace(/^function sampleDoc/, 'function').replace(/K\./g, `K.`) },
-  ) as Promise<Seeded>
+    { docs, archetypeId, now },
+  )
 }
