@@ -153,3 +153,9 @@ export async function savedSteps(page: Page): Promise<Array<Record<string, unkno
     return rec.payload.steps
   }, comboId)
 }
+
+/** Apre il pannello dei passi (chiuso di default) se non è già aperto. */
+export async function openPanel(page: Page) {
+  if ((await page.locator('[data-panel]').count()) === 0) await page.getByTestId('panel-toggle').click()
+  await page.locator('[data-panel]').first().waitFor()
+}

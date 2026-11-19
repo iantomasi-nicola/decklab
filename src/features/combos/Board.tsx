@@ -2,11 +2,9 @@
  * Campo interattivo: drag & drop (@dnd-kit/core, mouse + touch), due tocchi, menu contestuale, "Sposta in…"
  * da tastiera. Ogni azione diventa una bozza di passo (`Draft`) applicata dallo store.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, rectIntersection, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useTranslation } from 'react-i18next'
-import ArrowRightLeft from 'lucide-react/icons/arrow-right-left'
-import Plus from 'lucide-react/icons/plus'
 import { type ComboDoc, type Move, type Place, type PlayerIdx, type Uid } from '@/domain/combo/types'
 import { ownerOfUid, type GameState, type NPlace } from '@/domain/combo/state'
 import { Button } from '@/ui/Button'
@@ -70,7 +68,26 @@ type Pending =
 
 interface MenuState { x: number; y: number; title: string; items: PopItem[] }
 
-export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; state: GameState; mode: 'setup' | 'steps'; cursor: number; readOnly?: boolean }) {
+export interface BoardHandle {
+  addCard: (p: PlayerIdx) => void
+  deckToHand: () => void
+}
+
+export function Board({
+  doc,
+  state,
+  mode,
+  cursor,
+  readOnly,
+  handle,
+}: {
+  doc: ComboDoc
+  state: GameState
+  mode: 'setup' | 'steps'
+  cursor: number
+  readOnly?: boolean
+  handle?: Ref<BoardHandle>
+}) {
   const { t } = useTranslation()
   const cards = useCards()
   const [sel, setSel] = useState<Sel | null>(null)
@@ -88,6 +105,11 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
   const suppress = useRef(false)
   const longPress = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastPointer = useRef({ x: 0, y: 0 })
+
+  useImperativeHandle(handle, () => ({
+    addCard: (p) => setAddFor(p),
+    deckToHand: () => setSheet({ p: 0, loc: 'deck', forDrop: { dest: { t: 'pile', p: 0, loc: 'hand' }, x: window.innerWidth / 2, y: window.innerHeight / 2, mods: {} } }),
+  }))
 
   const infoOf = useCallback((uid: Uid): CardInfo => cardInfo(cards.byId(doc.cards[uid] ?? 0)), [cards, doc.cards])
   const ctx: Ctx = useMemo(() => ({ state, infoOf, mode }), [state, infoOf, mode])
@@ -352,7 +374,8 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
   const onDragStart = (e: DragStartEvent) => {
     suppress.current = false
     const id = String(e.active.id)
-    setDragSize(e.active.rect.current.initial?.width ?? 60)
+    const r0 = e.active.rect.current.initial
+    setDragSize(r0 ? Math.min(r0.width, (r0.height * 59) / 86) : 60)
     setMenu(null)
     const s = selOfDrag(id)
     if (s) {
@@ -506,9 +529,9 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
         : null
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="relative h-full min-h-0">
       {pending && pickLabel ? (
-        <div role="status" data-pick-bar className="flex flex-wrap items-center gap-2 rounded-md border border-ok/50 bg-surface-2 px-3 py-2">
+        <div role="status" data-pick-bar className="absolute inset-x-2 top-2 z-30 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-md border border-ok/60 bg-surface-1 px-3 py-2 shadow-2">
           <span className="min-w-0 flex-1 text-[15px] text-fg">{pickLabel}</span>
           <Button variant="primary" onClick={confirmPending} disabled={pending.kind === 'tribute' && pending.chosen.length === 0} data-testid="pick-confirm">
             {t(pending.kind === 'tribute' ? 'combos.pick.confirm' : 'combos.pick.done')}
@@ -516,7 +539,7 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
           <Button onClick={() => setPending(null)}>{t(pending.kind === 'tribute' ? 'common.cancel' : 'combos.pick.skip')}</Button>
         </div>
       ) : sel && !readOnly ? (
-        <div role="status" className="rounded-md border border-accent-text/50 bg-accent-soft px-3 py-2 text-[15px] text-fg">
+        <div role="status" className="pointer-events-none absolute inset-x-2 top-2 z-30 mx-auto max-w-xl rounded-md border border-accent-text/60 bg-surface-1 px-3 py-2 text-[15px] text-fg shadow-2">
           {t('combos.selected', { name: cards.nameOf(codeOf(sel)) })}
         </div>
       ) : null}
@@ -555,26 +578,6 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      {!readOnly ? (
-        <div className="flex flex-wrap gap-2">
-          <Button icon={<Plus size={18} />} onClick={() => setAddFor(0)} data-testid="add-own">
-            {t('combos.add.own')}
-          </Button>
-          <Button icon={<Plus size={18} />} onClick={() => setAddFor(1)} data-testid="add-opp">
-            {t('combos.add.opp')}
-          </Button>
-          {mode === 'setup' ? (
-            <Button
-              icon={<ArrowRightLeft size={18} />}
-              onClick={() => setSheet({ p: 0, loc: 'deck', forDrop: { dest: { t: 'pile', p: 0, loc: 'hand' }, x: window.innerWidth / 2, y: window.innerHeight / 2, mods: {} } })}
-              data-testid="add-hand"
-            >
-              {t('combos.add.toHand')}
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
 
       <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
 

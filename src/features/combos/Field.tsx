@@ -1,27 +1,28 @@
 /**
- * Campo di gioco completo (due giocatori). Si scala solo con CSS: il contenitore ha `container-type: size` e
- * rapporto fisso 100:141; tutto l'interno è in `cqw`, quindi nessuna carta può uscire dal campo (360–2560 px).
- * Colonne e righe: griglia 7×7. Per l'avversario le colonne sono specchiate (vista dal giocatore).
+ * Campo di gioco completo (due giocatori). Riempie lo spazio del contenitore: dimensioni e disposizione
+ * (verticale 7×7 / orizzontale 9×5) sono pura CSS (field.css, container query). Per l'avversario le colonne
+ * sono specchiate (vista dal giocatore).
  */
 import { createContext, useContext, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { useTranslation } from 'react-i18next'
 import Ban from 'lucide-react/icons/ban'
+import Check from 'lucide-react/icons/check'
 import Layers from 'lucide-react/icons/layers'
 import Skull from 'lucide-react/icons/skull'
 import Sparkles from 'lucide-react/icons/sparkles'
-import Check from 'lucide-react/icons/check'
 import { overlaysOf, zoneCards, type GameState } from '@/domain/combo/state'
 import type { PlayerIdx, Uid } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
-import { CardFace } from './CardFace'
+import { CardFace, isDefPos } from './CardFace'
+import './field.css'
 import { destKey, occupantAt, type Dest, type PileLoc, type ZoneLoc } from './zones'
 
 export interface FieldView {
   state: GameState
   registry: Record<Uid, number>
   nameOf: (code: number) => string
-  /** carte del Deck/Extra proprio non ancora rivelate: [deck, extra] */
+  /** carte del Deck/Extra proprio non ancora rivelate */
   unrevealed: { deck: number; extra: number }
   /** segnaposto "N carte casuali" nella mano propria */
   randomHand: number
@@ -51,24 +52,36 @@ const useField = () => {
 export const cardDragId = (uid: Uid) => `card:${uid}`
 export const freshDragId = (p: PlayerIdx, loc: 'deck' | 'extra') => `fresh:${p}:${loc}`
 
+/* ---------------------------------------------------------------- posizionamento (verticale / orizzontale) */
+type Row = 'hand' | 'back' | 'front' | 'mid'
+const PORTRAIT_ROW: Record<PlayerIdx, Record<Row, number>> = {
+  1: { hand: 1, back: 2, front: 3, mid: 4 },
+  0: { mid: 4, front: 5, back: 6, hand: 7 },
+}
+const LANDSCAPE_ROW: Record<PlayerIdx, Record<Row, number>> = {
+  1: { hand: 0, back: 1, front: 2, mid: 3 },
+  0: { mid: 3, front: 4, back: 5, hand: 0 },
+}
 const mirror = (p: PlayerIdx, col: number) => (p === 1 ? 8 - col : col)
 
-/** Posizione nella griglia 7×7 (riga/colonna 1-based) di ogni zona. */
-function cell(p: PlayerIdx, kind: 'hand' | 'front' | 'back', col: number): CSSProperties {
-  const row = p === 1 ? { hand: 1, back: 2, front: 3 }[kind] : { front: 5, back: 6, hand: 7 }[kind]
-  return { gridRow: row, gridColumn: mirror(p, col) }
+/** `col` = colonna 1–7 dal punto di vista del proprietario; nel campo orizzontale le colonne partono da 2 (1 e 9 sono le mani). */
+function at(p: PlayerIdx, row: Row, col: number, landscape?: { row?: Row; col?: number }): CSSProperties {
+  return {
+    ['--pr' as string]: PORTRAIT_ROW[p][row],
+    ['--pc' as string]: mirror(p, col),
+    ['--lr' as string]: LANDSCAPE_ROW[p][landscape?.row ?? row],
+    ['--lc' as string]: mirror(p, landscape?.col ?? col) + 1,
+  }
 }
 
-const BORDER_OWN = 'border-accent-text/35'
-const BORDER_OPP = 'border-line-strong/45'
-
-function Slot({
+/* ---------------------------------------------------------------- cella */
+function Cell({
   dest,
   p,
   style,
   label,
   children,
-  className,
+  overlay,
   occupant,
   onOpen,
 }: {
@@ -77,7 +90,8 @@ function Slot({
   style: CSSProperties
   label?: ReactNode
   children?: ReactNode
-  className?: string
+  /** sopra le carte (es. badge dei conteggi) */
+  overlay?: ReactNode
   occupant?: Uid | undefined
   onOpen?: () => void
 }) {
@@ -95,44 +109,33 @@ function Slot({
         if (valid) onZone(dest, e.currentTarget)
         else if (!(e.target as HTMLElement).closest('[data-card]')) onOpen?.()
       }}
-      className={cn(
-        'relative min-w-0 rounded-[0.9cqw] border border-dashed bg-surface-1/60 transition-[opacity,box-shadow,background-color] duration-150',
-        p === 0 ? BORDER_OWN : BORDER_OPP,
-        valid && 'cursor-pointer border-solid border-accent-text bg-accent-soft shadow-[0_0_0_0.5cqw_color-mix(in_srgb,var(--accent-text)_35%,transparent)]',
-        valid && isOver && 'bg-accent-text/25',
-        dim && 'opacity-45',
-        className,
-      )}
+      className={cn('cl-cell', p === 0 && 'cl-own', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
       style={style}
     >
-      {label ? (
-        <span className="pointer-events-none absolute inset-0 grid place-items-center text-center text-[max(8px,1.75cqw)] font-medium leading-none text-subtle">
-          {label}
-        </span>
-      ) : null}
+      <div aria-hidden className="cl-box cl-zone" />
+      {label ? <div className="cl-label">{label}</div> : null}
       {children}
+      {overlay ? <div className="cl-box z-20">{overlay}</div> : null}
     </div>
   )
 }
 
-function CardCounters({ uid }: { uid: Uid }) {
+/* ---------------------------------------------------------------- carta */
+function CardBadges({ uid }: { uid: Uid }) {
   const { view } = useField()
   const c = view.state.counters[uid]
   const total = c ? Object.values(c).reduce((a, b) => a + b, 0) : 0
   const ov = overlaysOf(view.state, uid).length
-  if (!total && !ov) return null
-  const badge =
-    'pointer-events-none absolute z-10 min-w-[3.4cqw] rounded-full border border-line-strong bg-surface-1 px-[0.7cqw] text-center text-[max(8px,2.1cqw)] font-semibold leading-[1.35] text-fg shadow-1'
   return (
     <>
-      {total ? <span className={cn(badge, 'left-[-0.6cqw] top-[-0.6cqw]')} data-counters={total}>●{total}</span> : null}
-      {ov ? <span className={cn(badge, 'bottom-[-0.6cqw] left-[-0.6cqw]')} data-overlays={ov}>×{ov}</span> : null}
+      {total ? <span className="cl-badge -left-1 -top-1" data-counters={total}>●{total}</span> : null}
+      {ov ? <span className="cl-badge -bottom-1 -left-1" data-overlays={ov}>×{ov}</span> : null}
     </>
   )
 }
 
 /** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
-function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: string; style?: CSSProperties; inPile?: boolean }) {
+function FieldCard({ uid, inPile }: { uid: Uid; inPile?: boolean }) {
   const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey } = useField()
   const place = view.state.places[uid]
   const code = view.registry[uid] ?? 0
@@ -143,6 +146,7 @@ function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: st
   const isSel = selected === uid
   const cand = picking?.candidates.has(uid)
   const chosen = picking?.chosen.has(uid)
+  const def = isDefPos(place.pos)
   return (
     <div
       ref={setNodeRef}
@@ -153,7 +157,7 @@ function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: st
       role="button"
       tabIndex={0}
       aria-roledescription=""
-      aria-label={name + (place.pos === 'FACEDOWN' || place.pos === 'FACEDOWN_DEF' ? ' (·)' : '')}
+      aria-label={name}
       aria-pressed={isSel}
       title={name}
       onClick={() => {
@@ -179,26 +183,25 @@ function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: st
         'absolute inset-0 flex touch-none select-none items-center justify-center outline-none',
         isDragging && 'opacity-30',
         picking && !cand && 'opacity-45',
-        className,
       )}
-      style={style}
     >
-      <div className="relative w-full" style={{ aspectRatio: '59 / 86' }}>
+      <div className={cn('cl-fit', def && 'cl-def')}>
         <CardFace
+          fit
           code={code}
           name={name}
           pos={place.pos}
           className={cn(
             'rounded-[6px] transition-shadow duration-150',
-            isSel && 'shadow-[0_0_0_0.55cqw_var(--accent-text)]',
-            cand && !chosen && 'shadow-[0_0_0_0.45cqw_var(--ok)]',
-            chosen && 'shadow-[0_0_0_0.7cqw_var(--ok)]',
+            isSel && 'shadow-[0_0_0_3px_var(--accent-text)]',
+            cand && !chosen && 'shadow-[0_0_0_3px_var(--ok)]',
+            chosen && 'shadow-[0_0_0_4px_var(--ok)]',
           )}
         />
-        {!inPile && <CardCounters uid={uid} />}
+        {!inPile && <CardBadges uid={uid} />}
         {chosen ? (
-          <span className="absolute right-[-0.6cqw] top-[-0.6cqw] grid size-[4cqw] place-items-center rounded-full bg-ok text-bg">
-            <Check className="size-[70%]" aria-hidden />
+          <span className="cl-badge -right-1 -top-1 grid place-items-center !bg-ok !text-bg">
+            <Check className="size-3.5" aria-hidden />
           </span>
         ) : null}
       </div>
@@ -206,7 +209,25 @@ function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: st
   )
 }
 
-function Pile({ p, loc, col, kind }: { p: PlayerIdx; loc: PileLoc; col: number; kind: 'front' | 'back' | 'hand' }) {
+/* ---------------------------------------------------------------- pile, mano, LP */
+function PileBack({ loc }: { loc: PileLoc }) {
+  const Icon = loc === 'extra' ? Sparkles : Layers
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="cl-fit">
+        <div className="absolute inset-0 translate-x-[3px] translate-y-[3px] rounded-[6px] border border-line bg-surface-3" />
+        <div
+          className="absolute inset-0 grid place-items-center rounded-[6px] border border-line-strong text-accent-text"
+          style={{ background: 'linear-gradient(160deg, var(--accent-soft) 0%, var(--surface-3) 60%, var(--surface-2) 100%)' }}
+        >
+          <Icon aria-hidden className="size-[42%] opacity-80" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSProperties }) {
   const { t } = useTranslation()
   const { view, onPile } = useField()
   const placed = zoneCards(view.state, p, loc)
@@ -220,64 +241,51 @@ function Pile({ p, loc, col, kind }: { p: PlayerIdx; loc: PileLoc; col: number; 
   const fresh = useDraggable({ id: hidden ? freshDragId(p, loc as 'deck' | 'extra') : `none:${p}:${loc}`, data: { fresh: loc }, disabled: !draggableFresh })
   const name = t(`combos.pile.${loc}`)
   return (
-    <Slot
+    <Cell
       dest={{ t: 'pile', p, loc }}
       p={p}
-      style={cell(p, kind, col)}
+      style={style}
       onOpen={count > 0 ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
-          <span className="flex flex-col items-center gap-[0.6cqw]">
-            <Icon aria-hidden className="size-[4.4cqw] opacity-70" />
-            <span className="max-w-full truncate px-[0.4cqw]">{name}</span>
+          <span className="flex flex-col items-center gap-1">
+            <Icon aria-hidden className="size-[28%] min-w-3.5 opacity-70" />
+            <span className="max-w-full truncate px-0.5">{name}</span>
           </span>
+        ) : undefined
+      }
+      overlay={
+        count > 0 ? (
+          <button
+            type="button"
+            aria-label={`${name}: ${count}`}
+            data-pile={`${p}:${loc}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              onPile(p, loc)
+            }}
+            className="cl-badge pointer-events-auto -bottom-1 -right-1 cursor-pointer before:absolute before:-inset-2.5 before:content-[''] hover:border-accent-text"
+          >
+            {count}
+          </button>
         ) : undefined
       }
     >
       {count > 0 ? (
-        <>
-          {hidden ? (
-            <div
-              ref={draggableFresh ? fresh.setNodeRef : undefined}
-              {...(draggableFresh ? { ...fresh.attributes, ...fresh.listeners } : {})}
-              data-pile-drag={draggableFresh ? loc : undefined}
-              className={cn('absolute inset-0 touch-none', fresh.isDragging && 'opacity-40')}
-            >
-              <PileBack loc={loc} />
-            </div>
-          ) : top ? (
-            <FieldCard uid={top} inPile />
-          ) : null}
-        </>
+        hidden ? (
+          <div
+            ref={draggableFresh ? fresh.setNodeRef : undefined}
+            {...(draggableFresh ? { ...fresh.attributes, ...fresh.listeners } : {})}
+            data-pile-drag={draggableFresh ? loc : undefined}
+            className={cn('absolute inset-0 touch-none', fresh.isDragging && 'opacity-40')}
+          >
+            <PileBack loc={loc} />
+          </div>
+        ) : top ? (
+          <FieldCard uid={top} inPile />
+        ) : null
       ) : null}
-      <button
-        type="button"
-        aria-label={`${name}: ${count}`}
-        data-pile={`${p}:${loc}`}
-        onClick={(e) => {
-          e.stopPropagation()
-          onPile(p, loc)
-        }}
-        className="absolute bottom-[-0.8cqw] right-[-0.8cqw] z-20 grid min-h-[5.2cqw] before:absolute before:-inset-2.5 before:content-[''] min-w-[5.2cqw] cursor-pointer place-items-center rounded-full border border-line-strong bg-surface-1 px-[0.9cqw] text-[max(9px,2.5cqw)] font-semibold tabular-nums leading-none text-fg shadow-1 hover:border-accent-text"
-      >
-        {count}
-      </button>
-    </Slot>
-  )
-}
-
-function PileBack({ loc }: { loc: PileLoc }) {
-  const Icon = loc === 'extra' ? Sparkles : Layers
-  return (
-    <div className="absolute inset-0">
-      <div className="absolute inset-0 translate-x-[0.5cqw] translate-y-[0.5cqw] rounded-[6px] border border-line bg-surface-3" />
-      <div
-        className="absolute inset-0 grid place-items-center rounded-[6px] border border-line-strong text-accent-text"
-        style={{ background: 'linear-gradient(160deg, var(--accent-soft) 0%, var(--surface-3) 60%, var(--surface-2) 100%)' }}
-      >
-        <Icon aria-hidden className="size-[42%] opacity-80" />
-      </div>
-    </div>
+    </Cell>
   )
 }
 
@@ -289,45 +297,49 @@ function Hand({ p }: { p: PlayerIdx }) {
   const { setNodeRef, isOver } = useDroppable({ id })
   const valid = !!highlight && highlight.has(id)
   const dim = !!highlight && !valid
-  const n = Math.max(uids.length, 2)
   const random = p === 0 ? view.randomHand : 0
+  const style = {
+    ['--pr' as string]: p === 1 ? 1 : 7,
+    ['--pc' as string]: '2 / 7',
+    ['--lr' as string]: '1 / 6',
+    ['--lc' as string]: p === 1 ? 1 : 9,
+    ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2),
+  } as CSSProperties
   return (
     <div
       ref={setNodeRef}
       data-zone={id}
       data-valid={valid || undefined}
-      className={cn(
-        'relative flex min-w-0 items-stretch justify-center rounded-[0.9cqw] border border-dashed transition-[opacity,box-shadow,background-color] duration-150',
-        p === 0 ? BORDER_OWN : BORDER_OPP,
-        valid && 'border-solid border-accent-text bg-accent-soft',
-        valid && isOver && 'bg-accent-text/25',
-        dim && 'opacity-45',
-      )}
-      style={{ gridRow: p === 1 ? 1 : 7, gridColumn: '2 / 7', ['--n' as string]: n, ['--g' as string]: '1.2cqw' }}
       aria-label={t('combos.pile.hand')}
+      className={cn('cl-cell cl-hand rounded-md', p === 0 && 'cl-own', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
+      style={{ ...style, containerType: 'normal' }}
     >
+      <div
+        aria-hidden
+        className={cn(
+          'absolute inset-0 rounded-md border border-dashed',
+          p === 0 ? 'border-accent-text/35' : 'border-line-strong/45',
+          valid && 'border-solid border-accent-text bg-accent-soft',
+          valid && isOver && 'bg-accent-text/25',
+        )}
+      />
       {uids.length === 0 && random === 0 ? (
-        <span className="pointer-events-none absolute inset-0 grid place-items-center text-[max(8px,1.75cqw)] font-medium text-subtle">
-          {t('combos.pile.hand')}
-        </span>
+        <span className="pointer-events-none absolute inset-0 grid place-items-center text-xs font-medium text-subtle">{t('combos.pile.hand')}</span>
       ) : null}
       {uids.map((uid, i) => (
-        <div
-          key={uid}
-          className="relative h-full shrink-0 hover:z-[40] focus-within:z-[40]"
-          style={{
-            width: 'calc((100% - 4 * var(--g)) / 5)',
-            marginLeft: i === 0 ? 0 : 'min(var(--g), calc((100% - var(--n) * (100% - 4 * var(--g)) / 5) / (var(--n) - 1)))',
-            zIndex: i + 1,
-            // il padding della cella è già nella griglia: la mano riempie tutta la riga
-          }}
-        >
+        <div key={uid} className="cl-hand-item" style={{ zIndex: i + 1 }}>
           <FieldCard uid={uid} />
         </div>
       ))}
       {random > 0 ? (
-        <span className="pointer-events-none absolute bottom-[0.8cqw] right-[0.8cqw] z-[50] rounded-full border border-line-strong bg-surface-1 px-[1.2cqw] py-[0.5cqw] text-[max(8px,1.9cqw)] font-medium text-fg-muted">
-          {t('combos.randomHand', { count: random })}
+        <span
+          className="cl-hand-item pointer-events-none grid place-items-center text-center font-medium text-muted"
+          style={{ zIndex: uids.length + 1 }}
+          title={t('combos.randomHandLong', { count: random })}
+        >
+          <span aria-label={t('combos.randomHandLong', { count: random })} className="whitespace-nowrap rounded-full border border-line-strong bg-surface-1 px-2 py-0.5 text-[clamp(9px,22cqw,13px)]">
+            {t('combos.randomHand', { count: random })}
+          </span>
         </span>
       ) : null}
     </div>
@@ -337,21 +349,23 @@ function Hand({ p }: { p: PlayerIdx }) {
 function LpBox({ p }: { p: PlayerIdx }) {
   const { t } = useTranslation()
   const { view, onLp } = useField()
+  const style = at(p, 'hand', 7, { row: 'mid' })
   return (
-    <button
-      type="button"
-      data-lp={p}
-      onClick={() => onLp(p)}
-      aria-label={t(p === 0 ? 'combos.lp.own' : 'combos.lp.opponent', { lp: view.state.lp[p] })}
-      className={cn(
-        'flex min-w-0 cursor-pointer flex-col items-center justify-center rounded-[0.9cqw] border bg-surface-2 leading-none hover:border-accent-text',
-        p === 0 ? 'border-accent-text/50' : 'border-line-strong/60',
-      )}
-      style={{ gridRow: p === 1 ? 1 : 7, gridColumn: mirror(p, 7) }}
-    >
-      <span className="text-[max(8px,1.9cqw)] font-medium text-subtle">{t('combos.lp.label')}</span>
-      <span className="mt-[0.6cqw] text-[max(11px,3.9cqw)] font-semibold tabular-nums text-fg">{view.state.lp[p]}</span>
-    </button>
+    <div className="cl-cell" style={style}>
+      <button
+        type="button"
+        data-lp={p}
+        onClick={() => onLp(p)}
+        aria-label={t(p === 0 ? 'combos.lp.own' : 'combos.lp.opponent', { lp: view.state.lp[p] })}
+        className={cn(
+          'cl-box pointer-events-auto flex cursor-pointer flex-col items-center justify-center rounded-[6px] border bg-surface-2 leading-none hover:border-accent-text',
+          p === 0 ? 'border-accent-text/50' : 'border-line-strong/60',
+        )}
+      >
+        <span className="text-[clamp(8px,15cqw,12px)] font-medium text-subtle">{t('combos.lp.label')}</span>
+        <span className="mt-1 text-[clamp(11px,26cqw,22px)] font-semibold tabular-nums text-fg">{view.state.lp[p]}</span>
+      </button>
+    </div>
   )
 }
 
@@ -368,41 +382,29 @@ function Side({ p }: { p: PlayerIdx }) {
   return (
     <>
       {seqs.map((i) => (
-        <Slot
-          key={`m${i}`}
-          dest={{ t: 'zone', p, loc: 'mzone', seq: i }}
-          p={p}
-          style={cell(p, 'front', 2 + i)}
-          occupant={occupantAt(view.state, p, 'mzone', i)}
-        >
+        <Cell key={`m${i}`} dest={{ t: 'zone', p, loc: 'mzone', seq: i }} p={p} style={at(p, 'front', 2 + i)} occupant={occupantAt(view.state, p, 'mzone', i)}>
           <ZoneCard p={p} loc="mzone" seq={i} />
-        </Slot>
+        </Cell>
       ))}
       {seqs.map((i) => (
-        <Slot
+        <Cell
           key={`s${i}`}
           dest={{ t: 'zone', p, loc: 'szone', seq: i }}
           p={p}
-          style={cell(p, 'back', 2 + i)}
+          style={at(p, 'back', 2 + i)}
           label={i === 0 || i === 4 ? <span className="text-accent-text">{t('combos.zone.pendulum')}</span> : undefined}
           occupant={occupantAt(view.state, p, 'szone', i)}
         >
           <ZoneCard p={p} loc="szone" seq={i} />
-        </Slot>
+        </Cell>
       ))}
-      <Slot
-        dest={{ t: 'zone', p, loc: 'fzone', seq: 0 }}
-        p={p}
-        style={cell(p, 'front', 1)}
-        label={t('combos.zone.field')}
-        occupant={occupantAt(view.state, p, 'fzone', 0)}
-      >
+      <Cell dest={{ t: 'zone', p, loc: 'fzone', seq: 0 }} p={p} style={at(p, 'front', 1)} label={t('combos.zone.field')} occupant={occupantAt(view.state, p, 'fzone', 0)}>
         <ZoneCard p={p} loc="fzone" seq={0} />
-      </Slot>
-      <Pile p={p} loc="gy" col={7} kind="front" />
-      <Pile p={p} loc="extra" col={1} kind="back" />
-      <Pile p={p} loc="deck" col={7} kind="back" />
-      <Pile p={p} loc="banished" col={1} kind="hand" />
+      </Cell>
+      <Pile p={p} loc="gy" style={at(p, 'front', 7)} />
+      <Pile p={p} loc="extra" style={at(p, 'back', 1)} />
+      <Pile p={p} loc="deck" style={at(p, 'back', 7)} />
+      <Pile p={p} loc="banished" style={at(p, 'hand', 1, { row: 'mid', col: 6 })} />
       <Hand p={p} />
       <LpBox p={p} />
     </>
@@ -413,45 +415,25 @@ export function Field({ view, ...handlers }: { view: FieldView } & FieldHandlers
   const { t } = useTranslation()
   return (
     <FieldCtx.Provider value={{ view, ...handlers }}>
-      <div
-        data-field
-        role="group"
-        aria-label={t('combos.field')}
-        className="relative mx-auto overflow-hidden rounded-lg border border-line"
-        style={{
-          containerType: 'size',
-          aspectRatio: '100 / 141',
-          width: 'min(100%, max(340px, calc((100dvh - var(--field-chrome, 200px)) * 100 / 141)))',
-          background:
-            'linear-gradient(180deg, var(--surface-1) 0%, var(--surface-1) 42%, color-mix(in srgb, var(--accent-soft) 55%, var(--surface-1)) 100%)',
-        }}
-      >
-        <div aria-hidden className="absolute inset-x-[2cqw] top-1/2 h-px bg-line" />
-        <div
-          className="absolute inset-0 grid"
-          style={{
-            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-            gridTemplateRows: 'repeat(7, minmax(0, 1fr))',
-            gap: '1.2cqw',
-            padding: '2cqw',
-          }}
-        >
+      <div data-field role="group" aria-label={t('combos.field')} className="cl-field">
+        <div aria-hidden className="cl-seam" />
+        <div className="cl-grid">
           <Side p={1} />
-          {[0, 1].map((i) => (
-            <Slot
-              key={`e${i}`}
-              dest={{ t: 'zone', p: 0, loc: 'emz', seq: i }}
-              p={0}
-              style={{ gridRow: 4, gridColumn: 3 + i * 2 }}
-              label={t('combos.zone.emz')}
-              occupant={occupantAt(view.state, 0, 'emz', i) ?? occupantAt(view.state, 1, 'emz', i)}
-            >
-              {(() => {
-                const o = occupantAt(view.state, 0, 'emz', i) ?? occupantAt(view.state, 1, 'emz', i)
-                return o ? <FieldCard key={o} uid={o} /> : null
-              })()}
-            </Slot>
-          ))}
+          {[0, 1].map((i) => {
+            const occ = occupantAt(view.state, 0, 'emz', i) ?? occupantAt(view.state, 1, 'emz', i)
+            return (
+              <Cell
+                key={`e${i}`}
+                dest={{ t: 'zone', p: 0, loc: 'emz', seq: i }}
+                p={0}
+                style={{ ['--pr' as string]: 4, ['--pc' as string]: 3 + i * 2, ['--lr' as string]: 3, ['--lc' as string]: 4 + i * 2 }}
+                label={t('combos.zone.emz')}
+                occupant={occ}
+              >
+                {occ ? <FieldCard key={occ} uid={occ} /> : null}
+              </Cell>
+            )
+          })}
           <Side p={0} />
         </div>
       </div>

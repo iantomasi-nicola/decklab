@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { C, card, chooseMenu, mouseDrag, openCombo, savedSteps, seedCombo, touchDrag, zone, type SeedCombo } from './helpers/combo'
+import { C, card, chooseMenu, mouseDrag, openCombo, openPanel, savedSteps, seedCombo, touchDrag, zone, type SeedCombo } from './helpers/combo'
 
 /**
  * Drag & drop del campo (docs/ARCHITECTURE.md §8.1): una prova per ogni coppia origine → destinazione della tabella,
@@ -203,6 +203,7 @@ test.describe('alternative al trascinamento', () => {
   test.use({ viewport: { width: 1280, height: 900 } })
   test.beforeEach(async ({ page }) => {
     await openCombo(page, await seedCombo(page, BASE))
+    await openPanel(page)
   })
 
   test('doppio clic = Attiva', async ({ page }) => {
@@ -273,14 +274,16 @@ test.describe('alternative al trascinamento', () => {
     await page.getByRole('menuitem', { name: /Move up|Sposta su/ }).click()
     const steps = await expect.poll(async () => (await savedSteps(page)).length).toBe(3).then(() => savedSteps(page))
     expect(steps[1]).toMatchObject({ card: 'u1', note: { it: 'Evoca il motore.', en: 'Summon the engine.' } })
-    expect(steps[0]!.group).toBeUndefined()
+    expect(steps[0]!.group).toBeDefined()
+    expect(steps[0]!.group).toBe(steps[1]!.group)
+    expect(steps[2]!.group).toBeUndefined()
   })
 
   test('modifica in mezzo: elimina un passo e segnala i successivi incoerenti', async ({ page }) => {
     await drag3(page)
     await page.getByTestId('step-menu-0').click()
     await page.getByRole('menuitem', { name: /Delete step|Elimina passo/ }).click()
-    // il passo 2 attivava dal Cimitero una carta che ora ... resta coerente; quello che spostava u1 dalla zona non lo è più
+    // il passo 3 manda al Cimitero u1 dalla zona: senza il passo 1 u1 è ancora in mano
     await expect(page.locator('[data-steps] li[data-incoherent]').first()).toBeVisible()
   })
 
@@ -293,17 +296,18 @@ test.describe('alternative al trascinamento', () => {
     await page.getByRole('tab', { name: /Details|Dettagli/ }).click()
     await expect(page.getByText(/Variant of|Variante di/)).toBeVisible()
     await page.goBack()
+    await page.getByRole('tab', { name: /Steps|Passi/ }).click()
     await expect(page.locator('[data-steps] li')).toHaveCount(3)
   })
 })
 
-/** Tre passi: Normale (Mano→M1), attiva Magia, manda u10 al Cimitero. */
+/** Tre passi: Normale (Mano→M3), attiva Magia, manda u1 (ora in campo) al Cimitero. */
 async function drag3(page: Page) {
   await mouseDrag(page, card(page, 'u1'), zone(page, 'z:0:mzone:2'))
   await chooseMenu(page, 'normalSummon')
   await mouseDrag(page, card(page, 'u3'), zone(page, 'z:0:szone:2'))
   await chooseMenu(page, 'activate')
-  await mouseDrag(page, card(page, 'u10'), zone(page, 'p:0:gy'))
+  await mouseDrag(page, card(page, 'u1'), zone(page, 'p:0:gy'))
   await chooseMenu(page, 'sendToGY')
   await expect(page.locator('[data-steps] li')).toHaveCount(3)
 }

@@ -119,7 +119,9 @@ export function Shell() {
   const secondary = NAV.filter((n) => !n.primary)
   const moreActive = secondary.some((n) => n.to === pathname)
   // l'editor di mazzo ha bisogno di più larghezza (pannelli affiancati)
-  const wide = /^\/(mazzi|combo)\/[^/]+/.test(pathname)
+  const wide = /^\/mazzi\/[^/]+/.test(pathname)
+  // editor combo: il campo occupa tutta l'area disponibile (nessun margine massimo né padding ampio)
+  const stage = /^\/combo\/[^/]+/.test(pathname)
   const pref = useSidebar((x) => x.pref)
   const setPref = useSidebar((x) => x.setPref)
   const collapsed = (pref ?? (isEditorRoute(pathname) ? 'collapsed' : 'expanded')) === 'collapsed'
@@ -191,8 +193,11 @@ export function Shell() {
           id="main"
           tabIndex={-1}
           className={cn(
-            'mx-auto w-full px-4 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom,0px))] pt-6 outline-none md:px-8 md:pb-12 md:pt-8',
-            wide ? 'max-w-[1600px]' : 'max-w-5xl',
+            'mx-auto w-full outline-none',
+            stage
+              ? 'p-2 pb-[calc(var(--bottomnav-h)+8px+env(safe-area-inset-bottom,0px))] md:pb-2'
+              : 'px-4 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom,0px))] pt-6 md:px-8 md:pb-12 md:pt-8',
+            !stage && (wide ? 'max-w-[1600px]' : 'max-w-5xl'),
           )}
         >
           <Outlet />

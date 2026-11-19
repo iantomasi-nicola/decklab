@@ -1,0 +1,175 @@
+/*
+ * Campo di gioco: riempie TUTTO lo spazio del contenitore (qualunque rapporto) e ridimensiona le carte sul minimo tra
+ * larghezza e altezza della cella. Due disposizioni scelte con una container query sul rapporto d'aspetto:
+ *  - verticale (< 9:10): griglia 7×7, mani in alto/in basso;
+ *  - orizzontale (≥ 9:10): griglia 9×5, mani come colonne laterali.
+ * Nessun JavaScript per il dimensionamento: solo container query (`cq*`) e aspect-ratio.
+ */
+@layer components {
+.cl-field {
+    container: clfield / size;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--surface-1) 0%, var(--surface-1) 42%, color-mix(in srgb, var(--accent-soft) 55%, var(--surface-1)) 100%);
+  }
+  .cl-seam {
+    position: absolute;
+    inset-inline: 2cqmin;
+    top: 50%;
+    height: 1px;
+    background: var(--border);
+  }
+  .cl-grid {
+    --g: 1.1cqmin;
+    --pad: 1.6cqmin;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: var(--g);
+    padding: var(--pad);
+    /* spazio per cella (disponibile) → carta che ci sta (tw × th); le tracce hanno la misura della carta e il tavolo resta centrato */
+    --cw: calc((100cqw - 2 * var(--pad) - 6 * var(--g)) / 7);
+    --ch: calc((100cqh - 2 * var(--pad) - 6 * var(--g)) / 7);
+    --tw: min(var(--cw), calc(var(--ch) * 59 / 86));
+    --th: calc(var(--tw) * 86 / 59);
+    grid-template-columns: repeat(7, var(--tw));
+    grid-template-rows: repeat(7, var(--th));
+    justify-content: center;
+    align-content: center;
+  }
+  .cl-cell {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+    container-type: size;
+    grid-row: var(--pr);
+    grid-column: var(--pc);
+    transition: opacity 150ms var(--ease);
+  }
+  /* contenitore a misura di carta, centrato nella cella */
+  .cl-box {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100cqw, calc(100cqh * 59 / 86));
+    aspect-ratio: 59 / 86;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .cl-zone {
+    border: 1px dashed color-mix(in srgb, var(--border-strong) 45%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--surface-1) 60%, transparent);
+    transition: box-shadow 150ms var(--ease), background-color 150ms var(--ease);
+  }
+  .cl-own .cl-zone {
+    border-color: color-mix(in srgb, var(--accent-text) 35%, transparent);
+  }
+  .cl-valid .cl-zone {
+    border-style: solid;
+    border-color: var(--accent-text);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-text) 35%, transparent);
+    cursor: pointer;
+  }
+  .cl-valid.cl-over .cl-zone {
+    background: color-mix(in srgb, var(--accent-text) 30%, var(--accent-soft));
+  }
+  .cl-dim {
+    opacity: 0.45;
+  }
+  .cl-label {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: clamp(8px, 15cqw, 12px);
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--fg-subtle);
+    pointer-events: none;
+  }
+  /* carta che entra nel box fittizio (ATK o DEF) */
+  .cl-fit {
+    --wa: min(100cqw, calc(100cqh * 59 / 86));
+    --wd: min(100cqh, calc(100cqw * 59 / 86));
+    position: relative;
+    width: var(--wa);
+    aspect-ratio: 59 / 86;
+  }
+  .cl-fit.cl-def {
+    width: calc(var(--wd) * 86 / 59);
+    height: var(--wd);
+    aspect-ratio: auto;
+  }
+  .cl-badge {
+    position: absolute;
+    z-index: 10;
+    min-width: clamp(14px, 28cqw, 22px);
+    padding-inline: 4px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface-1);
+    box-shadow: var(--shadow-1);
+    text-align: center;
+    font-size: clamp(9px, 17cqw, 13px);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .cl-hand {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+  }
+  .cl-hand-item {
+    position: relative;
+    flex: none;
+    width: var(--tw);
+    height: var(--th);
+    container-type: size;
+  }
+  .cl-hand-item:not(:first-child) {
+    margin-left: min(var(--g), calc((5 * var(--tw) + 4 * var(--g) - var(--n) * var(--tw)) / (var(--n) - 1)));
+  }
+  .cl-hand-item:hover,
+  .cl-hand-item:focus-within {
+    z-index: 40 !important;
+  }
+  
+  @container clfield (min-aspect-ratio: 9/10) {
+    .cl-grid {
+      --cw: calc((100cqw - 2 * var(--pad) - 8 * var(--g)) / 9);
+      --ch: calc((100cqh - 2 * var(--pad) - 4 * var(--g)) / 5);
+      grid-template-columns: repeat(9, var(--tw));
+      grid-template-rows: repeat(5, var(--th));
+    }
+    .cl-seam {
+      display: none;
+    }
+    .cl-cell {
+      grid-row: var(--lr);
+      grid-column: var(--lc);
+    }
+    .cl-hand {
+      flex-direction: column;
+    }
+    .cl-hand-item:not(:first-child) {
+      margin-left: 0;
+      margin-top: min(var(--g), calc((5 * var(--th) + 4 * var(--g) - var(--n) * var(--th)) / (var(--n) - 1)));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cl-cell,
+    .cl-zone {
+      transition: none;
+    }
+  }
+}

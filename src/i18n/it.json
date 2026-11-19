@@ -202,7 +202,7 @@
       "setup": "Configurazione",
       "info": "Dettagli"
     },
-    "panels": "Pannelli della combo",
+    "panels": "Pannelli",
     "field": "Campo di gioco",
     "selected": "Selezionata: {{name}}. Tocca una zona evidenziata per spostarla.",
     "tapZone": "Tocca una zona evidenziata sul campo.",
@@ -214,7 +214,7 @@
     "chooseAction": "Scegli l'azione",
     "removeCard": "Rimuovi dalla combo",
     "removeBlocked": "La carta è usata da un passo: elimina prima il passo.",
-    "randomHand": "+{{count}} casuali",
+    "randomHand": "+{{count}}",
     "zone": {
       "emz": "EMZ",
       "field": "Terreno",
@@ -268,6 +268,7 @@
       "apply": "Applica"
     },
     "add": {
+      "menu": "Aggiungi carta",
       "own": "Aggiungi carta o token",
       "opp": "Aggiungi carta avversaria",
       "toHand": "Dal Deck alla mano",
@@ -448,7 +449,11 @@
       "fromStart": "dall'inizio",
       "variants": "Varianti di questa combo",
       "noVariants": "Nessuna variante. Dal menu di un passo puoi crearne una."
-    }
+    },
+    "modeSetup": "Modifica la situazione iniziale",
+    "modeSetupBadge": "Configurazione iniziale: le carte che sposti non creano passi",
+    "panelToggle": "Pannelli: passi, configurazione, dettagli",
+    "randomHandLong": "{{count}} carte casuali dal Deck"
   },
   "learn": {
     "title": "Impara",
