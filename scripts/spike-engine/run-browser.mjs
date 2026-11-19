@@ -10,6 +10,7 @@ console.log('chrome', browser.version(), 'flags', extra.join(' '))
 const page = await browser.newPage()
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console.error]', m.text().slice(0, 200)) })
 const sizes = []
+page.on('request', (q) => { if (/ocgcore|\.wasm/.test(q.url())) console.log('REQ', q.url().split('/').pop()) })
 page.on('response', (r) => { if (r.url().endsWith('.wasm')) sizes.push([r.url().split('/').pop(), r.headers()['content-length']]) })
 if (process.env.THROTTLE) { const c = await page.context().newCDPSession(page); await c.send('Emulation.setCPUThrottlingRate', { rate: +process.env.THROTTLE }); console.log('CPU throttle x' + process.env.THROTTLE) }
 await page.goto('http://localhost:8765/'); await page.waitForFunction(() => window.ready)

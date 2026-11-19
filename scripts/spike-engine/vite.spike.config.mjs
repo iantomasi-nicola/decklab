@@ -1,0 +1,1 @@
+export default { root: new URL('.', import.meta.url).pathname, logLevel: 'warn', build: { outDir: process.env.OUT, emptyOutDir: true, minify: true, lib: { entry: 'worker.mjs', formats: ['es'], fileName: 'worker' }, rollupOptions: { output: { inlineDynamicImports: false } } } }

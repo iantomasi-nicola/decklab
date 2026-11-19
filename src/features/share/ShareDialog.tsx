@@ -128,10 +128,8 @@ export function ShareDialog({ open, onOpenChange, doc, legality }: ShareDialogPr
               {t('shareDlg.link.share')}
             </Button>
           ) : null}
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface-2 p-4">
-            {qr === null ? (
-              <Skeleton className="size-56 rounded-md" />
-            ) : qr.svg ? (
+          {qr?.svg ? (
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-line bg-surface-2 p-4">
               <div
                 role="img"
                 aria-label={t('shareDlg.qr.alt')}
@@ -139,25 +137,23 @@ export function ShareDialog({ open, onOpenChange, doc, legality }: ShareDialogPr
                 className="size-56 overflow-hidden rounded-md bg-white p-1 [&>svg]:size-full"
                 dangerouslySetInnerHTML={{ __html: qr.svg }}
               />
-            ) : null}
-            {qr?.warning ? (
-              <Banner
-                tone="warn"
-                title={t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLongTitle' : 'shareDlg.qr.longTitle')}
-                className="w-full"
-              >
-                {t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLong' : 'shareDlg.qr.long', { count: qr.length })}
-              </Banner>
-            ) : (
-              <p className="text-center text-sm text-muted">{t('shareDlg.qr.hint')}</p>
-            )}
-          </div>
+              {qr.warning ? null : <p className="text-center text-sm text-muted">{t('shareDlg.qr.hint')}</p>}
+            </div>
+          ) : qr === null ? (
+            <Skeleton className="size-56 self-center rounded-lg" />
+          ) : null}
+          {qr?.warning ? (
+            <Banner tone="warn" title={t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLongTitle' : 'shareDlg.qr.longTitle')}>
+              {t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLong' : 'shareDlg.qr.long', { count: qr.length })}
+            </Banner>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="text" className="flex flex-col gap-4">
           <Segmented<Lang>
             label={t('shareDlg.text.lang')}
             value={lang}
+            className="self-start"
             onValueChange={setLang}
             options={[
               { value: 'it', label: t('settings.language.it') },

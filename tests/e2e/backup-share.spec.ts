@@ -41,7 +41,11 @@ async function checks(page: Page, scope = 'body') {
       const b = el.getBoundingClientRect()
       if (b.width <= 1 || b.height <= 1) continue
       if ((b.right > vw + 1 || b.left < -1) && !clipped(el)) bad.push(`${el.tagName}.${(el.getAttribute('class') ?? '').slice(0, 40)}`)
-      if (el.matches('button, a, input:not([type=file]):not([hidden]), select, textarea, [role=tab], [role=radio]') && !el.closest('.sr-only') && !el.classList.contains('sr-only')) {
+      if (
+        el.matches('button, a, input:not([type=file]):not([hidden]), select, textarea, [role=tab], [role=radio]') &&
+        !el.closest('.sr-only') &&
+        !el.classList.contains('sr-only')
+      ) {
         if (b.height < 43.5) small.push(`${el.tagName} ${(el.textContent ?? '').trim().slice(0, 20)} h=${Math.round(b.height)}`)
       }
     }
@@ -108,7 +112,7 @@ for (const width of WIDTHS) {
   }
 }
 
-test('condividi: QR troppo lungo mostra l\'avviso', async ({ page }) => {
+test("condividi: QR troppo lungo mostra l'avviso", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 })
   await page.goto('/tests/harness/share.html?long=1')
   await expect(page.getByRole('alert')).toBeVisible()
@@ -126,7 +130,9 @@ test('importa da link, salva e apre la combo', async ({ page }) => {
 
 test('importa da file (selezione) e da testo incollato', async ({ page }) => {
   await page.goto('/importa')
-  await page.getByTestId('import-file').setInputFiles({ name: 'combo.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc)) })
+  await page
+    .getByTestId('import-file')
+    .setInputFiles({ name: 'combo.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(doc)) })
   await expect(page.getByTestId('import-preview')).toBeVisible()
   await page.getByRole('button', { name: /svuota|clear/i }).click()
   await page.getByTestId('import-text').fill('1.AAAAAAAAAAAAAA')
@@ -148,7 +154,15 @@ test('backup: esporta, cancella, ripristina, annulla', async ({ page }) => {
   // cancella i dati locali
   await page.evaluate(async () => {
     const dbs = await indexedDB.databases()
-    await Promise.all(dbs.map((d) => new Promise((r) => { const q = indexedDB.deleteDatabase(d.name!); q.onsuccess = q.onerror = q.onblocked = () => r(null) })))
+    await Promise.all(
+      dbs.map(
+        (d) =>
+          new Promise((r) => {
+            const q = indexedDB.deleteDatabase(d.name!)
+            q.onsuccess = q.onerror = q.onblocked = () => r(null)
+          }),
+      ),
+    )
   })
   await page.goto('/impostazioni')
   await page.getByTestId('backup-file').setInputFiles(file!)
@@ -157,7 +171,9 @@ test('backup: esporta, cancella, ripristina, annulla', async ({ page }) => {
   await page.goto('/combo')
   await expect(page.getByRole('link', { name: new RegExp(`${doc.meta.title.it}|${doc.meta.title.en}`) }).first()).toBeVisible()
   await page.goto('/impostazioni')
-  await page.getByTestId('backup-file').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"altro"}') })
+  await page
+    .getByTestId('backup-file')
+    .setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"altro"}') })
   await expect(page.getByRole('alert')).toBeVisible()
 })
 

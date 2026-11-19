@@ -412,7 +412,7 @@ export function ImportView({ initialText }: { initialText?: string }) {
                     {r.migratedFrom ? <Badge tone="accent">{t('importPage.combo.migrated', { v: r.migratedFrom })}</Badge> : null}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-3 gap-2">
                   <Stat label={t('importPage.combo.steps')} value={d.steps.length} />
                   <Stat label={t('importPage.combo.branches')} value={d.branches.length} />
                   <Stat label={t('importPage.combo.cards')} value={Object.keys(d.cards).length} />
