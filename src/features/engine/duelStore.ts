@@ -48,6 +48,8 @@ interface DuelStore {
   respond: (a: Answer) => Promise<boolean>
   undo: () => Promise<void>
   redo: () => Promise<void>
+  /** Scalda il motore (init + script del mazzo) senza avviare un duello; non blocca e non fallisce. */
+  warm: (codes: number[]) => void
   stop: () => Promise<void>
   clearError: () => void
 }
@@ -100,10 +102,17 @@ export const useDuel = create<DuelStore>((set, get) => {
   const enqueue = <T,>(fn: () => Promise<T>): Promise<T> => {
     pendingOps++
     set({ busy: true })
-    const run = chain.then(fn, fn)
+    const wrapped = async () => {
+      try {
+        return await fn()
+      } finally {
+        set({ load: null, replaying: 0 })
+      }
+    }
+    const run = chain.then(wrapped, wrapped)
     chain = run.catch(() => undefined).finally(() => {
       pendingOps--
-      if (pendingOps === 0) set({ busy: false, load: null, replaying: 0 })
+      if (pendingOps === 0) set({ busy: false })
     })
     return run
   }
@@ -174,6 +183,17 @@ export const useDuel = create<DuelStore>((set, get) => {
     redo: () => enqueue(async () => {
       try { const c = await getClient(); await apply(c, await c.redo()) } catch (e) { set({ status: 'error', error: fail(e) }) }
     }),
+
+    warm: (codes) => {
+      if (get().status === 'loading' || get().status === 'running') return
+      void enqueue(async () => {
+        try {
+          const c = await getClient()
+          set({ init: get().init ?? (await c.init()) })
+          await c.preload(codes)
+        } catch { /* si riprova all'avvio */ }
+      })
+    },
 
     stop: () =>
       enqueue(async () => {

@@ -23,6 +23,8 @@ interface EditorStore {
   edit: (fn: (doc: ComboDoc, cursor: number) => { doc: ComboDoc; cursor?: number } | null) => boolean
   /** Un rilascio/azione sul campo: nel manuale crea un passo, nella configurazione modifica lo stato iniziale. */
   apply: (d: Draft) => string | null
+  /** Aggiornamento silenzioso (modalità automatica): niente cronologia, cursore alla fine; l'annulla è quello del motore. */
+  sync: (fn: (doc: ComboDoc) => ComboDoc) => void
   patchStep: (id: string, patch: Partial<Step>) => void
   moveStep: (id: string, dir: -1 | 1) => void
   removeStep: (id: string) => void
@@ -73,6 +75,12 @@ export const useEditor = create<EditorStore>((set, get) => {
       const r = addStep(doc, cursor, d)
       commit(r.doc, r.cursor)
       return r.stepId
+    },
+    sync: (fn) => {
+      const s = get()
+      if (!s.doc) return
+      const next = fn(s.doc)
+      set({ doc: next, cursor: next.steps.length, rev: s.rev + 1 })
     },
     patchStep: (id, patch) => {
       const doc = get().doc

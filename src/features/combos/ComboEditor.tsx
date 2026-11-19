@@ -32,6 +32,14 @@ import { banlistImpact, checkCoherence } from '@/domain/smart'
 import { playSound } from '@/features/sound'
 import Ellipsis from 'lucide-react/icons/ellipsis'
 import { PracticeHandDialog } from './PracticeHandDialog'
+import { AutoDock, AutoNotices } from '@/features/engine/AutoDock'
+import { AutoStage } from '@/features/engine/AutoStage'
+import { useDuel } from '@/features/engine/duelStore'
+import { ModeSwitch } from '@/features/engine/ModeSwitch'
+import { startDuelFor } from '@/features/engine/StartPanel'
+import { isAutoDoc, savedSeed } from '@/features/engine/sync'
+import { useDuelDocSync } from '@/features/engine/useDuelSync'
+import { useEngT } from '@/features/engine/strings'
 import type { StepMark } from './StepsPanel'
 import { Board, type BoardHandle } from './Board'
 import { FIELD_ASPECT_RATIO } from './Field'
@@ -92,8 +100,16 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const cursor = useEditor((s) => s.cursor)
   const mode = useEditor((s) => s.mode)
   const rev = useEditor((s) => s.rev)
-  const canUndo = useEditor((s) => s.past.length > 0)
-  const canRedo = useEditor((s) => s.future.length > 0)
+  const canUndoManual = useEditor((s) => s.past.length > 0)
+  const canRedoManual = useEditor((s) => s.future.length > 0)
+  const auto = isAutoDoc(doc)
+  const duelLive = useDuel((s) => s.state !== null)
+  const duelCanUndo = useDuel((s) => s.state?.canUndo ?? false)
+  const duelCanRedo = useDuel((s) => s.state?.canRedo ?? false)
+  const engineLive = auto && duelLive
+  const canUndo = engineLive ? duelCanUndo : canUndoManual
+  const canRedo = engineLive ? duelCanRedo : canRedoManual
+  const { t: te } = useEngT()
   const recordRef = useRef<ComboRecord | null>(null)
 
   // ---- caricamento
@@ -159,19 +175,26 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return
       if (!(e.ctrlKey || e.metaKey)) return
       const key = e.key.toLowerCase()
+      const live = isAutoDoc(useEditor.getState().doc) && useDuel.getState().state !== null
       if (key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        useEditor.getState().undo()
+        if (live) void useDuel.getState().undo()
+        else useEditor.getState().undo()
         playSound('undo')
       } else if ((key === 'z' && e.shiftKey) || key === 'y') {
         e.preventDefault()
-        useEditor.getState().redo()
+        if (live) void useDuel.getState().redo()
+        else useEditor.getState().redo()
         playSound('redo')
       }
     }
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
   }, [])
+
+  // ---- modalità automatica: ogni stato del motore diventa i passi della combo; il motore si ferma con l'editor
+  useDuelDocSync(auto)
+  useEffect(() => () => void useDuel.getState().stop(), [comboId])
 
   const states = useMemo(() => (doc ? allStates(doc) : null), [doc])
   const state = states ? (mode === 'setup' ? states.main[0]! : (states.main[Math.min(cursor, states.main.length - 1)] ?? states.main[0]!)) : null
@@ -272,7 +295,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
         </TabsContent>
       ) : null}
       <TabsContent value="steps">
-        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={onDerive} marks={marks} turn={timeline?.[cursor]} optTotal={optTotal} onPhaseChange={onPhaseChange} checkBanner={checkOn ? { count: issues.length, onClose: () => setCheckOn(false) } : null} />
+        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={onDerive} marks={marks} turn={timeline?.[cursor]} optTotal={optTotal} {...(auto ? {} : { onPhaseChange })} checkBanner={checkOn ? { count: issues.length, onClose: () => setCheckOn(false) } : null} />
       </TabsContent>
       <TabsContent value="setup">
         <SetupPanel doc={doc} nameOf={nameOfUid} />
@@ -283,6 +306,21 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     </Tabs>
   )
 
+  const setAuto = (on: boolean) => {
+    if (!on) void useDuel.getState().stop()
+    useEditor.getState().sync((d) => ({ ...d, x: { ...(d.x ?? {}), playMode: on ? 'auto' : 'manual' } }))
+    playSound('uiToggle')
+  }
+  const doUndo = () => {
+    if (engineLive) void useDuel.getState().undo()
+    else store.undo()
+    playSound('undo')
+  }
+  const doRedo = () => {
+    if (engineLive) void useDuel.getState().redo()
+    else store.redo()
+    playSound('redo')
+  }
   const tool = 'inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-150'
   const run = (fn: () => void) => () => {
     playSound('uiTap')
@@ -307,14 +345,26 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       }),
     },
     { id: 'practice', label: t('combos.menu.practice'), onSelect: run(() => setPracticeOpen(true)) },
+    ...(doc.engine?.responses.length && !readOnly
+      ? [{
+          id: 'replay-engine',
+          label: te('start.replay'),
+          onSelect: run(() => {
+            if (!auto) setAuto(true)
+            const sv = savedSeed(doc)
+            void startDuelFor(doc, { seed: sv?.seed ?? 1, order: sv?.order, replay: true })
+          }),
+        }]
+      : []),
   ]
   const actions = (
     <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+      <ModeSwitch auto={auto} onChange={setAuto} disabled={readOnly} compact={phone} />
       <Tooltip label={`${t('combos.undo')} (Ctrl+Z)`}>
-        <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={() => { store.undo(); playSound('undo') }} data-testid="undo" />
+        <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={doUndo} data-testid="undo" />
       </Tooltip>
       <Tooltip label={`${t('combos.redo')} (Ctrl+Shift+Z)`}>
-        <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={() => { store.redo(); playSound('redo') }} data-testid="redo" />
+        <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={doRedo} data-testid="redo" />
       </Tooltip>
       {!phone ? (
         <>
@@ -394,6 +444,8 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       </header>
 
       {readOnly ? <Banner tone="warn" title={t('combos.readOnly')}>{t('combos.readOnlyBody')}</Banner> : null}
+      {auto ? <AutoNotices onManual={() => setAuto(false)} nameOf={cards.nameOf} /> : null}
+      {auto && duelLive ? <AutoDock turn={timeline?.[cursor]} /> : null}
 
       <div className="relative min-h-0 flex-1" style={{ containerType: 'size' }}>
         <div className="flex h-full justify-center gap-2">
@@ -402,7 +454,13 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             data-mode={mode}
             style={{ width: inlinePanel ? `min(calc(100cqw - 328px), calc(100cqh * ${FIELD_ASPECT_RATIO}))` : '100%', flex: inlinePanel ? 'none' : '1 1 0%' }}
           >
-            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} turn={timeline?.[cursor]} mineOnly={mineOnly} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
+            {auto && !readOnly ? (
+              <AutoStage doc={doc} turn={timeline?.[cursor]} mineOnly={mineOnly}>
+                <Board doc={doc} state={state} mode="steps" cursor={cursor} readOnly handle={boardRef} turn={timeline?.[cursor]} mineOnly={mineOnly} pilesEl={null} />
+              </AutoStage>
+            ) : (
+              <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} turn={timeline?.[cursor]} mineOnly={mineOnly} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
+            )}
             {mode === 'setup' ? (
               <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
                 {t('combos.modeSetupBadge')}

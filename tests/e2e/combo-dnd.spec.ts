@@ -273,7 +273,14 @@ test.describe('alternative al trascinamento', () => {
     await expect(page.locator('[data-steps] li[data-block="group"]')).toBeVisible() // i due passi raggruppati formano un blocco comprimibile
     await page.getByTestId('step-menu-1').click()
     await page.getByRole('menuitem', { name: /Move up|Sposta su/ }).click()
-    const steps = await expect.poll(async () => (await savedSteps(page)).length).toBe(3).then(() => savedSteps(page))
+    // l'autosalvataggio è ritardato: si aspetta lo stato finale (gruppo + ordine + nota), non solo il numero di passi
+    await expect
+      .poll(async () => {
+        const s = await savedSteps(page)
+        return s.length === 3 && s[0]!.group !== undefined && s[0]!.group === s[1]!.group && s[1]!.card === 'u1' && (s[1]!.note as { en?: string } | undefined)?.en === 'Summon the engine.'
+      })
+      .toBe(true)
+    const steps = await savedSteps(page)
     expect(steps[1]).toMatchObject({ card: 'u1', note: { en: 'Summon the engine.' } }) // un solo campo: salva sotto la lingua corrente
     expect(steps[0]!.group).toBeDefined()
     expect(steps[0]!.group).toBe(steps[1]!.group)
@@ -304,10 +311,13 @@ test.describe('alternative al trascinamento', () => {
 
 /** Tre passi: Normale (Mano→M3), attiva Magia, manda u1 (ora in campo) al Cimitero. */
 async function drag3(page: Page) {
+  const steps = page.locator('[data-steps] li[data-step-id]')
   await mouseDrag(page, card(page, 'u1'), zone(page, 'z:0:mzone:2'))
   await chooseMenu(page, 'normalSummon')
+  await expect(steps).toHaveCount(1)
   await mouseDrag(page, card(page, 'u3'), zone(page, 'z:0:szone:2'))
   await chooseMenu(page, 'activate')
+  await expect(steps).toHaveCount(2)
   await mouseDrag(page, card(page, 'u1'), zone(page, 'p:0:gy'))
   await chooseMenu(page, 'sendToGY')
   await expect(page.locator('[data-steps] li')).toHaveCount(3)

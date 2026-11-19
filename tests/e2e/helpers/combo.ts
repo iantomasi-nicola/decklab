@@ -94,8 +94,20 @@ export async function openCombo(page: Page, id: string, lang: 'it' | 'en' = 'en'
 export const card = (page: Page, uid: string): Locator => page.locator(`[data-card="${uid}"]`)
 export const zone = (page: Page, key: string): Locator => page.locator(`[data-zone="${key}"]`)
 
+/** Aspetta che l'elemento smetta di muoversi (animazione di spostamento carta, ricalcolo del layout) prima di usarne le coordinate. */
+async function settled(l: Locator) {
+  let prev: { x: number; y: number; width: number; height: number } | null = null
+  for (let i = 0; i < 30; i++) {
+    const b = await l.boundingBox()
+    if (b && prev && Math.abs(b.x - prev.x) < 0.5 && Math.abs(b.y - prev.y) < 0.5 && Math.abs(b.width - prev.width) < 0.5 && Math.abs(b.height - prev.height) < 0.5) return b
+    prev = b
+    await l.page().waitForTimeout(70)
+  }
+  return prev
+}
+
 async function center(l: Locator) {
-  const b = await l.boundingBox()
+  const b = await settled(l)
   if (!b) throw new Error('elemento non visibile')
   return { x: b.x + b.width / 2, y: b.y + b.height / 2 }
 }
