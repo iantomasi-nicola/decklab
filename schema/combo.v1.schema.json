@@ -1,0 +1,2144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "combolab.combo"
+    },
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "object",
+          "properties": {
+            "it": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": {}
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "variant",
+            "archetype"
+          ]
+        },
+        "archetype": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "object",
+              "properties": {
+                "it": {
+                  "type": "string"
+                },
+                "en": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": {}
+        },
+        "variant": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "object",
+                  "properties": {
+                    "it": {
+                      "type": "string"
+                    },
+                    "en": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "additionalProperties": {}
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rules": {
+          "type": "string",
+          "enum": [
+            "TCG",
+            "OCG"
+          ]
+        },
+        "banlist": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "format",
+            "id"
+          ],
+          "additionalProperties": {}
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "noteLang": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "favorite": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "engine",
+            "import"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "scope",
+        "archetype",
+        "variant",
+        "rules",
+        "banlist",
+        "tags",
+        "noteLang",
+        "favorite",
+        "createdAt",
+        "updatedAt",
+        "source"
+      ],
+      "additionalProperties": {}
+    },
+    "deck": {
+      "type": "object",
+      "properties": {
+        "main": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "extra": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "side": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "ydke": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "main",
+        "extra",
+        "side"
+      ],
+      "additionalProperties": {}
+    },
+    "cards": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+      }
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "first": {
+          "type": "boolean"
+        },
+        "hand": {
+          "type": "object",
+          "properties": {
+            "required": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "fill": {
+              "type": "string",
+              "enum": [
+                "random",
+                "none"
+              ]
+            }
+          },
+          "required": [
+            "required",
+            "size",
+            "fill"
+          ],
+          "additionalProperties": {}
+        },
+        "own": {
+          "type": "object",
+          "properties": {
+            "lp": {
+              "type": "number"
+            },
+            "places": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "uid": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "place": {
+                    "type": "object",
+                    "properties": {
+                      "p": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "const": 0
+                          },
+                          {
+                            "type": "number",
+                            "const": 1
+                          }
+                        ]
+                      },
+                      "loc": {
+                        "type": "string",
+                        "enum": [
+                          "deck",
+                          "hand",
+                          "extra",
+                          "gy",
+                          "banished",
+                          "mzone",
+                          "emz",
+                          "szone",
+                          "fzone",
+                          "overlay"
+                        ]
+                      },
+                      "seq": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "pos": {
+                        "type": "string",
+                        "enum": [
+                          "FACEUP_ATK",
+                          "FACEUP_DEF",
+                          "FACEDOWN_DEF",
+                          "FACEUP",
+                          "FACEDOWN"
+                        ]
+                      },
+                      "host": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "loc"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "uid",
+                  "place"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "counters": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "required": [
+            "lp",
+            "places"
+          ],
+          "additionalProperties": {}
+        },
+        "opponent": {
+          "type": "object",
+          "properties": {
+            "board": {
+              "type": "object",
+              "properties": {
+                "lp": {
+                  "type": "number"
+                },
+                "places": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uid": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "place": {
+                        "type": "object",
+                        "properties": {
+                          "p": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 0
+                              },
+                              {
+                                "type": "number",
+                                "const": 1
+                              }
+                            ]
+                          },
+                          "loc": {
+                            "type": "string",
+                            "enum": [
+                              "deck",
+                              "hand",
+                              "extra",
+                              "gy",
+                              "banished",
+                              "mzone",
+                              "emz",
+                              "szone",
+                              "fzone",
+                              "overlay"
+                            ]
+                          },
+                          "seq": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "pos": {
+                            "type": "string",
+                            "enum": [
+                              "FACEUP_ATK",
+                              "FACEUP_DEF",
+                              "FACEDOWN_DEF",
+                              "FACEUP",
+                              "FACEDOWN"
+                            ]
+                          },
+                          "host": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "loc"
+                        ],
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "uid",
+                      "place"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "counters": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "additionalProperties": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "lp",
+                "places"
+              ],
+              "additionalProperties": {}
+            },
+            "interrupts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "uid": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "ask",
+                      "auto-first",
+                      "auto-selected",
+                      "never"
+                    ]
+                  },
+                  "when": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "card": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "card"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  },
+                  "target": {
+                    "type": "string",
+                    "enum": [
+                      "manual",
+                      "priority"
+                    ]
+                  },
+                  "priority": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "uid",
+                  "mode",
+                  "target"
+                ],
+                "additionalProperties": {}
+              }
+            }
+          },
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "first",
+        "hand"
+      ],
+      "additionalProperties": {}
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "normalSummon",
+              "tributeSummon",
+              "setMonster",
+              "flipSummon",
+              "specialSummon",
+              "activate",
+              "setSpellTrap",
+              "chainActivate",
+              "search",
+              "draw",
+              "discard",
+              "sendToGY",
+              "banish",
+              "returnToHand",
+              "returnToDeck",
+              "destroy",
+              "detach",
+              "shuffle",
+              "changePosition",
+              "equip",
+              "attach",
+              "placeCounter",
+              "changeLP",
+              "attack",
+              "enterPhase",
+              "endTurn",
+              "resolve",
+              "declare",
+              "choice",
+              "custom"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "fusion",
+              "synchro",
+              "xyz",
+              "link",
+              "ritual",
+              "pendulum",
+              "effect",
+              "procedure",
+              "other"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "card": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effect": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "activation",
+                  "ignition",
+                  "trigger",
+                  "quick",
+                  "continuous",
+                  "summon-proc",
+                  "other"
+                ]
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": {}
+          },
+          "from": {
+            "type": "object",
+            "properties": {
+              "p": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "const": 0
+                  },
+                  {
+                    "type": "number",
+                    "const": 1
+                  }
+                ]
+              },
+              "loc": {
+                "type": "string",
+                "enum": [
+                  "deck",
+                  "hand",
+                  "extra",
+                  "gy",
+                  "banished",
+                  "mzone",
+                  "emz",
+                  "szone",
+                  "fzone",
+                  "overlay"
+                ]
+              },
+              "seq": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "pos": {
+                "type": "string",
+                "enum": [
+                  "FACEUP_ATK",
+                  "FACEUP_DEF",
+                  "FACEDOWN_DEF",
+                  "FACEUP",
+                  "FACEDOWN"
+                ]
+              },
+              "host": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "loc"
+            ],
+            "additionalProperties": {}
+          },
+          "to": {
+            "type": "object",
+            "properties": {
+              "p": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "const": 0
+                  },
+                  {
+                    "type": "number",
+                    "const": 1
+                  }
+                ]
+              },
+              "loc": {
+                "type": "string",
+                "enum": [
+                  "deck",
+                  "hand",
+                  "extra",
+                  "gy",
+                  "banished",
+                  "mzone",
+                  "emz",
+                  "szone",
+                  "fzone",
+                  "overlay"
+                ]
+              },
+              "seq": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "pos": {
+                "type": "string",
+                "enum": [
+                  "FACEUP_ATK",
+                  "FACEUP_DEF",
+                  "FACEDOWN_DEF",
+                  "FACEUP",
+                  "FACEDOWN"
+                ]
+              },
+              "host": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "loc"
+            ],
+            "additionalProperties": {}
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "costs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "cards": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "kind",
+                "cards"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "searched": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "moves": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "uid": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "from": {
+                  "type": "object",
+                  "properties": {
+                    "p": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 0
+                        },
+                        {
+                          "type": "number",
+                          "const": 1
+                        }
+                      ]
+                    },
+                    "loc": {
+                      "type": "string",
+                      "enum": [
+                        "deck",
+                        "hand",
+                        "extra",
+                        "gy",
+                        "banished",
+                        "mzone",
+                        "emz",
+                        "szone",
+                        "fzone",
+                        "overlay"
+                      ]
+                    },
+                    "seq": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "pos": {
+                      "type": "string",
+                      "enum": [
+                        "FACEUP_ATK",
+                        "FACEUP_DEF",
+                        "FACEDOWN_DEF",
+                        "FACEUP",
+                        "FACEDOWN"
+                      ]
+                    },
+                    "host": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loc"
+                  ],
+                  "additionalProperties": {}
+                },
+                "to": {
+                  "type": "object",
+                  "properties": {
+                    "p": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 0
+                        },
+                        {
+                          "type": "number",
+                          "const": 1
+                        }
+                      ]
+                    },
+                    "loc": {
+                      "type": "string",
+                      "enum": [
+                        "deck",
+                        "hand",
+                        "extra",
+                        "gy",
+                        "banished",
+                        "mzone",
+                        "emz",
+                        "szone",
+                        "fzone",
+                        "overlay"
+                      ]
+                    },
+                    "seq": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "pos": {
+                      "type": "string",
+                      "enum": [
+                        "FACEUP_ATK",
+                        "FACEUP_DEF",
+                        "FACEDOWN_DEF",
+                        "FACEUP",
+                        "FACEDOWN"
+                      ]
+                    },
+                    "host": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loc"
+                  ],
+                  "additionalProperties": {}
+                },
+                "why": {
+                  "type": "string",
+                  "enum": [
+                    "summon",
+                    "tribute",
+                    "material",
+                    "cost",
+                    "search",
+                    "draw",
+                    "discard",
+                    "destroy",
+                    "send",
+                    "banish",
+                    "return",
+                    "set",
+                    "flip",
+                    "position",
+                    "equip",
+                    "shuffle",
+                    "other"
+                  ]
+                }
+              },
+              "required": [
+                "uid",
+                "to"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "lp": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "p": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0
+                    },
+                    {
+                      "type": "number",
+                      "const": 1
+                    }
+                  ]
+                },
+                "delta": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "p",
+                "delta"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "counters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "uid": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string"
+                },
+                "delta": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "uid",
+                "type",
+                "delta"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "chain": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "link": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "link"
+            ],
+            "additionalProperties": {}
+          },
+          "ref": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "draw",
+              "standby",
+              "main1",
+              "battle",
+              "main2",
+              "end"
+            ]
+          },
+          "note": {
+            "type": "object",
+            "properties": {
+              "it": {
+                "type": "string"
+              },
+              "en": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {}
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "x": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "moves"
+        ],
+        "additionalProperties": {}
+      }
+    },
+    "branches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "object",
+            "properties": {
+              "it": {
+                "type": "string"
+              },
+              "en": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {}
+          },
+          "condition": {
+            "type": "object",
+            "properties": {
+              "afterStep": {
+                "type": "string"
+              },
+              "window": {
+                "type": "string",
+                "enum": [
+                  "activation",
+                  "resolution"
+                ]
+              },
+              "opponent": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "effect": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "code"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "afterStep",
+              "window",
+              "opponent"
+            ],
+            "additionalProperties": {}
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "normalSummon",
+                    "tributeSummon",
+                    "setMonster",
+                    "flipSummon",
+                    "specialSummon",
+                    "activate",
+                    "setSpellTrap",
+                    "chainActivate",
+                    "search",
+                    "draw",
+                    "discard",
+                    "sendToGY",
+                    "banish",
+                    "returnToHand",
+                    "returnToDeck",
+                    "destroy",
+                    "detach",
+                    "shuffle",
+                    "changePosition",
+                    "equip",
+                    "attach",
+                    "placeCounter",
+                    "changeLP",
+                    "attack",
+                    "enterPhase",
+                    "endTurn",
+                    "resolve",
+                    "declare",
+                    "choice",
+                    "custom"
+                  ]
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "fusion",
+                    "synchro",
+                    "xyz",
+                    "link",
+                    "ritual",
+                    "pendulum",
+                    "effect",
+                    "procedure",
+                    "other"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                },
+                "card": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "effect": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "activation",
+                        "ignition",
+                        "trigger",
+                        "quick",
+                        "continuous",
+                        "summon-proc",
+                        "other"
+                      ]
+                    },
+                    "index": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "additionalProperties": {}
+                },
+                "from": {
+                  "type": "object",
+                  "properties": {
+                    "p": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 0
+                        },
+                        {
+                          "type": "number",
+                          "const": 1
+                        }
+                      ]
+                    },
+                    "loc": {
+                      "type": "string",
+                      "enum": [
+                        "deck",
+                        "hand",
+                        "extra",
+                        "gy",
+                        "banished",
+                        "mzone",
+                        "emz",
+                        "szone",
+                        "fzone",
+                        "overlay"
+                      ]
+                    },
+                    "seq": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "pos": {
+                      "type": "string",
+                      "enum": [
+                        "FACEUP_ATK",
+                        "FACEUP_DEF",
+                        "FACEDOWN_DEF",
+                        "FACEUP",
+                        "FACEDOWN"
+                      ]
+                    },
+                    "host": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loc"
+                  ],
+                  "additionalProperties": {}
+                },
+                "to": {
+                  "type": "object",
+                  "properties": {
+                    "p": {
+                      "anyOf": [
+                        {
+                          "type": "number",
+                          "const": 0
+                        },
+                        {
+                          "type": "number",
+                          "const": 1
+                        }
+                      ]
+                    },
+                    "loc": {
+                      "type": "string",
+                      "enum": [
+                        "deck",
+                        "hand",
+                        "extra",
+                        "gy",
+                        "banished",
+                        "mzone",
+                        "emz",
+                        "szone",
+                        "fzone",
+                        "overlay"
+                      ]
+                    },
+                    "seq": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "pos": {
+                      "type": "string",
+                      "enum": [
+                        "FACEUP_ATK",
+                        "FACEUP_DEF",
+                        "FACEDOWN_DEF",
+                        "FACEUP",
+                        "FACEDOWN"
+                      ]
+                    },
+                    "host": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "loc"
+                  ],
+                  "additionalProperties": {}
+                },
+                "targets": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "costs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string"
+                      },
+                      "cards": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "cards"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "searched": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "moves": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uid": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "from": {
+                        "type": "object",
+                        "properties": {
+                          "p": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 0
+                              },
+                              {
+                                "type": "number",
+                                "const": 1
+                              }
+                            ]
+                          },
+                          "loc": {
+                            "type": "string",
+                            "enum": [
+                              "deck",
+                              "hand",
+                              "extra",
+                              "gy",
+                              "banished",
+                              "mzone",
+                              "emz",
+                              "szone",
+                              "fzone",
+                              "overlay"
+                            ]
+                          },
+                          "seq": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "pos": {
+                            "type": "string",
+                            "enum": [
+                              "FACEUP_ATK",
+                              "FACEUP_DEF",
+                              "FACEDOWN_DEF",
+                              "FACEUP",
+                              "FACEDOWN"
+                            ]
+                          },
+                          "host": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "loc"
+                        ],
+                        "additionalProperties": {}
+                      },
+                      "to": {
+                        "type": "object",
+                        "properties": {
+                          "p": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 0
+                              },
+                              {
+                                "type": "number",
+                                "const": 1
+                              }
+                            ]
+                          },
+                          "loc": {
+                            "type": "string",
+                            "enum": [
+                              "deck",
+                              "hand",
+                              "extra",
+                              "gy",
+                              "banished",
+                              "mzone",
+                              "emz",
+                              "szone",
+                              "fzone",
+                              "overlay"
+                            ]
+                          },
+                          "seq": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "pos": {
+                            "type": "string",
+                            "enum": [
+                              "FACEUP_ATK",
+                              "FACEUP_DEF",
+                              "FACEDOWN_DEF",
+                              "FACEUP",
+                              "FACEDOWN"
+                            ]
+                          },
+                          "host": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "loc"
+                        ],
+                        "additionalProperties": {}
+                      },
+                      "why": {
+                        "type": "string",
+                        "enum": [
+                          "summon",
+                          "tribute",
+                          "material",
+                          "cost",
+                          "search",
+                          "draw",
+                          "discard",
+                          "destroy",
+                          "send",
+                          "banish",
+                          "return",
+                          "set",
+                          "flip",
+                          "position",
+                          "equip",
+                          "shuffle",
+                          "other"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "uid",
+                      "to"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "lp": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "p": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "const": 0
+                          },
+                          {
+                            "type": "number",
+                            "const": 1
+                          }
+                        ]
+                      },
+                      "delta": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "p",
+                      "delta"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "counters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uid": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "delta": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "uid",
+                      "type",
+                      "delta"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "chain": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "link": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "link"
+                  ],
+                  "additionalProperties": {}
+                },
+                "ref": {
+                  "type": "string"
+                },
+                "group": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "draw",
+                    "standby",
+                    "main1",
+                    "battle",
+                    "main2",
+                    "end"
+                  ]
+                },
+                "note": {
+                  "type": "object",
+                  "properties": {
+                    "it": {
+                      "type": "string"
+                    },
+                    "en": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": {}
+                },
+                "optional": {
+                  "type": "boolean"
+                },
+                "x": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "id",
+                "action",
+                "moves"
+              ],
+              "additionalProperties": {}
+            }
+          },
+          "rejoin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endboard": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "own": {
+                    "type": "object",
+                    "properties": {
+                      "lp": {
+                        "type": "number"
+                      },
+                      "places": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "uid": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "place": {
+                              "type": "object",
+                              "properties": {
+                                "p": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number",
+                                      "const": 0
+                                    },
+                                    {
+                                      "type": "number",
+                                      "const": 1
+                                    }
+                                  ]
+                                },
+                                "loc": {
+                                  "type": "string",
+                                  "enum": [
+                                    "deck",
+                                    "hand",
+                                    "extra",
+                                    "gy",
+                                    "banished",
+                                    "mzone",
+                                    "emz",
+                                    "szone",
+                                    "fzone",
+                                    "overlay"
+                                  ]
+                                },
+                                "seq": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "pos": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FACEUP_ATK",
+                                    "FACEUP_DEF",
+                                    "FACEDOWN_DEF",
+                                    "FACEUP",
+                                    "FACEDOWN"
+                                  ]
+                                },
+                                "host": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "loc"
+                              ],
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "uid",
+                            "place"
+                          ],
+                          "additionalProperties": {}
+                        }
+                      },
+                      "counters": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "lp",
+                      "places"
+                    ],
+                    "additionalProperties": {}
+                  },
+                  "opponent": {
+                    "type": "object",
+                    "properties": {
+                      "lp": {
+                        "type": "number"
+                      },
+                      "places": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "uid": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "place": {
+                              "type": "object",
+                              "properties": {
+                                "p": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number",
+                                      "const": 0
+                                    },
+                                    {
+                                      "type": "number",
+                                      "const": 1
+                                    }
+                                  ]
+                                },
+                                "loc": {
+                                  "type": "string",
+                                  "enum": [
+                                    "deck",
+                                    "hand",
+                                    "extra",
+                                    "gy",
+                                    "banished",
+                                    "mzone",
+                                    "emz",
+                                    "szone",
+                                    "fzone",
+                                    "overlay"
+                                  ]
+                                },
+                                "seq": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "pos": {
+                                  "type": "string",
+                                  "enum": [
+                                    "FACEUP_ATK",
+                                    "FACEUP_DEF",
+                                    "FACEDOWN_DEF",
+                                    "FACEUP",
+                                    "FACEDOWN"
+                                  ]
+                                },
+                                "host": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "loc"
+                              ],
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "uid",
+                            "place"
+                          ],
+                          "additionalProperties": {}
+                        }
+                      },
+                      "counters": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "lp",
+                      "places"
+                    ],
+                    "additionalProperties": {}
+                  },
+                  "summary": {
+                    "type": "object",
+                    "properties": {
+                      "it": {
+                        "type": "string"
+                      },
+                      "en": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": {}
+                  },
+                  "hash": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "own"
+                ],
+                "additionalProperties": {}
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "type": "object",
+            "properties": {
+              "it": {
+                "type": "string"
+              },
+              "en": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "id",
+          "condition",
+          "steps",
+          "rejoin"
+        ],
+        "additionalProperties": {}
+      }
+    },
+    "endboard": {
+      "type": "object",
+      "properties": {
+        "own": {
+          "type": "object",
+          "properties": {
+            "lp": {
+              "type": "number"
+            },
+            "places": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "uid": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "place": {
+                    "type": "object",
+                    "properties": {
+                      "p": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "const": 0
+                          },
+                          {
+                            "type": "number",
+                            "const": 1
+                          }
+                        ]
+                      },
+                      "loc": {
+                        "type": "string",
+                        "enum": [
+                          "deck",
+                          "hand",
+                          "extra",
+                          "gy",
+                          "banished",
+                          "mzone",
+                          "emz",
+                          "szone",
+                          "fzone",
+                          "overlay"
+                        ]
+                      },
+                      "seq": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "pos": {
+                        "type": "string",
+                        "enum": [
+                          "FACEUP_ATK",
+                          "FACEUP_DEF",
+                          "FACEDOWN_DEF",
+                          "FACEUP",
+                          "FACEDOWN"
+                        ]
+                      },
+                      "host": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "loc"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "uid",
+                  "place"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "counters": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "required": [
+            "lp",
+            "places"
+          ],
+          "additionalProperties": {}
+        },
+        "opponent": {
+          "type": "object",
+          "properties": {
+            "lp": {
+              "type": "number"
+            },
+            "places": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "uid": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "place": {
+                    "type": "object",
+                    "properties": {
+                      "p": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "const": 0
+                          },
+                          {
+                            "type": "number",
+                            "const": 1
+                          }
+                        ]
+                      },
+                      "loc": {
+                        "type": "string",
+                        "enum": [
+                          "deck",
+                          "hand",
+                          "extra",
+                          "gy",
+                          "banished",
+                          "mzone",
+                          "emz",
+                          "szone",
+                          "fzone",
+                          "overlay"
+                        ]
+                      },
+                      "seq": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "pos": {
+                        "type": "string",
+                        "enum": [
+                          "FACEUP_ATK",
+                          "FACEUP_DEF",
+                          "FACEDOWN_DEF",
+                          "FACEUP",
+                          "FACEDOWN"
+                        ]
+                      },
+                      "host": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "loc"
+                    ],
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "uid",
+                  "place"
+                ],
+                "additionalProperties": {}
+              }
+            },
+            "counters": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "required": [
+            "lp",
+            "places"
+          ],
+          "additionalProperties": {}
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "it": {
+              "type": "string"
+            },
+            "en": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": {}
+        },
+        "hash": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "own"
+      ],
+      "additionalProperties": {}
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "core": {
+          "type": "string"
+        },
+        "scriptsCommit": {
+          "type": "string"
+        },
+        "cdbVersion": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "seed": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "core",
+        "scriptsCommit",
+        "cdbVersion",
+        "mode",
+        "seed",
+        "responses"
+      ],
+      "additionalProperties": {}
+    },
+    "x": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    }
+  },
+  "required": [
+    "format",
+    "v",
+    "meta",
+    "deck",
+    "cards",
+    "setup",
+    "steps",
+    "branches"
+  ],
+  "additionalProperties": {},
+  "$id": "https://combolab.app/schema/combo.v1.schema.json",
+  "title": "combolab.combo v1"
+}
