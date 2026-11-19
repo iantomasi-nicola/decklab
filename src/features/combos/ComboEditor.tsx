@@ -22,6 +22,7 @@ import { Tooltip } from '@/ui/Tooltip'
 import { BottomSheet } from '@/ui/BottomSheet'
 import { Menu } from '@/ui/Menu'
 import { Board, type BoardHandle } from './Board'
+import { FIELD_ASPECT_RATIO } from './Field'
 import { useEditor } from './editorStore'
 import { InfoPanel } from './InfoPanel'
 import { deriveDoc, finalizeDoc } from './model'
@@ -199,6 +200,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     setPanel(p)
     writePanel(p)
   }
+  const inlinePanel = isLg && panel.open
   const togglePanel = () => setPanelState({ ...panel, open: !panel.open })
 
   const panelBody = (
@@ -293,31 +295,37 @@ export function ComboEditor({ comboId }: { comboId: string }) {
 
       {readOnly ? <Banner tone="warn" title={t('combos.readOnly')}>{t('combos.readOnlyBody')}</Banner> : null}
 
-      <div className="relative flex min-h-0 flex-1 gap-2">
-        <div className="relative min-w-0 flex-1" data-mode={mode}>
-          <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} />
-          {mode === 'setup' ? (
-            <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
-              {t('combos.modeSetupBadge')}
-            </p>
+      <div className="relative min-h-0 flex-1" style={{ containerType: 'size' }}>
+        <div className="flex h-full justify-center gap-2">
+          <div
+            className="relative min-w-0"
+            data-mode={mode}
+            style={{ width: inlinePanel ? `min(calc(100cqw - 328px), calc(100cqh * ${FIELD_ASPECT_RATIO}))` : '100%', flex: inlinePanel ? 'none' : '1 1 0%' }}
+          >
+            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} />
+            {mode === 'setup' ? (
+              <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
+                {t('combos.modeSetupBadge')}
+              </p>
+            ) : null}
+          </div>
+          {isMd && panel.open ? (
+            <aside
+              aria-label={t('combos.panels')}
+              data-panel
+              className={cn(
+                'flex min-h-0 flex-col rounded-lg border border-line bg-surface-1',
+                isLg ? 'min-w-80 max-w-[560px] flex-1' : 'absolute inset-y-0 right-0 z-30 w-[min(380px,85%)] shadow-3',
+              )}
+            >
+              <div className="flex items-center justify-between gap-2 px-4 pt-2">
+                <h2 className="text-base font-semibold">{t('combos.panels')}</h2>
+                <IconButton label={t('common.close')} icon={<X size={20} />} onClick={togglePanel} />
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{panelBody}</div>
+            </aside>
           ) : null}
         </div>
-        {isMd && panel.open ? (
-          <aside
-            aria-label={t('combos.panels')}
-            data-panel
-            className={cn(
-              'flex min-h-0 flex-col rounded-lg border border-line bg-surface-1',
-              isLg ? 'w-[clamp(320px,30vw,440px)] shrink-0' : 'absolute inset-y-0 right-0 z-30 w-[min(380px,85%)] shadow-3',
-            )}
-          >
-            <div className="flex items-center justify-between gap-2 px-4 pt-2">
-              <h2 className="text-base font-semibold">{t('combos.panels')}</h2>
-              <IconButton label={t('common.close')} icon={<X size={20} />} onClick={togglePanel} />
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{panelBody}</div>
-          </aside>
-        ) : null}
       </div>
 
       {!isMd ? (

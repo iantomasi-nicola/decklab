@@ -125,3 +125,22 @@ export function parseNote(text: string, r: NoteResolver): NoteSeg[] {
 export function noteToPlain(segs: readonly NoteSeg[], nameOf: (code: number) => string): string {
   return segs.map((s) => (s.t === 'text' ? s.s : nameOf(s.code))).join('')
 }
+
+/** Copia del documento con le note rese in chiaro (ogni nota usa i nomi della propria lingua): serve agli export testuali. */
+export function resolveDocNotes(doc: ComboDoc, r: NoteResolver, nameIn: (code: number, lang: 'it' | 'en') => string): ComboDoc {
+  const fix = (note: ComboDoc['steps'][number]['note']) => {
+    if (!note) return note
+    const out: { it?: string; en?: string } = {}
+    for (const lang of ['it', 'en'] as const) {
+      const v = note[lang]
+      if (v !== undefined) out[lang] = noteToPlain(parseNote(v, r), (c) => nameIn(c, lang))
+    }
+    return out
+  }
+  const fixStep = <S extends ComboDoc['steps'][number]>(s: S): S => (s.note ? { ...s, note: fix(s.note)! } : s)
+  return {
+    ...doc,
+    steps: doc.steps.map(fixStep),
+    branches: doc.branches.map((b) => ({ ...b, steps: b.steps.map(fixStep), ...(b.note ? { note: fix(b.note)! } : {}) })),
+  }
+}

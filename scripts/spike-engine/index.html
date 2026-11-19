@@ -1,0 +1,13 @@
+<!doctype html><meta charset="utf-8"><title>spike-engine</title><body><pre id="o">idle</pre>
+<script type="module">
+// main thread: long-task observer while the worker runs the engine
+const long = []; try { new PerformanceObserver((l) => l.getEntries().forEach((e) => long.push(Math.round(e.duration)))).observe({ entryTypes: ['longtask'] }) } catch {}
+window.runSpike = (opts) => new Promise((resolve) => {
+  const t0 = performance.now()
+  const w = new Worker('./worker.mjs', { type: 'module' })
+  w.onmessage = (e) => { window.__w = w; resolve({ ...e.data, totalWallMs: Math.round(performance.now() - t0), mainLongTasksMs: long.slice() }) }
+  w.onerror = (e) => resolve({ error: 'worker error ' + e.message })
+  w.postMessage(opts)
+})
+window.stopSpike = () => window.__w?.terminate(); window.ready = true
+</script>
