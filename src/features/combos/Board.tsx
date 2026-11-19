@@ -19,13 +19,13 @@ import { CardFace } from './CardFace'
 import { cardInfo, UNKNOWN_INFO, type CardInfo } from './cardKind'
 import { AddCardDialog, CounterDialog, LpDialog, MoveToDialog, type AddDest } from './Dialogs'
 import { useEditor } from './editorStore'
-import { Field, freshDragId, type FieldView } from './Field'
+import { Field, type FieldView } from './Field'
 import { nextUid, remainingPool, poolTotal, type Draft } from './model'
 import { PileSheet } from './PileSheet'
 import { PopMenu, type PopItem } from './PopMenu'
 import type { Sel } from './selection'
 import { useCards } from './useCards'
-import { destKey, freeSeq, occupantAt, parseDest, ZONE_COUNT, type Dest, type PileLoc, type ZoneLoc } from './zones'
+import { destKey, freeSeq, occupantAt, parseDest, type Dest, type PileLoc } from './zones'
 
 const clean = (pl: NPlace): Place => {
   const out: Place = { p: pl.p, loc: pl.loc }
@@ -70,7 +70,7 @@ type Pending =
 
 interface MenuState { x: number; y: number; title: string; items: PopItem[] }
 
-export function Board({ doc, state, mode, readOnly }: { doc: ComboDoc; state: GameState; mode: 'setup' | 'steps'; readOnly?: boolean }) {
+export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; state: GameState; mode: 'setup' | 'steps'; cursor: number; readOnly?: boolean }) {
   const { t } = useTranslation()
   const cards = useCards()
   const [sel, setSel] = useState<Sel | null>(null)
@@ -99,11 +99,12 @@ export function Board({ doc, state, mode, readOnly }: { doc: ComboDoc; state: Ga
       registry: doc.cards,
       nameOf: cards.nameOf,
       unrevealed: { deck: poolTotal(pool.main), extra: poolTotal(pool.extra) },
-      randomHand: doc.setup.hand.fill === 'random' && (mode === 'setup' || state === undefined ? true : useEditor.getState().cursor === 0)
-        ? Math.max(0, doc.setup.hand.size - doc.setup.hand.required.length)
-        : 0,
+      randomHand:
+        doc.setup.hand.fill === 'random' && (mode === 'setup' || cursor === 0)
+          ? Math.max(0, doc.setup.hand.size - doc.setup.hand.required.length)
+          : 0,
     }),
-    [state, doc, cards.nameOf, pool, mode],
+    [state, doc, cards.nameOf, pool, mode, cursor],
   )
 
   // ---------- origine
@@ -127,8 +128,14 @@ export function Board({ doc, state, mode, readOnly }: { doc: ComboDoc; state: Ga
     if (dragSel === null && sel === null) return null
     const src = srcOf(active)
     if (!src) return null
-    const list = destinations(src, ctx)
-    return new Set(list.map(destKey))
+    // carta ancora da scegliere (rilascio dal Deck/Extra): unione delle destinazioni dei tipi possibili
+    const variants: CardInfo[] =
+      active?.kind === 'fresh' && active.code === 0
+        ? active.loc === 'extra'
+          ? [{ ...UNKNOWN_INFO, extra: 'fusion' }]
+          : [UNKNOWN_INFO, { ...UNKNOWN_INFO, kind: 'spell' }]
+        : [src.info]
+    return new Set(variants.flatMap((info) => destinations({ ...src, info }, ctx)).map(destKey))
   }, [active, dragSel, sel, srcOf, ctx, pending, readOnly])
 
   const announce = useCallback((msg: string) => setLive(msg), [])
@@ -636,7 +643,3 @@ export function Board({ doc, state, mode, readOnly }: { doc: ComboDoc; state: Ga
 }
 
 interface Mods { shift?: boolean; alt?: boolean; ctrl?: boolean }
-void freshDragId
-void ZONE_COUNT
-void UNKNOWN_INFO
-export type { ZoneLoc }
