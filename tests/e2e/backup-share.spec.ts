@@ -155,7 +155,7 @@ test('backup: esporta, cancella, ripristina, annulla', async ({ page }) => {
   await page.getByTestId('backup-confirm').click()
   await expect(page.getByTestId('backup-result')).toContainText(/\d/)
   await page.goto('/combo')
-  await expect(page.getByText(doc.meta.title.it ?? doc.meta.title.en ?? '').first()).toBeVisible()
+  await expect(page.getByRole('link', { name: new RegExp(`${doc.meta.title.it}|${doc.meta.title.en}`) }).first()).toBeVisible()
   await page.goto('/impostazioni')
   await page.getByTestId('backup-file').setInputFiles({ name: 'x.json', mimeType: 'application/json', buffer: Buffer.from('{"app":"altro"}') })
   await expect(page.getByRole('alert')).toBeVisible()
