@@ -25,7 +25,7 @@ async function last(page: Page) {
 
 type Drag = (page: Page, from: ReturnType<typeof card>, to: ReturnType<typeof zone>, mods?: ('Shift' | 'Alt' | 'Control')[]) => Promise<void>
 
-function pairs(name: string, drag: Drag) {
+function pairs(name: string, drag: Drag, kbd = false) {
   test.describe(name, () => {
     test.beforeEach(async ({ page }) => {
       await openCombo(page, await seedCombo(page, BASE))
@@ -164,12 +164,14 @@ function pairs(name: string, drag: Drag) {
     })
 
     test('Scorciatoia Shift = Evocazione Speciale (senza menu)', async ({ page }) => {
+      test.skip(!kbd, 'scorciatoie solo da tastiera fisica')
       await drag(page, card(page, 'u1'), zone(page, 'z:0:mzone:2'), ['Shift'])
       expect(await last(page)).toMatchObject({ action: 'specialSummon', card: 'u1' })
       await expect(page.locator('[data-pop-menu]')).toHaveCount(0)
     })
 
     test('Scorciatoia Alt = Cala e Ctrl = Attiva', async ({ page }) => {
+      test.skip(!kbd, 'scorciatoie solo da tastiera fisica')
       await drag(page, card(page, 'u1'), zone(page, 'z:0:mzone:2'), ['Alt'])
       expect(await last(page)).toMatchObject({ action: 'setMonster' })
       await drag(page, card(page, 'u3'), zone(page, 'z:0:szone:2'), ['Control'])
@@ -186,7 +188,7 @@ function pairs(name: string, drag: Drag) {
 
 test.describe('mouse', () => {
   test.use({ viewport: { width: 1440, height: 900 } })
-  pairs('desktop', mouseDrag)
+  pairs('desktop', mouseDrag, true)
 })
 
 for (const w of [768, 1024]) {
@@ -195,3 +197,138 @@ for (const w of [768, 1024]) {
     pairs(`tablet ${w}`, (page, from, to) => touchDrag(page, from, to))
   })
 }
+
+/* ------------------------------------------------------------------ alternative al drag */
+test.describe('alternative al trascinamento', () => {
+  test.use({ viewport: { width: 1280, height: 900 } })
+  test.beforeEach(async ({ page }) => {
+    await openCombo(page, await seedCombo(page, BASE))
+  })
+
+  test('doppio clic = Attiva', async ({ page }) => {
+    await card(page, 'u3').dblclick()
+    expect(await last(page)).toMatchObject({ action: 'activate', card: 'u3', from: { loc: 'hand' }, to: { loc: 'szone' } })
+  })
+
+  test('clic destro = menu contestuale con Sposta in…', async ({ page }) => {
+    await card(page, 'u10').click({ button: 'right' })
+    await expect(page.locator('[data-pop-menu]')).toBeVisible()
+    await page.locator('[data-pop-menu] [data-action="posDef"]').click()
+    expect(await last(page)).toMatchObject({ action: 'changePosition', card: 'u10', to: { pos: 'FACEUP_DEF' } })
+  })
+
+  test('due tocchi: seleziona la carta, poi la zona', async ({ page }) => {
+    await card(page, 'u1').click()
+    await expect(zone(page, 'z:0:mzone:3')).toHaveAttribute('data-valid', 'true')
+    await expect(zone(page, 'z:0:szone:3')).not.toHaveAttribute('data-valid', 'true')
+    await zone(page, 'z:0:mzone:3').click()
+    await chooseMenu(page, 'normalSummon')
+    expect(await last(page)).toMatchObject({ action: 'normalSummon', to: { seq: 3 } })
+  })
+
+  test('tastiera: Invio apre "Sposta in…" e si completa senza mouse', async ({ page }) => {
+    await card(page, 'u1').focus()
+    await page.keyboard.press('Enter')
+    const dlg = page.getByRole('dialog')
+    await expect(dlg).toBeVisible()
+    await dlg.locator('[data-dest="mzone:1"]').focus()
+    await page.keyboard.press('Enter')
+    await dlg.locator('[data-action="specialSummon"]').focus()
+    await page.keyboard.press('Enter')
+    expect(await last(page)).toMatchObject({ action: 'specialSummon', card: 'u1', to: { seq: 1 } })
+    await expect(page.getByTestId('announcer')).toContainText('Special Summon')
+  })
+
+  test('annulla e ripeti (pulsanti e Ctrl+Z / Ctrl+Shift+Z)', async ({ page }) => {
+    await card(page, 'u1').dblclick()
+    await expect(page.locator('[data-steps] li')).toHaveCount(1)
+    await page.keyboard.press('Control+z')
+    await expect(page.locator('[data-steps] li')).toHaveCount(0)
+    await page.keyboard.press('Control+Shift+z')
+    await expect(page.locator('[data-steps] li')).toHaveCount(1)
+    await page.getByTestId('undo').click()
+    await expect(page.locator('[data-steps] li')).toHaveCount(0)
+    await page.getByTestId('redo').click()
+    await expect(page.locator('[data-steps] li')).toHaveCount(1)
+  })
+
+  test('LP: la modifica diventa un passo changeLP', async ({ page }) => {
+    await page.locator('[data-lp="0"]').click()
+    await page.getByTestId('lp-delta').fill('-1000')
+    await page.getByTestId('lp-apply').click()
+    expect(await last(page)).toMatchObject({ action: 'changeLP', lp: [{ p: 0, delta: -1000 }] })
+    await expect(page.locator('[data-lp="0"]')).toContainText('7000')
+  })
+
+  test('annotazioni IT/EN, riordino e gruppo "ordine libero"', async ({ page }) => {
+    await drag3(page)
+    const first = page.locator('[data-steps] li').first()
+    await first.getByRole('button').first().click()
+    await page.getByTestId('note-it').fill('Evoca il motore.')
+    await page.getByTestId('note-en').fill('Summon the engine.')
+    await page.getByTestId('step-menu-1').click()
+    await page.getByRole('menuitem', { name: /Free order|Ordine libero/ }).click()
+    await expect(page.locator('[data-steps] li').nth(1)).toContainText(/Free order|Ordine libero/)
+    await page.getByTestId('step-menu-1').click()
+    await page.getByRole('menuitem', { name: /Move up|Sposta su/ }).click()
+    const steps = await expect.poll(async () => (await savedSteps(page)).length).toBe(3).then(() => savedSteps(page))
+    expect(steps[1]).toMatchObject({ card: 'u1', note: { it: 'Evoca il motore.', en: 'Summon the engine.' } })
+    expect(steps[0]!.group).toBeUndefined()
+  })
+
+  test('modifica in mezzo: elimina un passo e segnala i successivi incoerenti', async ({ page }) => {
+    await drag3(page)
+    await page.getByTestId('step-menu-0').click()
+    await page.getByRole('menuitem', { name: /Delete step|Elimina passo/ }).click()
+    // il passo 2 attivava dal Cimitero una carta che ora ... resta coerente; quello che spostava u1 dalla zona non lo è più
+    await expect(page.locator('[data-steps] li[data-incoherent]').first()).toBeVisible()
+  })
+
+  test('Crea variante da questo passo: nuova combo collegata, madre invariata', async ({ page }) => {
+    await drag3(page)
+    await page.getByTestId('step-menu-1').click()
+    await page.getByRole('menuitem', { name: /up to this step|fino a questo passo/ }).click()
+    await expect(page).toHaveURL(/\/combo\/.+/)
+    await expect(page.locator('[data-steps] li')).toHaveCount(2)
+    await page.getByRole('tab', { name: /Details|Dettagli/ }).click()
+    await expect(page.getByText(/Variant of|Variante di/)).toBeVisible()
+    await page.goBack()
+    await expect(page.locator('[data-steps] li')).toHaveCount(3)
+  })
+})
+
+/** Tre passi: Normale (Mano→M1), attiva Magia, manda u10 al Cimitero. */
+async function drag3(page: Page) {
+  await mouseDrag(page, card(page, 'u1'), zone(page, 'z:0:mzone:2'))
+  await chooseMenu(page, 'normalSummon')
+  await mouseDrag(page, card(page, 'u3'), zone(page, 'z:0:szone:2'))
+  await chooseMenu(page, 'activate')
+  await mouseDrag(page, card(page, 'u10'), zone(page, 'p:0:gy'))
+  await chooseMenu(page, 'sendToGY')
+  await expect(page.locator('[data-steps] li')).toHaveCount(3)
+}
+
+/* ------------------------------------------------------------------ touch: pressione lunga */
+test.describe('touch: pressione lunga', () => {
+  test.use({ viewport: { width: 768, height: 1024 }, hasTouch: true })
+  test('pressione lunga su una carta apre il menu contestuale', async ({ page }) => {
+    await openCombo(page, await seedCombo(page, BASE))
+    const c = card(page, 'u10')
+    await touchDrag(page, c, c, { hold: 1100 })
+    await expect(page.locator('[data-pop-menu]')).toBeVisible()
+    expect(await savedSteps(page)).toHaveLength(0)
+  })
+  test('doppio tocco = Attiva', async ({ page }) => {
+    await openCombo(page, await seedCombo(page, BASE))
+    await card(page, 'u3').tap()
+    await card(page, 'u3').tap()
+    expect(await last(page)).toMatchObject({ action: 'activate', card: 'u3' })
+  })
+  test('due tocchi: carta poi zona', async ({ page }) => {
+    await openCombo(page, await seedCombo(page, BASE))
+    await card(page, 'u1').tap()
+    await zone(page, 'z:0:mzone:3').tap()
+    await chooseMenu(page, 'setMonster')
+    expect(await last(page)).toMatchObject({ action: 'setMonster', to: { seq: 3, pos: 'FACEDOWN_DEF' } })
+  })
+})
