@@ -231,6 +231,7 @@ export function PlanEditor({ plan, others, variant, variantName, index, banlist,
                   id={id}
                   aria-describedby={describedBy}
                   data-testid="plan-archetype"
+                  className="min-h-12"
                   list={ARCHETYPE_LIST_ID}
                   value={draft.matchup.archetype ?? ''}
                   placeholder={t('side.plan.archetypePlaceholder')}
@@ -295,6 +296,7 @@ export function PlanEditor({ plan, others, variant, variantName, index, banlist,
             value={tab}
             onValueChange={setTab}
             className="w-full"
+            fill
             options={[
               { value: 'out', label: `${t('side.tabs.out')} −${validation.summary.outCount}` },
               { value: 'in', label: `${t('side.tabs.in')} +${validation.summary.inCount}` },

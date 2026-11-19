@@ -119,9 +119,8 @@ for (const { w, h } of SIZES) {
         await page.screenshot({ path: `test-results/side/${tag}-3-valid.png`, fullPage: true })
 
         // preview (su schermo stretto è una scheda)
-        if (w < 700) {
-          await page.getByRole('radio', { name: /^(Mazzo|Deck)/ }).click()
-        }
+        const previewTab = page.getByRole('radio', { name: /^(Mazzo|Deck)/ })
+        if (await previewTab.isVisible()) await previewTab.click()
         await expect(page.getByTestId('preview')).toBeVisible()
         await expectNoHorizontalScroll(page)
         await page.screenshot({ path: `test-results/side/${tag}-4-preview.png`, fullPage: true })
