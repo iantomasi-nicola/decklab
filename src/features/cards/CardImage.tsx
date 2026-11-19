@@ -36,7 +36,7 @@ export function CardImage({ id, size = 'small', alt = '', className, eager }: Ca
 
   return (
     <div
-      className={cn('relative block w-full select-none overflow-hidden rounded-[6px] bg-surface-3', className)}
+      className={cn('relative block select-none overflow-hidden rounded-[6px] bg-surface-3', !/(^|\s)(w|size|min-w|max-w)-/.test(className ?? '') && 'w-full', className)}
       style={{ aspectRatio: '59 / 86', containerType: 'inline-size' }}
       data-card-id={id}
     >

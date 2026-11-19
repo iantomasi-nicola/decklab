@@ -1,6 +1,6 @@
 /** Client della ricerca: parla con cards.worker.ts (o, dove i Worker non esistono, esegue lo stesso motore in-thread). */
 import type { Card } from '@/domain/types'
-import { createSearchRuntime, type SearchRuntime, type WorkerRequest, type WorkerResponse } from '@/domain/cards/searchRuntime'
+import type { SearchRuntime, WorkerRequest, WorkerResponse } from '@/domain/cards/searchRuntime'
 import type { SearchOptions } from '@/domain/cards/searchEngine'
 
 type Call = WorkerRequest extends infer R ? (R extends { id: number } ? Omit<R, 'id'> : never) : never
@@ -36,14 +36,18 @@ function workerBackend(): Backend {
   }
 }
 
-function inThreadBackend(runtime: SearchRuntime): Backend {
+/** Senza Worker (test, ambienti vecchi): stesso motore sul thread corrente, caricato solo se serve (non entra nel bundle principale). */
+function inThreadBackend(runtime?: SearchRuntime): Backend {
+  let rt = runtime
   return {
-    call: async <T>(req: Call) =>
-      (req.type === 'init' ? await runtime.init(req.url) : runtime.search(req.query, req.opts)) as T,
+    call: async <T>(req: Call) => {
+      rt ??= (await import('@/domain/cards/searchRuntime')).createSearchRuntime()
+      return (req.type === 'init' ? await rt.init(req.url) : rt.search(req.query, req.opts)) as T
+    },
   }
 }
 
-const getBackend = (): Backend => (backend ??= typeof Worker === 'undefined' ? inThreadBackend(createSearchRuntime()) : workerBackend())
+const getBackend = (): Backend => (backend ??= typeof Worker === 'undefined' ? inThreadBackend() : workerBackend())
 
 /** Solo test: sostituisce il backend (es. runtime in-thread con fetch finto). */
 export function __setSearchBackendForTests(runtime: SearchRuntime | undefined) {
