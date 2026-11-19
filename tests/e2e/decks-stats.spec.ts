@@ -24,11 +24,11 @@ const LANGS = ['it', 'en'] as const
 const F = (i: number) => 80000000 + i
 
 /** Mazzo di 40 carte con ruoli, coppie e un tris, scritto con i repository reali. */
-async function seedStats(page: Page): Promise<string> {
+async function seedStats(page: Page, opts: { combo?: boolean } = {}): Promise<string> {
   await page.goto('/impostazioni')
   await expect(page.locator('h1')).toBeVisible()
   return page.evaluate(
-    async ({ id, f }) => {
+    async ({ id, f, combo }) => {
       const g = (i: number) => f[i] as number
       const load = new Function('p', 'return import(p)') as (p: string) => Promise<{ repos: any }>
       const { repos } = await load('/src/data/repo.ts')
@@ -60,9 +60,13 @@ async function seedStats(page: Page): Promise<string> {
         settings: { useAssumedDeckSize: false, assumedDeckSize: 40, useSixCardHand: false, tournamentRounds: 15, tournamentMode: 'average', drawPowerMode: 'fast' },
         useCombos: true, tournament: { plan: 'mixed', k: 2 },
       })
+      if (combo) {
+        // combo salvata: la mano richiesta (f2 + Mago Nero) rende compatibile quella coppia
+        await repos.combos.create({ archetypeId: a.id, variantId: v.id, tagIds: [], payload: { setup: { hand: { required: ['a', 'b'] } }, cards: { a: g(2), b: id.darkMagician } } })
+      }
       return v.id as string
     },
-    { id: ID, f: Array.from({ length: 100 }, (_, i) => F(i)) },
+    { id: ID, f: Array.from({ length: 100 }, (_, i) => F(i)), combo: opts.combo ?? false },
   )
 }
 
@@ -222,6 +226,96 @@ test.describe('stats lab', () => {
     await expect(page.getByTestId('tabs-more-right')).toHaveCSS('opacity', '0')
     await expect(page.getByRole('tab', { name: 'Combinazioni' })).toBeInViewport()
   })
+
+  test('coppie da confermare: fascia min–max, elenco e etichetta in un tocco', async ({ page }) => {
+    const errors = collectErrors(page)
+    await open(page, 375, 'dark', 'it')
+    await seedStats(page)
+    await page.goto('/statistiche')
+    await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByTestId('hero-range')).toBeVisible()
+    const card = page.getByTestId('unknown-pairs')
+    await expect(card).toBeVisible()
+    const title = (await card.getByRole('heading').textContent())!
+    const n = Number(title.match(/\d+/)![0])
+    const before = await page.getByTestId('hero-playable').textContent()
+    await card.getByRole('button', { name: /Segna .* come brick/ }).first().click()
+    await expect(page.getByTestId('unknown-pairs').getByRole('heading')).toContainText(String(n - 1))
+    await expect(page.getByTestId('hero-playable')).toHaveText(before!) // brick non cambia il minimo
+    await card.getByRole('button', { name: /Segna .* come giocabile/ }).first().click()
+    await expect(page.getByTestId('hero-playable')).not.toHaveText(before!, { timeout: 10_000 })
+    await page.evaluate(() => document.fonts.ready)
+    await expectNoHorizontalScroll(page)
+    expect(await smallTargets(page), 'target < 44px').toEqual([])
+    await page.screenshot({ path: `${SHOTS}/confermare-375-dark-it.png`, fullPage: true })
+    expect(errors).toEqual([])
+  })
+
+  test('matrice C2: celle da 44px che ciclano auto → giocabile → brick, e "deriva dalle combo"', async ({ page }) => {
+    const errors = collectErrors(page)
+    await open(page, 375, 'dark', 'it')
+    await seedStats(page, { combo: true })
+    await page.goto('/statistiche')
+    await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
+    await page.getByRole('tab', { name: 'Combinazioni' }).click()
+    const matrix = page.getByTestId('c2-matrix')
+    await expect(matrix).toBeVisible()
+    const cell = matrix.locator('button[data-state="UNKNOWN"]').first()
+    await expect(cell).toBeVisible()
+    const box = (await cell.boundingBox())!
+    expect(box.width).toBeGreaterThanOrEqual(43.5)
+    expect(box.height).toBeGreaterThanOrEqual(43.5)
+    const label = await cell.getAttribute('aria-label')
+    await cell.click()
+    const same = matrix.locator(`button[aria-label^="${label!.split(':')[0]}:"]`)
+    await expect(same).toHaveAttribute('data-state', 'PLAYABLE')
+    await expect(same).toHaveAttribute('data-manual', 'true')
+    await same.click()
+    await expect(same).toHaveAttribute('data-state', 'BRICK')
+    await same.click()
+    await expect(same).toHaveAttribute('data-manual', 'false')
+    await page.getByTestId('derive-combos').click()
+    await expect(matrix.locator('button[data-manual="true"][data-state="PLAYABLE"]')).toHaveCount(1)
+    await page.getByTestId('all-brick').click()
+    await expect(matrix.locator('button[data-state="UNKNOWN"]')).toHaveCount(0)
+    await page.reload()
+    await page.getByRole('tab', { name: 'Combinazioni' }).click()
+    await expect(page.getByTestId('c2-matrix').locator('button[data-state="UNKNOWN"]')).toHaveCount(0)
+    expect(errors).toEqual([])
+  })
+
+  for (const [width, theme, lang] of [[375, 'dark', 'it'], [768, 'light', 'en'], [1440, 'dark', 'it']] as const)
+    test(`post-side ${width} ${theme} ${lang}`, async ({ page }) => {
+      const errors = collectErrors(page)
+      await open(page, width, theme, lang)
+      const vid = await seedStats(page)
+      await page.goto('/statistiche')
+      await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
+      await expect(page.getByTestId('side-select').locator('option')).toHaveCount(1)
+      const pre = await page.getByTestId('hero-playable').textContent()
+      await page.evaluate(async ({ vid, id }) => {
+        const load = new Function('p', 'return import(p)') as (p: string) => Promise<{ injectSidePlans: (p: unknown[]) => void }>
+        const { injectSidePlans } = await load('/src/features/stats/sidePlanAdapter.ts')
+        injectSidePlans([{ id: 'plan1', variantId: vid, matchup: 'Snake-Eye', outs: [{ cardId: id.ash, count: 3 }], ins: [{ cardId: id.blueEyes, count: 3 }] }])
+      }, { vid, id: ID })
+      await expect(page.getByTestId('side-select').locator('option')).toHaveCount(2)
+      await page.getByTestId('side-select').selectOption('plan1')
+      await expect(page.getByTestId('hero-side')).toBeVisible({ timeout: 20_000 })
+      await expect(page.getByTestId('hero-side')).toContainText('+')
+      await expect(page.getByTestId('hero-playable')).not.toHaveText(pre!)
+      await expect(page.getByTestId('side-compare')).toBeVisible()
+      await expect(page.getByTestId('side-swaps').locator('li')).toHaveCount(1)
+      await expect(page.getByTestId('side-swaps')).toContainText('−3')
+      await page.evaluate(() => document.fonts.ready)
+      await expectNoHorizontalScroll(page)
+      expect(await smallTargets(page), 'target < 44px').toEqual([])
+      await page.screenshot({ path: `${SHOTS}/postside-${width}-${theme}-${lang}.png`, fullPage: true })
+      await page.getByRole('tab', { name: /Composizione|Makeup/ }).click()
+      await expect(page.getByTestId('comp-after-side')).toBeVisible()
+      await page.getByTestId('side-select').selectOption('')
+      await expect(page.getByTestId('hero-playable')).toHaveText(pre!, { timeout: 20_000 })
+      expect(errors).toEqual([])
+    })
 
   test('export Deckspace: scarica un file rileggibile', async ({ page }) => {
     await open(page, 1024, 'dark', 'it')

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import ChartColumn from 'lucide-react/icons/chart-column'
 import Download from 'lucide-react/icons/download'
 import Upload from 'lucide-react/icons/upload'
-import { composition, roundPlan, tournament, type TournamentPlan } from '@/domain/stats'
+import { applyOverride, composition, diffHands, mergeCards, planToSwaps, roundPlan, tournament, type HandInput, type StatsCard, type TournamentPlan } from '@/domain/stats'
 import { repos } from '@/data/repo'
 import { useLocalized } from '@/i18n'
 import { PageHeader } from '@/app/PageHeader'
@@ -20,7 +20,7 @@ import { cn } from '@/ui/cn'
 import { NativeSelect } from '@/features/decks/fields'
 import { useObservable } from '@/features/decks/useObservable'
 import { CompositionTab } from './CompositionTab'
-import { HandTab } from './HandTab'
+import { HandTab, type SideView } from './HandTab'
 import { Hero } from './Hero'
 import { ImportDialog } from './ImportDialog'
 import { LabelsTab } from './LabelsTab'
@@ -29,6 +29,7 @@ import { SensitivityTab } from './SensitivityTab'
 import { TournamentTab, asTourMode, type TourMode } from './TournamentTab'
 import { buildProject, downloadText, exportText } from './deckspaceIO'
 import { useCardNames } from './names'
+import { watchSidePlans } from './sidePlanAdapter'
 import { ScrollTabsList, Stepper, useLang } from './parts'
 import { useAnalysis, useSensitivity, useStatsModel } from './useStatsModel'
 import './locales'
@@ -56,6 +57,7 @@ export function StatsView() {
   const [tab, setTab] = useState<TabId>('hand')
   const [sensSeen, setSensSeen] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [planId, setPlanId] = useState<string | null>(null)
 
   const groups = useMemo(() => {
     const vs = variants.value ?? []
@@ -78,9 +80,25 @@ export function StatsView() {
   const { saved, update, rows } = model
   const name = useCardNames(model.cards, lang)
   const handSize = saved.settings.useSixCardHand ? 6 : 5
-  const analysis = useAnalysis(model.input)
-  const sens = useSensitivity(model.input, handSize, sensSeen)
   const archetype = useObservable(() => repos.archetypes.watch(model.variant?.archetypeId ?? ''), [model.variant?.archetypeId]).value
+  const sidePlans = useObservable(() => watchSidePlans(variantId ?? '', lang), [variantId, lang]).value ?? []
+  const sidePlan = sidePlans.find((p) => p.id === planId) ?? null
+
+  // pre-side = mazzo salvato; post-side = lo stesso con gli scambi del piano (`deckOverride`) e i ruoli delle carte che entrano dal Side
+  const preInput = model.input
+  const postInput = useMemo<HandInput | null>(() => {
+    if (!preInput || !sidePlan) return null
+    const profile = (id: number): StatsCard => ({ id, count: 1, tags: saved.tags[String(id)] ?? [], comboWith: saved.partners[String(id)]?.combo ?? [], brickWith: saved.partners[String(id)]?.brick ?? [] })
+    return { ...preInput, deckOverride: planToSwaps(sidePlan), pool: [...new Set(sidePlan.ins.map((e) => e.cardId))].map((id) => profile(model.canonical(id))) }
+  }, [preInput, sidePlan, saved.tags, saved.partners, model.canonical])
+  const activeInput = postInput ?? preInput
+  /** Mazzo su cui lavorano composizione, etichette e sensibilità: già con gli scambi applicati. */
+  const resolved = useMemo(() => (activeInput ? applyOverride(activeInput) : null), [activeInput])
+
+  const pre = useAnalysis(preInput, 'hands')
+  const post = useAnalysis(postInput, 'post')
+  const analysis = sidePlan ? post : pre
+  const sens = useSensitivity(resolved, handSize, sensSeen)
 
   useEffect(() => {
     if (tab === 'sensitivity') setSensSeen(true)
@@ -90,19 +108,28 @@ export function StatsView() {
   const hand = hands?.[handSize]
   const rounds = saved.settings.tournamentRounds
   const mode = asTourMode(saved.settings.tournamentMode)
-  const plan = saved.tournament.plan
+  const tplan = saved.tournament.plan
   const k = saved.tournament.k
-  const tour = useMemo(
-    () => (hands ? tournament(roundPlan(plan, rounds, hands[5]?.brick ?? 0, hands[6]?.brick ?? 0), mode === 'atLeast1' ? 1 : k) : null),
-    [hands, plan, rounds, k, mode],
-  )
+  const [tour, tourMax] = useMemo(() => {
+    if (!hands) return [null, null] as const
+    const kk = mode === 'atLeast1' ? 1 : k
+    const lo = tournament(roundPlan(tplan, rounds, hands[5]?.brick ?? 0, hands[6]?.brick ?? 0), kk)
+    const hi = tournament(roundPlan(tplan, rounds, (hands[5]?.brick ?? 0) + (hands[5]?.unknown ?? 0), (hands[6]?.brick ?? 0) + (hands[6]?.unknown ?? 0)), kk)
+    return [lo, hi] as const
+  }, [hands, tplan, rounds, k, mode])
   const comp = useMemo(
     () =>
-      model.cards.status === 'ready'
-        ? composition(rows.map((r) => ({ card: model.cards.status === 'ready' ? model.cards.index.byId(r.id) : undefined, count: r.count, tags: saved.tags[String(r.id)] ?? [] })))
+      model.cards.status === 'ready' && resolved
+        ? composition(mergeCards(resolved.cards).map((c) => ({ card: model.cards.status === 'ready' ? model.cards.index.byId(c.id) : undefined, count: c.count, tags: c.tags })))
         : null,
-    [model.cards, rows, saved.tags],
+    [model.cards, resolved],
   )
+  const side = useMemo<SideView | null>(() => {
+    const preH = pre.hands?.[handSize]
+    const postH = post.hands?.[handSize]
+    if (!sidePlan || !preH || !postH) return null
+    return { matchup: sidePlan.matchup, pre: preH, diff: diffHands(preH, postH), swaps: planToSwaps(sidePlan) }
+  }, [sidePlan, pre.hands, post.hands, handSize])
 
   const header = <PageHeader title={t('statsLab.title')} lead={t('statsLab.lead')} />
 
@@ -143,7 +170,7 @@ export function StatsView() {
   }
 
   const tooSmall = hand ? hand.deckSize < handSize : false
-  const loading = !variants.loaded || !archetypes.loaded || !model.ready || !model.variantLoaded || (!hands && !analysis.error)
+  const loading = !variants.loaded || !archetypes.loaded || !model.ready || !model.variantLoaded || (!hands && !analysis.error) || (!!sidePlan && !pre.hands && !pre.error)
 
   return (
     <div className="stats-lab">
@@ -178,6 +205,20 @@ export function StatsView() {
                 { value: 'second', label: t('statsLab.hand.second') },
               ]}
             />
+          </div>
+          <div className="flex min-w-0 flex-col gap-1 md:col-span-2">
+            <label htmlFor="stats-side" className="text-sm font-medium text-fg">
+              {t('statsLab.side.label')}
+            </label>
+            <NativeSelect value={sidePlan?.id ?? ''} onChange={(e) => setPlanId(e.target.value || null)} id="stats-side" data-testid="side-select">
+              <option value="">{t('statsLab.side.pre')}</option>
+              {sidePlans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {t('statsLab.side.option', { matchup: p.matchup })}
+                </option>
+              ))}
+            </NativeSelect>
+            {!sidePlans.length ? <p className="text-sm text-muted">{t('statsLab.side.none')}</p> : null}
           </div>
         </div>
         <div className="grid gap-4 border-t border-line pt-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
@@ -214,9 +255,19 @@ export function StatsView() {
         <Banner tone="warn" title={t('statsLab.tooSmall.title')}>
           {t('statsLab.tooSmall.body', { size: hand!.deckSize, count: handSize })}
         </Banner>
-      ) : hand && hands && tour ? (
+      ) : hand && hands && tour && tourMax ? (
         <>
-          <Hero hand={hand} other={hands[handSize === 5 ? 6 : 5]} tour={tour} rounds={rounds} progress={analysis.progress} running={analysis.running} />
+          <Hero
+            hand={hand}
+            other={hands[handSize === 5 ? 6 : 5]}
+            tour={tour}
+            tourMax={tourMax}
+            rounds={rounds}
+            progress={analysis.progress}
+            running={analysis.running}
+            side={side ? { matchup: side.matchup, diff: side.diff } : null}
+            onConfirm={() => setTab('labels')}
+          />
           <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
             <ScrollTabsList label={t('statsLab.tabsLabel')} activeKey={tab}>
               {TABS.map((id) => (
@@ -226,14 +277,21 @@ export function StatsView() {
               ))}
             </ScrollTabsList>
             <TabsContent value="hand">
-              <HandTab hand={hand} name={name} />
+              <HandTab
+                hand={hand}
+                name={name}
+                side={side}
+                onOpenLabels={() => setTab('labels')}
+                onLabel={(key, label) => update((s) => ({ ...s, labels: { ...s.labels, [key]: label } }))}
+              />
             </TabsContent>
             <TabsContent value="tournament">
               <TournamentTab
                 tour={tour}
+                tourMax={tourMax}
                 hands={hands}
                 rounds={rounds}
-                plan={plan}
+                plan={tplan}
                 mode={mode}
                 k={k}
                 onRounds={(n) => setSettings({ tournamentRounds: n })}
@@ -245,11 +303,11 @@ export function StatsView() {
             <TabsContent value="sensitivity">
               <SensitivityTab state={sens} handSize={handSize} name={name} />
             </TabsContent>
-            <TabsContent value="composition">{comp ? <CompositionTab comp={comp} /> : null}</TabsContent>
+            <TabsContent value="composition">{comp ? <CompositionTab comp={comp} sideMatchup={sidePlan?.matchup ?? null} /> : null}</TabsContent>
             <TabsContent value="roles">
-              <RolesTab rows={rows} saved={saved} update={update} name={name} archetype={archetype} />
+              <RolesTab rows={rows} sideRows={model.sideRows} saved={saved} update={update} name={name} archetype={archetype} />
             </TabsContent>
-            <TabsContent value="labels">{model.input ? <LabelsTab input={model.input} saved={saved} update={update} name={name} /> : null}</TabsContent>
+            <TabsContent value="labels">{resolved ? <LabelsTab input={resolved} saved={saved} update={update} name={name} /> : null}</TabsContent>
           </Tabs>
         </>
       ) : null}

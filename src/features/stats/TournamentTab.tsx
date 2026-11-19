@@ -13,6 +13,7 @@ export const asTourMode = (s: string): TourMode => (TOUR_MODES.includes(s as Tou
 
 export function TournamentTab({
   tour,
+  tourMax,
   hands,
   rounds,
   plan,
@@ -24,6 +25,8 @@ export function TournamentTab({
   onK,
 }: {
   tour: TournamentResult
+  /** Caso peggiore: le mani da confermare contano come brick. */
+  tourMax: TournamentResult
   hands: Record<number, HandResult>
   rounds: number
   plan: TournamentPlan
@@ -90,9 +93,9 @@ export function TournamentTab({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label={t('statsLab.tour.expected')} value={dec(tour.expectedBricks, lang)} hint={t('statsLab.tour.expectedHint', { count: rounds })} emphasis={mode === 'average'} />
+        <StatTile label={t('statsLab.tour.expected')} value={dec(tour.expectedBricks, lang)} hint={tourMax.expectedBricks - tour.expectedBricks > 1e-6 ? t('statsLab.tour.upTo', { v: dec(tourMax.expectedBricks, lang) }) : t('statsLab.tour.expectedHint', { count: rounds })} emphasis={mode === 'average'} />
         <StatTile label={t('statsLab.tour.none')} value={pct(tour.pNone, lang)} hint={t('statsLab.tour.noneHint')} />
-        <StatTile label={t('statsLab.tour.atLeast', { count: 1 })} value={pct(tour.pAtLeast1, lang)} emphasis={mode === 'atLeast1'} />
+        <StatTile label={t('statsLab.tour.atLeast', { count: 1 })} value={pct(tour.pAtLeast1, lang)} hint={tourMax.pAtLeast1 - tour.pAtLeast1 > 1e-6 ? t('statsLab.tour.upTo', { v: pct(tourMax.pAtLeast1, lang) }) : undefined} emphasis={mode === 'atLeast1'} />
         <StatTile label={t('statsLab.tour.atLeast', { count: Math.max(2, k) })} value={pct(sumFrom(tour.pmf, Math.max(2, k)), lang)} emphasis={mode === 'atLeastK'} />
       </div>
 

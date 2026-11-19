@@ -8,7 +8,7 @@ import { roleName } from './HandTab'
 import { pct } from './format'
 import { useLang } from './parts'
 
-export function CompositionTab({ comp }: { comp: Composition }) {
+export function CompositionTab({ comp, sideMatchup }: { comp: Composition; sideMatchup: string | null }) {
   const { t } = useTranslation()
   const lang = useLang()
   const total = comp.total || 1
@@ -31,6 +31,11 @@ export function CompositionTab({ comp }: { comp: Composition }) {
   const n = (v: number) => String(v)
   return (
     <div className="grid gap-4 lg:grid-cols-2">
+      {sideMatchup ? (
+        <p data-testid="comp-after-side" className="rounded-md border border-accent-text bg-surface-1 px-4 py-3 text-[15px] text-fg lg:col-span-2">
+          {t('statsLab.side.compNote', { matchup: sideMatchup })}
+        </p>
+      ) : null}
       <ChartCard
         testId="chart-kinds"
         title={t('statsLab.comp.kinds')}

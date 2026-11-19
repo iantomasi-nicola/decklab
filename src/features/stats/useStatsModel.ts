@@ -22,6 +22,16 @@ export function deckRows(variant: Variant | undefined, canonical: (id: number) =
   return [...rows].map(([id, count]) => ({ id, count }))
 }
 
+/** Carte del Side raggruppate per carta base. */
+export function sideRowsOf(variant: Variant | undefined, canonical: (id: number) => number): DeckRow[] {
+  const rows = new Map<number, number>()
+  for (const raw of variant?.deck.side ?? []) {
+    const id = canonical(raw)
+    rows.set(id, (rows.get(id) ?? 0) + 1)
+  }
+  return [...rows].map(([id, count]) => ({ id, count }))
+}
+
 export function buildInput(rows: DeckRow[], saved: SavedStats, extraRules: number[][]): HandInput {
   const cards: StatsCard[] = rows.map((r) => {
     const p = saved.partners[String(r.id)]
@@ -198,5 +208,7 @@ export function useStatsModel(variantId: string | null) {
   }, [combos.value, variantId, canonical])
   const input = useMemo(() => (variant.value && loaded ? buildInput(rows, saved, extraRules) : null), [variant.value, loaded, rows, saved, extraRules])
 
-  return { cards, ready, variant: variant.value, variantLoaded: variant.loaded, rows, saved, update, input, extraRuleCount: extraRules.length, canonical }
+  const sideRows = useMemo(() => sideRowsOf(variant.value, canonical), [variant.value, canonical])
+
+  return { cards, ready, variant: variant.value, variantLoaded: variant.loaded, rows, sideRows, saved, update, input, extraRuleCount: extraRules.length, canonical }
 }

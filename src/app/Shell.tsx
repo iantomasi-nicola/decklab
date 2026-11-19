@@ -119,7 +119,7 @@ export function Shell() {
   const secondary = NAV.filter((n) => !n.primary)
   const moreActive = secondary.some((n) => n.to === pathname)
   // l'editor di mazzo ha bisogno di più larghezza (pannelli affiancati)
-  const wide = /^\/mazzi\/[^/]+/.test(pathname)
+  const wide = /^\/mazzi\/[^/]+/.test(pathname) || pathname === '/side'
   // editor combo: il campo occupa tutta l'area disponibile (nessun margine massimo né padding ampio)
   const stage = /^\/combo\/[^/]+/.test(pathname)
   const pref = useSidebar((x) => x.pref)

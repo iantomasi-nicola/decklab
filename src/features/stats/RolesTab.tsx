@@ -14,6 +14,8 @@ import type { SavedStats } from './statsStore'
 import { roleName } from './HandTab'
 import { Section } from './parts'
 
+const GROUPS = ['C2-A', 'C2-B', 'C2-C', 'C2-D']
+
 const chip =
   'inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md border px-3 text-[15px] font-semibold transition-colors duration-150'
 const chipOff = 'border-line bg-surface-2 text-muted hover:border-line-strong hover:text-fg'
@@ -21,12 +23,15 @@ const chipOn = 'border-accent bg-accent text-accent-fg'
 
 export function RolesTab({
   rows,
+  sideRows,
   saved,
   update,
   name,
   archetype,
 }: {
   rows: DeckRow[]
+  /** Carte del Side: i ruoli servono quando entrano con un piano di side. */
+  sideRows: DeckRow[]
   saved: SavedStats
   update: (fn: (s: SavedStats) => SavedStats) => void
   name: (id: number) => string
@@ -59,9 +64,13 @@ export function RolesTab({
     setTags(ids, (tags) => (all ? tags.filter((x) => x !== role) : tags.includes(role) ? tags : [...tags, role]))
   }
 
-  const selected = [...sel].filter((id) => rows.some((r) => r.id === id))
+  const visibleSide = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return q ? sideRows.filter((r) => name(r.id).toLowerCase().includes(q)) : sideRows
+  }, [sideRows, query, name])
+  const selected = [...sel].filter((id) => rows.some((r) => r.id === id) || sideRows.some((r) => r.id === id))
   const allVisible = visible.length > 0 && visible.every((r) => sel.has(r.id))
-  const customTags = [...new Set(rows.flatMap((r) => tagsOf(r.id)).filter((x) => !(ROLE_PRESETS as readonly string[]).includes(x)))]
+  const customTags = [...new Set([...rows, ...sideRows].flatMap((r) => tagsOf(r.id)).filter((x) => !(ROLE_PRESETS as readonly string[]).includes(x)))]
 
   const suggest = () => {
     if (!archetype) return
@@ -87,6 +96,53 @@ export function RolesTab({
     update((s) => ({ ...s, tags: {} }))
     setSel(new Set())
     toast(t('statsLab.roles.resetDone'), { action: { label: t('common.undo'), onClick: () => update((s) => ({ ...s, tags: before })) } })
+  }
+
+  const renderRow = (r: DeckRow) => {
+    const tags = tagsOf(r.id)
+            const extra = tags.filter((x) => !(ROLE_PRESETS as readonly string[]).includes(x))
+            return (
+              <li key={r.id} className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-x-2 py-3 first:pt-0 last:pb-0 lg:grid-cols-[44px_minmax(0,1fr)_auto]">
+                <label className="inline-flex size-11 cursor-pointer items-center justify-center">
+                  <input
+                    type="checkbox"
+                    aria-label={name(r.id)}
+                    className="size-5 cursor-pointer accent-[var(--accent)]"
+                    checked={sel.has(r.id)}
+                    onChange={() =>
+                      setSel((cur) => {
+                        const n = new Set(cur)
+                        if (!n.delete(r.id)) n.add(r.id)
+                        return n
+                      })
+                    }
+                  />
+                </label>
+                <p className="min-w-0 text-[15px] font-medium text-fg">
+                  <span className="break-words">{name(r.id)}</span>
+                  <span className="ml-2 text-muted">×{r.count}</span>
+                </p>
+                <div className="col-start-2 mt-2 flex flex-wrap gap-2 lg:col-start-3 lg:mt-0">
+                  {ROLE_PRESETS.map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      aria-pressed={tags.includes(role)}
+                      title={t(`statsLab.roles.${role}.hint`)}
+                      onClick={() => toggle(role, [r.id])}
+                      className={cn(chip, tags.includes(role) ? chipOn : chipOff)}
+                    >
+                      {role}
+                    </button>
+                  ))}
+                  {extra.map((role) => (
+                    <button key={role} type="button" aria-pressed onClick={() => toggle(role, [r.id])} className={cn(chip, chipOn)}>
+                      {roleName(t, role)}
+                    </button>
+                  ))}
+                </div>
+              </li>
+            )
   }
 
   return (
@@ -141,6 +197,18 @@ export function RolesTab({
                 {r}
               </button>
             ))}
+          </div>
+          <div className="flex flex-col gap-2" role="group" aria-label={t('statsLab.roles.groups')}>
+            <p className="text-sm text-muted">{t('statsLab.roles.groupsHint')}</p>
+            <div className="flex flex-wrap gap-2">
+              {GROUPS.map((g) => (
+                <button key={g} type="button" disabled={!selected.length} onClick={() => toggle(g, selected)} className={cn(chip, chipOff, 'disabled:cursor-not-allowed disabled:opacity-40')}>
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <form
               className="flex min-w-0 flex-1 basis-56 gap-2"
               onSubmit={(e) => {
@@ -160,53 +228,17 @@ export function RolesTab({
         </div>
 
         <ul className="flex flex-col divide-y divide-line" data-testid="roles-list">
-          {visible.map((r) => {
-            const tags = tagsOf(r.id)
-            const extra = tags.filter((x) => !(ROLE_PRESETS as readonly string[]).includes(x))
-            return (
-              <li key={r.id} className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-x-2 py-3 first:pt-0 last:pb-0 lg:grid-cols-[44px_minmax(0,1fr)_auto]">
-                <label className="inline-flex size-11 cursor-pointer items-center justify-center">
-                  <input
-                    type="checkbox"
-                    aria-label={name(r.id)}
-                    className="size-5 cursor-pointer accent-[var(--accent)]"
-                    checked={sel.has(r.id)}
-                    onChange={() =>
-                      setSel((cur) => {
-                        const n = new Set(cur)
-                        if (!n.delete(r.id)) n.add(r.id)
-                        return n
-                      })
-                    }
-                  />
-                </label>
-                <p className="min-w-0 text-[15px] font-medium text-fg">
-                  <span className="break-words">{name(r.id)}</span>
-                  <span className="ml-2 text-muted">×{r.count}</span>
-                </p>
-                <div className="col-start-2 mt-2 flex flex-wrap gap-2 lg:col-start-3 lg:mt-0">
-                  {ROLE_PRESETS.map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      aria-pressed={tags.includes(role)}
-                      title={t(`statsLab.roles.${role}.hint`)}
-                      onClick={() => toggle(role, [r.id])}
-                      className={cn(chip, tags.includes(role) ? chipOn : chipOff)}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                  {extra.map((role) => (
-                    <button key={role} type="button" aria-pressed onClick={() => toggle(role, [r.id])} className={cn(chip, chipOn)}>
-                      {roleName(t, role)}
-                    </button>
-                  ))}
-                </div>
-              </li>
-            )
-          })}
+          {visible.map(renderRow)}
         </ul>
+        {visibleSide.length ? (
+          <>
+            <h3 className="mt-2 text-base font-semibold text-fg">{t('statsLab.roles.sideTitle')}</h3>
+            <p className="-mt-2 text-sm text-muted">{t('statsLab.roles.sideHint')}</p>
+            <ul className="flex flex-col divide-y divide-line" data-testid="roles-side-list">
+              {visibleSide.map(renderRow)}
+            </ul>
+          </>
+        ) : null}
         {customTags.length ? <p className="text-sm text-muted">{t('statsLab.roles.customNote', { tags: customTags.join(', ') })}</p> : null}
       </div>
     </div>

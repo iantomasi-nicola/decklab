@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import type { HandResult, SideDiff, TournamentResult } from '@/domain/stats'
+import { Button } from '@/ui/Button'
 import { Legend, SplitBar } from './charts/SplitBar'
 import { dec, pct, signedPts } from './format'
 import { Progress, StatTile, useLang } from './parts'
@@ -45,12 +46,12 @@ export function Hero({
           </p>
           <p className="mt-2 text-base font-medium text-fg">{t('statsLab.hero.playable')}</p>
           {unknown ? (
-            <p className="mt-2 max-w-[44ch] text-[15px] text-muted" data-testid="hero-range">
-              {t('statsLab.hero.range', { max: maxPlayable })}{' '}
-              <button type="button" onClick={onConfirm} className="inline min-h-11 cursor-pointer font-medium text-accent-text underline underline-offset-2 hover:text-fg">
+            <div className="mt-3 flex max-w-[48ch] flex-col items-start gap-2" data-testid="hero-range">
+              <p className="text-[15px] text-muted">{t('statsLab.hero.range', { max: maxPlayable })}</p>
+              <Button variant="secondary" onClick={onConfirm}>
                 {t('statsLab.hero.confirm')}
-              </button>
-            </p>
+              </Button>
+            </div>
           ) : null}
         </div>
         <p className="max-w-[34ch] text-[15px] text-muted lg:text-right">
