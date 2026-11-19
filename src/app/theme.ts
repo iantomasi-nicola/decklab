@@ -7,11 +7,11 @@ const META_COLORS = { dark: '#0e1015', light: '#f5f6fa' } as const
 function readPref(): ThemePref {
   try {
     const v = localStorage.getItem(STORAGE_KEY)
-    if (v === 'dark' || v === 'light') return v
+    if (v === 'dark' || v === 'light' || v === 'system') return v
   } catch {
     /* storage non disponibile */
   }
-  return 'system'
+  return 'dark' // predefinito: scuro; "Sistema" è una scelta esplicita
 }
 
 const mq = () => (typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: light)') : null)
@@ -39,8 +39,7 @@ export const useTheme = create<ThemeState>((set) => ({
   pref: readPref(),
   setPref: (pref) => {
     try {
-      if (pref === 'system') localStorage.removeItem(STORAGE_KEY)
-      else localStorage.setItem(STORAGE_KEY, pref)
+      localStorage.setItem(STORAGE_KEY, pref)
     } catch {
       /* ignora */
     }
