@@ -198,16 +198,22 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const tops: { w: number; k: number[]; fill: number }[] = []
   let topFloor = 0
 
-  const isPlayable = (used: number): boolean => {
-    if (used === 0) return false
-    if (used <= 3) {
-      let code = 0
-      for (let i = 0; i < m; i++) for (let n = k[i]!; n > 0; n--) code = code * base + i + 1
-      return small.get(code) === true
-    }
-    for (let i = 0; i < m; i++) {
-      if (k[i] === 0) continue
-      const list = byAnchor[i]!
+  // tabella dei binomiali C(n, r), n ≤ dimensione del mazzo, r ≤ mano: evita ricalcoli nelle foglie
+  const R = handSize + 1
+  const ctab = new Float64Array((size + 1) * R)
+  for (let n = 0; n <= size; n++) for (let r = 0; r <= handSize; r++) ctab[n * R + r] = comb(n, r)
+  const cb = (n: number, r: number) => (r < 0 || r > handSize || n < 0 || n > size ? 0 : ctab[n * R + r]!)
+  // carte ancora libere a partire dal tipo i (compreso il riempimento)
+  const restFrom = new Array<number>(m + 1)
+  restFrom[m] = F
+  for (let i = m - 1; i >= 0; i--) restFrom[i] = restFrom[i + 1]! + counts[i]!
+
+  const pres = new Int16Array(handSize + 1) // tipi presenti nella mano parziale
+  let np = 0
+  /** Con almeno 4 carte engine in mano vale solo "contiene una regola PLAYABLE" (monotona): niente etichette sull'insieme esatto. */
+  const ruleSatisfied = (): boolean => {
+    for (let p = 0; p < np; p++) {
+      const list = byAnchor[pres[p]!]!
       for (let r = 0; r < list.length; r++) {
         const { idx: ri, need } = list[r]!
         let ok = true
@@ -217,36 +223,53 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
     }
     return false
   }
+  const prune = !opts.detail
 
-  const rec = (i: number, remaining: number, w: number, used: number) => {
-    if (i === m) {
-      if (remaining > F) return
-      const wt = w * comb(F, remaining)
-      if (wt === 0) return
-
-      if (isPlayable(used)) playableW += wt
-      else {
-        brickW += wt
-        if (opts.detail && wt > topFloor) {
-          tops.push({ w: wt, k: Array.from(k), fill: remaining })
-          if (tops.length > TOP * 4) {
-            tops.sort((a, b) => b.w - a.w)
-            tops.length = TOP
-            topFloor = tops[TOP - 1]!.w
-          }
-        }
-      }
-      if (opts.detail) hist[used] = hist[used]! + wt
+  /**
+   * Visita il nodo "mano con queste carte engine, il resto riempimento", poi i nodi con una carta engine in più (tipi di indice ≥ start).
+   * Ogni composizione si visita una sola volta e senza scorrere i tipi assenti. Senza dettagli, un nodo giocabile con ≥4 carte engine
+   * assegna in blocco tutte le sue estensioni (sono tutte giocabili): somma Vandermonde w·C(carte libere, posti rimasti).
+   */
+  const rec = (start: number, used: number, w: number, code: number) => {
+    const rem = handSize - used
+    const playable = used === 0 ? false : used <= 3 ? small.get(code) === true : ruleSatisfied()
+    if (prune && used >= 4 && playable) {
+      playableW += w * cb(restFrom[start]!, rem)
       return
     }
-    const maxk = Math.min(counts[i]!, remaining)
-    for (let x = 0; x <= maxk; x++) {
-      k[i] = x
-      rec(i + 1, remaining - x, w * comb(counts[i]!, x), used + x)
+    if (rem <= F) {
+      const wt = w * cb(F, rem)
+      if (wt > 0) {
+        if (playable) playableW += wt
+        else {
+          brickW += wt
+          if (opts.detail && wt > topFloor) {
+            tops.push({ w: wt, k: Array.from(k), fill: rem })
+            if (tops.length > TOP * 4) {
+              tops.sort((a, b) => b.w - a.w)
+              tops.length = TOP
+              topFloor = tops[TOP - 1]!.w
+            }
+          }
+        }
+        if (opts.detail) hist[used] = hist[used]! + wt
+      }
     }
-    k[i] = 0
+    if (rem === 0) return
+    for (let i = start; i < m; i++) {
+      const maxx = Math.min(counts[i]!, rem)
+      pres[np++] = i
+      let cc = code
+      for (let x = 1; x <= maxx; x++) {
+        k[i] = x
+        if (used + x <= 3) cc = cc * base + i + 1
+        rec(i + 1, used + x, w * cb(counts[i]!, x), cc)
+      }
+      np--
+      k[i] = 0
+    }
   }
-  rec(0, handSize, 1, 0)
+  rec(0, 0, 1, 0)
 
   const denom = comb(size, handSize)
   const res: HandResult = { ...empty, playable: playableW / denom, brick: brickW / denom, ruleCount: rules.length }

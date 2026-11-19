@@ -14,7 +14,7 @@ import { EmptyState } from '@/ui/EmptyState'
 import { Segmented } from '@/ui/Segmented'
 import { Skeleton } from '@/ui/Skeleton'
 import { Switch } from '@/ui/Switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/Tabs'
+import { Tabs, TabsContent, TabsTrigger } from '@/ui/Tabs'
 import { toast } from '@/ui/Toast'
 import { cn } from '@/ui/cn'
 import { NativeSelect } from '@/features/decks/fields'
@@ -29,8 +29,8 @@ import { SensitivityTab } from './SensitivityTab'
 import { TournamentTab, asTourMode, type TourMode } from './TournamentTab'
 import { buildProject, downloadText, exportText } from './deckspaceIO'
 import { useCardNames } from './names'
-import { Stepper, useLang } from './parts'
-import { useAnalysis, useStatsModel } from './useStatsModel'
+import { ScrollTabsList, Stepper, useLang } from './parts'
+import { useAnalysis, useSensitivity, useStatsModel } from './useStatsModel'
 import './locales'
 import './stats.css'
 
@@ -78,7 +78,8 @@ export function StatsView() {
   const { saved, update, rows } = model
   const name = useCardNames(model.cards, lang)
   const handSize = saved.settings.useSixCardHand ? 6 : 5
-  const analysis = useAnalysis(model.input, handSize, sensSeen)
+  const analysis = useAnalysis(model.input)
+  const sens = useSensitivity(model.input, handSize, sensSeen)
   const archetype = useObservable(() => repos.archetypes.watch(model.variant?.archetypeId ?? ''), [model.variant?.archetypeId]).value
 
   useEffect(() => {
@@ -217,13 +218,13 @@ export function StatsView() {
         <>
           <Hero hand={hand} other={hands[handSize === 5 ? 6 : 5]} tour={tour} rounds={rounds} progress={analysis.progress} running={analysis.running} />
           <Tabs value={tab} onValueChange={(v) => setTab(v as TabId)}>
-            <TabsList aria-label={t('statsLab.tabsLabel')} className="flex-wrap overflow-visible lg:flex-nowrap">
+            <ScrollTabsList label={t('statsLab.tabsLabel')} activeKey={tab}>
               {TABS.map((id) => (
-                <TabsTrigger key={id} value={id}>
+                <TabsTrigger key={id} value={id} className="shrink-0">
                   {t(`statsLab.tabs.${id}`)}
                 </TabsTrigger>
               ))}
-            </TabsList>
+            </ScrollTabsList>
             <TabsContent value="hand">
               <HandTab hand={hand} name={name} />
             </TabsContent>
@@ -242,7 +243,7 @@ export function StatsView() {
               />
             </TabsContent>
             <TabsContent value="sensitivity">
-              <SensitivityTab items={analysis.sensitivity} running={analysis.running} progress={analysis.progress} handSize={handSize} name={name} />
+              <SensitivityTab state={sens} handSize={handSize} name={name} />
             </TabsContent>
             <TabsContent value="composition">{comp ? <CompositionTab comp={comp} /> : null}</TabsContent>
             <TabsContent value="roles">

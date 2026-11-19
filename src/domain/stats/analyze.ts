@@ -12,6 +12,8 @@ export interface AnalyzeRequest {
 
 export interface AnalyzeCallbacks {
   onHands?: (hands: Record<number, HandResult>) => void
+  /** Una voce di sensibilità appena calcolata (risultati parziali). */
+  onSensitivityItem?: (item: SensitivityItem) => void
   /** 0..100 */
   onProgress?: (pct: number) => void
 }
@@ -36,7 +38,7 @@ export function analyze(req: AnalyzeRequest, cb: AnalyzeCallbacks = {}): Analyze
     tick()
   }
   cb.onHands?.(hands)
-  const sensitivityResult = sens ? sensitivity(req.input, sens, tick) : null
+  const sensitivityResult = sens ? sensitivity(req.input, sens, tick, cb.onSensitivityItem) : null
   cb.onProgress?.(100)
   return { hands, sensitivity: sensitivityResult }
 }

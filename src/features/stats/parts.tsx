@@ -1,9 +1,12 @@
-import { useId, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import Minus from 'lucide-react/icons/minus'
 import Plus from 'lucide-react/icons/plus'
 import Check from 'lucide-react/icons/check'
 import X from 'lucide-react/icons/x'
+import ChevronLeft from 'lucide-react/icons/chevron-left'
+import ChevronRight from 'lucide-react/icons/chevron-right'
+import { TabsList } from '@/ui/Tabs'
 import type { Label } from '@/domain/stats'
 import type { Lang } from '@/domain/types'
 import { cn } from '@/ui/cn'
@@ -94,5 +97,54 @@ export function Section({ title, hint, children, actions }: { title: string; hin
       </div>
       {children}
     </section>
+  )
+}
+
+/**
+ * Barra di schede su un'unica riga che scorre in orizzontale. Ai bordi con altro contenuto compare una sfumatura con una freccia
+ * (solo indicativa: si scorre col dito, il trackpad o la tastiera); la scheda attiva viene portata in vista.
+ */
+export function ScrollTabsList({ label, activeKey, children }: { label: string; activeKey: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [edge, setEdge] = useState({ left: false, right: false })
+  const update = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    setEdge({ left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 })
+  }, [])
+  useEffect(() => {
+    update()
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [update])
+  useEffect(() => {
+    const el = ref.current?.querySelector<HTMLElement>('[data-state=active]')
+    el?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' })
+  }, [activeKey])
+  const fade = (side: 'left' | 'right') => (
+    <span
+      aria-hidden
+      className={cn(
+        'pointer-events-none absolute bottom-px top-0 flex w-12 items-center text-muted transition-opacity duration-150',
+        side === 'left' ? 'left-0 justify-start' : 'right-0 justify-end',
+        (side === 'left' ? edge.left : edge.right) ? 'opacity-100' : 'opacity-0',
+      )}
+      style={{ background: `linear-gradient(to ${side === 'left' ? 'right' : 'left'}, var(--bg) 35%, transparent)` }}
+      data-testid={`tabs-more-${side}`}
+    >
+      {side === 'left' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+    </span>
+  )
+  return (
+    <div className="relative">
+      <TabsList ref={ref} aria-label={label} onScroll={update} className="flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
+      </TabsList>
+      {fade('left')}
+      {fade('right')}
+    </div>
   )
 }

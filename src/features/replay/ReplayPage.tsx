@@ -234,7 +234,7 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
 
       <div className="flex min-h-0 flex-1 gap-3">
         <div className="min-h-0 min-w-0 flex-1">
-          <ReplayField doc={doc} frame={frame} frameKey={`${branchId ?? 'main'}:${index}`} nameOf={cards.nameOf} />
+          <ReplayField doc={doc} frame={frame} frameKey={`${branchId ?? 'main'}:${index}`} nameOf={cards.nameOf} animate={!(p.playing && p.speed >= 2)} />
         </div>
         {panel ? (
           <aside aria-label={t('replay.timeline')} data-testid="replay-panel" className="flex min-h-0 w-[clamp(300px,28vw,380px)] shrink-0 flex-col gap-3 rounded-lg border border-line bg-surface-1 p-3">

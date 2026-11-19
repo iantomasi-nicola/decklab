@@ -6,6 +6,7 @@ export type StatsWorkerIn = { id: number; req: AnalyzeRequest }
 export type StatsWorkerOut =
   | { id: number; type: 'progress'; pct: number }
   | { id: number; type: 'hands'; hands: Record<number, HandResult> }
+  | { id: number; type: 'item'; item: SensitivityItem }
   | { id: number; type: 'done'; sensitivity: SensitivityItem[] | null }
   | { id: number; type: 'error'; error: string }
 
@@ -17,6 +18,7 @@ ctx.onmessage = (e: MessageEvent<StatsWorkerIn>) => {
     const out = analyze(req, {
       onProgress: (pct) => ctx.postMessage({ id, type: 'progress', pct } satisfies StatsWorkerOut),
       onHands: (hands) => ctx.postMessage({ id, type: 'hands', hands } satisfies StatsWorkerOut),
+      onSensitivityItem: (item) => ctx.postMessage({ id, type: 'item', item } satisfies StatsWorkerOut),
     })
     ctx.postMessage({ id, type: 'done', sensitivity: out.sensitivity } satisfies StatsWorkerOut)
   } catch (err) {

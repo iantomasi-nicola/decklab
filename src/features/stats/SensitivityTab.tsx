@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SensitivityItem } from '@/domain/stats'
+import type { SensitivityState } from './useStatsModel'
+import { Banner } from '@/ui/Banner'
 import { Button } from '@/ui/Button'
 import { Skeleton } from '@/ui/Skeleton'
 import { ChartCard } from './charts/ChartCard'
@@ -11,14 +13,29 @@ import { Progress, useLang } from './parts'
 
 const FIRST = 10
 
-export function SensitivityTab({ items, running, progress, handSize, name }: { items: SensitivityItem[] | null; running: boolean; progress: number; handSize: number; name: (id: number) => string }) {
+export function SensitivityTab({ state, handSize, name }: { state: SensitivityState; handSize: number; name: (id: number) => string }) {
   const { t } = useTranslation()
   const lang = useLang()
   const [all, setAll] = useState(false)
-  if (!items) {
+  const { items, running, progress, cancelled, error } = state
+  if (error) return <Banner tone="danger" title={t('statsLab.error')}>{error}</Banner>
+  if (!items.length) {
     return (
-      <div className="rounded-lg border border-line bg-surface-1 p-4 md:p-6" aria-busy>
-        <p className="mb-4 text-[15px] text-muted">{t('statsLab.sens.computing', { pct: progress })}</p>
+      <div className="rounded-lg border border-line bg-surface-1 p-4 md:p-6" aria-busy={running}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[15px] text-muted" aria-live="polite">
+            {t('statsLab.sens.computing', { pct: progress })}
+          </p>
+          {running ? (
+            <Button variant="secondary" onClick={state.cancel}>
+              {t('statsLab.sens.cancel')}
+            </Button>
+          ) : (
+            <Button variant="secondary" onClick={state.restart}>
+              {t('statsLab.sens.resume')}
+            </Button>
+          )}
+        </div>
         <Progress value={progress} active={running} />
         <div className="mt-4 flex flex-col gap-4">
           {[0, 1, 2, 3].map((i) => (
@@ -43,6 +60,25 @@ export function SensitivityTab({ items, running, progress, handSize, name }: { i
         rows: rows.map((r) => [label(r), txt(r.minus), txt(r.plus)]),
       }}
     >
+      {running || cancelled ? (
+        <div className="mb-4 flex flex-col gap-3 rounded-md border border-line bg-surface-2 p-3" data-testid="sens-progress">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[15px] text-muted" aria-live="polite">
+              {cancelled ? t('statsLab.sens.cancelled', { count: rows.length }) : t('statsLab.sens.partial', { pct: progress })}
+            </p>
+            {running ? (
+              <Button variant="secondary" onClick={state.cancel}>
+                {t('statsLab.sens.cancel')}
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={state.restart}>
+                {t('statsLab.sens.resume')}
+              </Button>
+            )}
+          </div>
+          <Progress value={progress} active={running} />
+        </div>
+      ) : null}
       <div className="mb-4">
         <Legend
           items={[

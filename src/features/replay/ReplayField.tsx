@@ -9,7 +9,7 @@ import './replay.css'
 
 const SAFE = /^[A-Za-z0-9_-]+$/
 
-export function ReplayField({ doc, frame, frameKey, nameOf }: { doc: ComboDoc; frame: Frame; frameKey: string; nameOf: (code: number) => string }) {
+export function ReplayField({ doc, frame, frameKey, nameOf, animate = true }: { doc: ComboDoc; frame: Frame; frameKey: string; nameOf: (code: number) => string; animate?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const pool = useMemo(() => remainingPool(doc), [doc])
   const view: FieldView = useMemo(
@@ -30,7 +30,7 @@ export function ReplayField({ doc, frame, frameKey, nameOf }: { doc: ComboDoc; f
         : '',
     [frame.chain],
   )
-  useFlip(ref, frameKey)
+  useFlip(ref, frameKey, animate)
   return (
     <div ref={ref} className="rp-field h-full min-h-0 w-full" data-testid="replay-field">
       {css ? <style>{css}</style> : null}

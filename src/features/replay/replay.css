@@ -17,3 +17,8 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* il campo si ridisegna a ogni passo: isolare layout e stile dal resto della pagina (nessun clipping: niente `paint`) */
+.rp-field {
+  contain: layout style;
+}

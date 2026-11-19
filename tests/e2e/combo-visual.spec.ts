@@ -45,8 +45,8 @@ async function checkField(page: Page, label: string) {
     const stage = field.parentElement!
     const f = r(field)
     const s = r(stage)
-    const cells = [...field.querySelectorAll('.cl-cell')].map((c) => r(c))
-    const cards = [...field.querySelectorAll('[data-card]')].map((c) => r(c.firstElementChild ?? c))
+    const cells = [...field.querySelectorAll('.cl-cell')].filter((c) => c.getClientRects().length > 0).map((c) => r(c))
+    const cards = [...field.querySelectorAll('[data-card]')].filter((c) => c.getClientRects().length > 0).map((c) => r(c.firstElementChild ?? c))
     const hand = r(field.querySelector('[data-zone="p:0:hand"]')!)
     const own = r(field.querySelector('[data-zone="z:0:szone:2"]')!)
     return {

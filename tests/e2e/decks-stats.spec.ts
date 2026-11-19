@@ -107,7 +107,7 @@ test.describe('stats lab', () => {
         await seedStats(page)
         await page.goto('/statistiche')
         await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
-        await page.getByRole('tab', { name: new RegExp({ tournament: 'Torneo|Tournament', sensitivity: 'E se|What if', composition: 'Composizione|Makeup', roles: 'Ruoli|Roles', labels: 'Combinazioni|Combinations' }[tab]) }).click()
+        await page.getByRole('tab', { name: new RegExp({ tournament: 'Torneo|Tournament', sensitivity: 'Simulazioni|What-if', composition: 'Composizione|Makeup', roles: 'Ruoli|Roles', labels: 'Combinazioni|Combinations' }[tab]) }).click()
         if (tab === 'sensitivity') await expect(page.getByTestId('chart-sensitivity')).toBeVisible({ timeout: 30_000 })
         if (tab === 'composition') await expect(page.getByTestId('chart-kinds')).toBeVisible()
         await page.waitForTimeout(250)
@@ -193,6 +193,34 @@ test.describe('stats lab', () => {
     await expectNoHorizontalScroll(page)
     await page.screenshot({ path: `${SHOTS}/import-vuoto-375-dark-it.png`, fullPage: true })
     expect(errors).toEqual([])
+  })
+
+  test('simulazioni: risultati in meno di 1 secondo e annullabili', async ({ page }) => {
+    await open(page, 1024, 'dark', 'it')
+    await seedStats(page)
+    await page.goto('/statistiche')
+    await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
+    const t0 = Date.now()
+    await page.getByRole('tab', { name: 'Simulazioni' }).click()
+    await expect(page.getByTestId('chart-sensitivity')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByTestId('sens-progress')).toHaveCount(0, { timeout: 10_000 })
+    expect(Date.now() - t0, 'ms dal clic alla sensibilità completa (include il debounce di 200 ms)').toBeLessThan(1500)
+  })
+
+  test('schede: una sola riga scorrevole con indicatore a 375', async ({ page }) => {
+    await open(page, 375, 'dark', 'it')
+    await seedStats(page)
+    await page.goto('/statistiche')
+    await expect(page.getByTestId('hero-playable')).toBeVisible({ timeout: 20_000 })
+    const tabs = page.getByRole('tab')
+    const tops = await tabs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)))
+    expect(new Set(tops).size, 'tutte le schede sulla stessa riga').toBe(1)
+    await expect(page.getByTestId('tabs-more-right')).toHaveCSS('opacity', '1')
+    await expect(page.getByTestId('tabs-more-left')).toHaveCSS('opacity', '0')
+    await page.getByRole('tab', { name: 'Combinazioni' }).click()
+    await expect(page.getByTestId('tabs-more-left')).toHaveCSS('opacity', '1')
+    await expect(page.getByTestId('tabs-more-right')).toHaveCSS('opacity', '0')
+    await expect(page.getByRole('tab', { name: 'Combinazioni' })).toBeInViewport()
   })
 
   test('export Deckspace: scarica un file rileggibile', async ({ page }) => {

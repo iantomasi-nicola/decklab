@@ -8,9 +8,9 @@ export const prefersReducedMotion = () => typeof window !== 'undefined' && !!win
 /**
  * Animazione FLIP delle carte (`[data-card]`) quando cambia `key` (fotogramma): ogni carta già presente scivola dalla vecchia
  * alla nuova posizione, quelle nuove appaiono in dissolvenza. Solo `transform`/`opacity`, 150–250 ms; nessuna animazione con
- * prefers-reduced-motion, né se il contenitore è stato ridimensionato tra due fotogrammi.
+ * prefers-reduced-motion, né se `enabled` è falso (riproduzione veloce), né se il contenitore è stato ridimensionato tra due fotogrammi.
  */
-export function useFlip(ref: RefObject<HTMLElement | null>, key: unknown) {
+export function useFlip(ref: RefObject<HTMLElement | null>, key: unknown, enabled = true) {
   const prev = useRef<{ rects: Map<string, { x: number; y: number }>; w: number; h: number } | null>(null)
   useLayoutEffect(() => {
     const root = ref.current
@@ -18,7 +18,7 @@ export function useFlip(ref: RefObject<HTMLElement | null>, key: unknown) {
     const box = root.getBoundingClientRect()
     const rects = new Map<string, { x: number; y: number }>()
     const before = prev.current
-    const animate = !!before && !prefersReducedMotion() && Math.abs(before.w - box.width) < 1 && Math.abs(before.h - box.height) < 1
+    const animate = enabled && !!before && !prefersReducedMotion() && Math.abs(before.w - box.width) < 1 && Math.abs(before.h - box.height) < 1
     for (const el of root.querySelectorAll<HTMLElement>('[data-card]')) {
       const uid = el.dataset.card!
       const r = el.getBoundingClientRect()
