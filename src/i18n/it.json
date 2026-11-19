@@ -764,5 +764,235 @@
     "copied": "{{what}} copiato",
     "copyFailed": "Copia non riuscita: seleziona il testo e copialo a mano.",
     "preview": "Anteprima: {{what}}"
+  },
+  "backup": {
+    "title": "Dati e backup",
+    "description": "Salva una copia di tutto quello che hai creato, oppure ripristinala su questo o su un altro dispositivo.",
+    "export": {
+      "title": "Esporta backup",
+      "body": "Un unico file con archetipi, mazzi, combo, tag e impostazioni.",
+      "action": "Scarica il backup"
+    },
+    "restore": {
+      "title": "Ripristina da un backup",
+      "body": "Scegli un file di backup: prima di cambiare qualcosa ti mostro cosa contiene.",
+      "action": "Scegli il file"
+    },
+    "exported": "Backup scaricato",
+    "exportFailed": "Non sono riuscito a creare il backup",
+    "kind": {
+      "archetypes": "Archetipi",
+      "variants": "Mazzi",
+      "combos": "Combo",
+      "boards": "Board avversarie",
+      "tags": "Tag",
+      "settings": "Impostazioni"
+    },
+    "preview": {
+      "title": "Ripristina il backup",
+      "date": "Backup creato il {{date}}",
+      "noDate": "Data del backup non indicata",
+      "mode": "Come ripristinare",
+      "merge": "Unisci",
+      "replace": "Sostituisci",
+      "mergeHint": "Aggiunge quello che manca. Se un elemento esiste già, vince la versione modificata più di recente.",
+      "replaceTitle": "Sostituisci tutto",
+      "replaceHint": "I dati di questo dispositivo diventano uguali al backup: quello che non c'è nel backup viene eliminato. Dopo potrai annullare.",
+      "confirmMerge": "Unisci i dati",
+      "confirmReplace": "Sostituisci i dati"
+    },
+    "done": {
+      "title": "Ripristino completato",
+      "merge": "Aggiunti o aggiornati {{written}} elementi, {{skipped}} già più recenti sul dispositivo.",
+      "replace": "Ripristinati {{written}} elementi, {{removed}} eliminati perché non presenti nel backup.",
+      "undo": "Annulla il ripristino"
+    },
+    "undone": {
+      "title": "Ripristino annullato",
+      "body": "I dati sono tornati com'erano prima."
+    },
+    "error": {
+      "title": "Ripristino non riuscito",
+      "tooBig": "Il file è troppo grande (massimo 50 MB).",
+      "invalid": "Questo file non è un backup utilizzabile: {{reason}}.",
+      "read": "Non riesco a leggere il file.",
+      "restore": "Il ripristino non è andato a buon fine e nulla è cambiato.",
+      "undo": "Non sono riuscito ad annullare il ripristino."
+    }
+  },
+  "account": {
+    "title": "Account e sincronizzazione",
+    "description": "Accedi per ritrovare i tuoi dati su tutti i dispositivi. Senza account tutto resta su questo dispositivo.",
+    "disabled": {
+      "title": "Sincronizzazione non attiva",
+      "body": "Mancano le chiavi del servizio (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY): l'accesso è disabilitato. L'app funziona comunque, con i dati su questo dispositivo."
+    },
+    "email": {
+      "label": "Email",
+      "hint": "Ti mandiamo un link per entrare, senza password.",
+      "send": "Invia il link",
+      "invalid": "Scrivi un indirizzo email valido.",
+      "failed": "Non sono riuscito a inviare il link. Riprova tra poco.",
+      "sentTitle": "Link inviato",
+      "sent": "Controlla la posta di {{email}} e apri il link per entrare."
+    },
+    "or": "Oppure",
+    "why": "Con Google entri con un tocco, senza aspettare l'email.",
+    "google": {
+      "action": "Continua con Google",
+      "failed": "Non sono riuscito ad aprire l'accesso con Google."
+    },
+    "signedInAs": "Hai effettuato l'accesso come",
+    "status": "Stato",
+    "lastSync": "Ultimo aggiornamento",
+    "syncError": "Sincronizzazione non riuscita",
+    "syncNow": "Sincronizza ora",
+    "signOut": "Esci",
+    "signedOut": "Disconnesso",
+    "signOutFailed": "Non sono riuscito a disconnetterti"
+  },
+  "shareDlg": {
+    "title": "Condividi combo",
+    "preview": "Anteprima: {{what}}",
+    "copy": "Copia",
+    "copied": "{{what}} copiato",
+    "copiedShort": "Copiato",
+    "copyFailed": "Non sono riuscito a copiare",
+    "tab": {
+      "link": "Link e QR",
+      "text": "Testo",
+      "file": "File"
+    },
+    "link": {
+      "what": "Link",
+      "lead": "Chi apre il link vede l'anteprima della combo e può salvarla. Non serve un account.",
+      "copy": "Copia il link",
+      "share": "Condividi…"
+    },
+    "qr": {
+      "alt": "Codice QR del link",
+      "hint": "Inquadra il codice con la fotocamera dell'altro dispositivo.",
+      "longTitle": "Codice QR molto fitto",
+      "long": "Il link è lungo ({{count}} caratteri): il codice può essere difficile da inquadrare. Meglio il link o il file.",
+      "tooLongTitle": "Troppo lunga per un codice QR",
+      "tooLong": "Il link è di {{count}} caratteri e non entra in un codice QR. Usa il link o il file."
+    },
+    "text": {
+      "lang": "Lingua dei nomi",
+      "numbered": "Testo numerato",
+      "compact": "Compatto per Discord",
+      "cardsError": "Non riesco a caricare i nomi delle carte."
+    },
+    "file": {
+      "lead": "Un file .json con la combo completa, da importare su un altro dispositivo.",
+      "download": "Scarica il file",
+      "done": "File scaricato"
+    }
+  },
+  "importPage": {
+    "title": "Importa",
+    "lead": "Combo e mazzi da file, link o testo. Prima di salvare vedi cosa c'è dentro.",
+    "drop": {
+      "title": "Importa da file, link o testo",
+      "lead": "Trascina qui un file, incolla un link o un testo: riconosco da solo combo e mazzi."
+    },
+    "field": "Contenuto da importare",
+    "placeholder": "Incolla un link di Combo Lab, il JSON di una combo, una lista di carte o un link ydke://",
+    "run": "Controlla",
+    "chooseFile": "Scegli un file",
+    "paste": "Incolla dagli appunti",
+    "clear": "Svuota",
+    "error": {
+      "empty": "Non c'è niente da importare: incolla un link o un testo, oppure scegli un file.",
+      "unknown": "Non riconosco questo contenuto.",
+      "unknownHint": "Posso importare combo (link o JSON) e mazzi (.ydk, ydke://, lista di carte, JSON).",
+      "invalidJson": "Il JSON non è valido. Controlla di averlo copiato per intero.",
+      "needsIndex": "Sto caricando i dati delle carte: riprovo da solo appena sono pronti.",
+      "noCards": "Non ho riconosciuto nessuna carta. Controlla i nomi o il formato.",
+      "invalidDeck": "Il contenuto sembra un mazzo ma non è valido.",
+      "tooBig": "Il file è troppo grande (massimo 5 MB).",
+      "read": "Non riesco a leggere il file.",
+      "clipboardEmpty": "Gli appunti sono vuoti.",
+      "clipboardDenied": "Il browser non mi lascia leggere gli appunti: incolla il testo nel campo.",
+      "save": "Non sono riuscito a salvare. Riprova."
+    },
+    "backup": {
+      "title": "Questo è un backup completo",
+      "body": "Un backup si ripristina dalle Impostazioni, nella sezione Dati e backup, dove puoi scegliere se unire o sostituire.",
+      "go": "Apri le Impostazioni"
+    },
+    "combo": {
+      "found": "Combo riconosciuta",
+      "invalid": "Questa combo non si può importare",
+      "invalidBody": "Il contenuto è stato riconosciuto ma non è valido. Non è stato salvato nulla.",
+      "steps": "Passi",
+      "branches": "Rami",
+      "cards": "Carte",
+      "hand": "Mano iniziale",
+      "migrated": "Aggiornata dalla v{{v}}"
+    },
+    "deck": {
+      "found": "Mazzo riconosciuto",
+      "title": "Mazzo da {{format}}",
+      "total": "Totale",
+      "skipped_one": "{{count}} riga saltata",
+      "skipped_other": "{{count}} righe saltate",
+      "more": "…e altre {{count}}",
+      "ambiguous_one": "{{count}} riga con più carte possibili: aprila dall'editor per scegliere",
+      "ambiguous_other": "{{count}} righe con più carte possibili: aprile dall'editor per scegliere",
+      "defaultName": "Mazzo importato"
+    },
+    "warnings_one": "{{count}} avviso",
+    "warnings_other": "{{count}} avvisi",
+    "target": {
+      "archetype": "Salva nell'archetipo",
+      "newArchetype": "Nuovo archetipo…",
+      "newName": "Nome del nuovo archetipo",
+      "variant": "Collega a",
+      "general": "Generale (tutto l'archetipo)",
+      "deckName": "Nome del mazzo",
+      "unnamed": "Senza nome"
+    },
+    "save": {
+      "combo": "Salva la combo",
+      "deck": "Salva il mazzo",
+      "hint": "Si salva sul dispositivo e non sostituisce nulla."
+    },
+    "saved": {
+      "combo": "Combo salvata",
+      "deck": "Mazzo salvato",
+      "copied": "Ne avevi già una uguale: ho salvato questa come copia.",
+      "openCombo": "Apri la combo",
+      "openDeck": "Apri il mazzo",
+      "another": "Importa altro"
+    },
+    "issue": {
+      "generic": "Problema nel documento ({{code}})",
+      "badFormat": "Il file non è una combo di Combo Lab.",
+      "badVersion": "La versione del formato manca o non è valida.",
+      "notObject": "Il contenuto non è un documento valido.",
+      "readOnlyNewerVersion": "Creata con una versione più recente (v{{v}}, qui {{supported}}): si apre solo in lettura.",
+      "schema": "Dato non valido in «{{path}}»: {{message}}",
+      "duplicateStepId": "Due passi hanno lo stesso id ({{id}}).",
+      "duplicateBranchId": "Due rami hanno lo stesso id ({{id}}).",
+      "unknownUid": "Una carta citata ({{uid}}) non è nell'elenco delle carte.",
+      "afterStepMissing": "Un ramo parte da un passo che non esiste.",
+      "rejoinMissing": "Un ramo rientra in un passo che non esiste.",
+      "rejoinNotAfter": "Un ramo rientra in un passo precedente al suo punto di partenza.",
+      "groupNotContiguous": "Un gruppo «ordine libero» non è contiguo ({{group}}).",
+      "ydkeMismatch": "Il mazzo salvato non corrisponde al suo codice ydke.",
+      "endboardDrift": "Il board finale salvato non coincide con quello calcolato dai passi.",
+      "handCardNotInDeck": "Una carta della mano non è nel mazzo.",
+      "handTooLarge": "Le carte necessarie sono più della mano.",
+      "moveFromMismatch": "Il passo {{step}} sposta una carta da dove non si trova.",
+      "moveUnknownCard": "Il passo {{step}} sposta una carta sconosciuta.",
+      "overlayHostInvalid": "Un materiale Xyz è agganciato a un mostro non valido."
+    },
+    "link": {
+      "tooLarge": "Il link è troppo grande per essere importato.",
+      "unsupportedVersion": "Il link è stato creato con una versione del formato che questa app non conosce.",
+      "badPrefix": "Il link non è un link di Combo Lab.",
+      "corrupt": "Il link è danneggiato: controlla di averlo copiato per intero."
+    }
   }
 }

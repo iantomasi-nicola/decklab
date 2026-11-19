@@ -764,5 +764,235 @@
     "copied": "{{what}} copied",
     "copyFailed": "Copy failed: select the text and copy it by hand.",
     "preview": "Preview: {{what}}"
+  },
+  "backup": {
+    "title": "Data and backup",
+    "description": "Save a copy of everything you have created, or restore it on this or another device.",
+    "export": {
+      "title": "Export backup",
+      "body": "A single file with archetypes, decks, combos, tags and settings.",
+      "action": "Download backup"
+    },
+    "restore": {
+      "title": "Restore from a backup",
+      "body": "Choose a backup file: before anything changes I show you what it contains.",
+      "action": "Choose file"
+    },
+    "exported": "Backup downloaded",
+    "exportFailed": "Could not create the backup",
+    "kind": {
+      "archetypes": "Archetypes",
+      "variants": "Decks",
+      "combos": "Combos",
+      "boards": "Opponent boards",
+      "tags": "Tags",
+      "settings": "Settings"
+    },
+    "preview": {
+      "title": "Restore backup",
+      "date": "Backup created on {{date}}",
+      "noDate": "Backup date not available",
+      "mode": "How to restore",
+      "merge": "Merge",
+      "replace": "Replace",
+      "mergeHint": "Adds what is missing. If an item already exists, the most recently edited version wins.",
+      "replaceTitle": "Replace everything",
+      "replaceHint": "Data on this device becomes identical to the backup: anything not in the backup is deleted. You can undo afterwards.",
+      "confirmMerge": "Merge data",
+      "confirmReplace": "Replace data"
+    },
+    "done": {
+      "title": "Restore complete",
+      "merge": "{{written}} items added or updated, {{skipped}} already newer on this device.",
+      "replace": "{{written}} items restored, {{removed}} deleted because they were not in the backup.",
+      "undo": "Undo restore"
+    },
+    "undone": {
+      "title": "Restore undone",
+      "body": "Your data is back to how it was."
+    },
+    "error": {
+      "title": "Restore failed",
+      "tooBig": "The file is too large (50 MB maximum).",
+      "invalid": "This file is not a usable backup: {{reason}}.",
+      "read": "Could not read the file.",
+      "restore": "The restore did not complete and nothing has changed.",
+      "undo": "Could not undo the restore."
+    }
+  },
+  "account": {
+    "title": "Account and sync",
+    "description": "Sign in to find your data on all your devices. Without an account everything stays on this device.",
+    "disabled": {
+      "title": "Sync is off",
+      "body": "The service keys are missing (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), so sign-in is disabled. The app still works, with data on this device."
+    },
+    "email": {
+      "label": "Email",
+      "hint": "We email you a sign-in link, no password needed.",
+      "send": "Send link",
+      "invalid": "Enter a valid email address.",
+      "failed": "Could not send the link. Try again shortly.",
+      "sentTitle": "Link sent",
+      "sent": "Check the inbox of {{email}} and open the link to sign in."
+    },
+    "or": "Or",
+    "why": "With Google you sign in with one tap, no waiting for email.",
+    "google": {
+      "action": "Continue with Google",
+      "failed": "Could not open Google sign-in."
+    },
+    "signedInAs": "Signed in as",
+    "status": "Status",
+    "lastSync": "Last update",
+    "syncError": "Sync failed",
+    "syncNow": "Sync now",
+    "signOut": "Sign out",
+    "signedOut": "Signed out",
+    "signOutFailed": "Could not sign you out"
+  },
+  "shareDlg": {
+    "title": "Share combo",
+    "preview": "Preview: {{what}}",
+    "copy": "Copy",
+    "copied": "{{what}} copied",
+    "copiedShort": "Copied",
+    "copyFailed": "Could not copy",
+    "tab": {
+      "link": "Link and QR",
+      "text": "Text",
+      "file": "File"
+    },
+    "link": {
+      "what": "Link",
+      "lead": "Anyone who opens the link sees a preview of the combo and can save it. No account needed.",
+      "copy": "Copy link",
+      "share": "Share…"
+    },
+    "qr": {
+      "alt": "QR code of the link",
+      "hint": "Scan the code with the other device's camera.",
+      "longTitle": "Very dense QR code",
+      "long": "The link is long ({{count}} characters): the code may be hard to scan. The link or the file works better.",
+      "tooLongTitle": "Too long for a QR code",
+      "tooLong": "The link is {{count}} characters and does not fit in a QR code. Use the link or the file."
+    },
+    "text": {
+      "lang": "Card name language",
+      "numbered": "Numbered text",
+      "compact": "Compact for Discord",
+      "cardsError": "Could not load card names."
+    },
+    "file": {
+      "lead": "A .json file with the whole combo, to import on another device.",
+      "download": "Download file",
+      "done": "File downloaded"
+    }
+  },
+  "importPage": {
+    "title": "Import",
+    "lead": "Combos and decks from a file, link or text. You see what is inside before saving.",
+    "drop": {
+      "title": "Import from file, link or text",
+      "lead": "Drop a file here, or paste a link or text: I recognise combos and decks on my own."
+    },
+    "field": "Content to import",
+    "placeholder": "Paste a Combo Lab link, a combo's JSON, a card list or a ydke:// link",
+    "run": "Check",
+    "chooseFile": "Choose file",
+    "paste": "Paste from clipboard",
+    "clear": "Clear",
+    "error": {
+      "empty": "Nothing to import: paste a link or text, or choose a file.",
+      "unknown": "I don't recognise this content.",
+      "unknownHint": "I can import combos (link or JSON) and decks (.ydk, ydke://, card list, JSON).",
+      "invalidJson": "The JSON is not valid. Check that you copied all of it.",
+      "needsIndex": "Loading card data: I will retry as soon as it is ready.",
+      "noCards": "No cards recognised. Check the names or the format.",
+      "invalidDeck": "This looks like a deck but it is not valid.",
+      "tooBig": "The file is too large (5 MB maximum).",
+      "read": "Could not read the file.",
+      "clipboardEmpty": "The clipboard is empty.",
+      "clipboardDenied": "The browser won't let me read the clipboard: paste the text into the field.",
+      "save": "Could not save. Try again."
+    },
+    "backup": {
+      "title": "This is a full backup",
+      "body": "Backups are restored from Settings, in the Data and backup section, where you can choose to merge or replace.",
+      "go": "Open Settings"
+    },
+    "combo": {
+      "found": "Combo recognised",
+      "invalid": "This combo can't be imported",
+      "invalidBody": "The content was recognised but it is not valid. Nothing has been saved.",
+      "steps": "Steps",
+      "branches": "Branches",
+      "cards": "Cards",
+      "hand": "Starting hand",
+      "migrated": "Upgraded from v{{v}}"
+    },
+    "deck": {
+      "found": "Deck recognised",
+      "title": "Deck from {{format}}",
+      "total": "Total",
+      "skipped_one": "{{count}} line skipped",
+      "skipped_other": "{{count}} lines skipped",
+      "more": "…and {{count}} more",
+      "ambiguous_one": "{{count}} line with several possible cards: open it in the editor to choose",
+      "ambiguous_other": "{{count}} lines with several possible cards: open them in the editor to choose",
+      "defaultName": "Imported deck"
+    },
+    "warnings_one": "{{count}} warning",
+    "warnings_other": "{{count}} warnings",
+    "target": {
+      "archetype": "Save in archetype",
+      "newArchetype": "New archetype…",
+      "newName": "New archetype name",
+      "variant": "Link to",
+      "general": "General (whole archetype)",
+      "deckName": "Deck name",
+      "unnamed": "Untitled"
+    },
+    "save": {
+      "combo": "Save combo",
+      "deck": "Save deck",
+      "hint": "Saved on this device, nothing is replaced."
+    },
+    "saved": {
+      "combo": "Combo saved",
+      "deck": "Deck saved",
+      "copied": "You already had an identical one: this was saved as a copy.",
+      "openCombo": "Open combo",
+      "openDeck": "Open deck",
+      "another": "Import another"
+    },
+    "issue": {
+      "generic": "Problem in the document ({{code}})",
+      "badFormat": "The file is not a Combo Lab combo.",
+      "badVersion": "The format version is missing or not valid.",
+      "notObject": "The content is not a valid document.",
+      "readOnlyNewerVersion": "Created with a newer version (v{{v}}, this app has {{supported}}): it opens read-only.",
+      "schema": "Invalid data at «{{path}}»: {{message}}",
+      "duplicateStepId": "Two steps share the same id ({{id}}).",
+      "duplicateBranchId": "Two branches share the same id ({{id}}).",
+      "unknownUid": "A referenced card ({{uid}}) is not in the card list.",
+      "afterStepMissing": "A branch starts from a step that does not exist.",
+      "rejoinMissing": "A branch rejoins a step that does not exist.",
+      "rejoinNotAfter": "A branch rejoins a step before its starting point.",
+      "groupNotContiguous": "A free-order group is not contiguous ({{group}}).",
+      "ydkeMismatch": "The saved deck does not match its ydke code.",
+      "endboardDrift": "The saved end board differs from the one computed from the steps.",
+      "handCardNotInDeck": "A card in the hand is not in the deck.",
+      "handTooLarge": "There are more required cards than hand slots.",
+      "moveFromMismatch": "Step {{step}} moves a card from where it is not.",
+      "moveUnknownCard": "Step {{step}} moves an unknown card.",
+      "overlayHostInvalid": "An Xyz material is attached to an invalid monster."
+    },
+    "link": {
+      "tooLarge": "The link is too large to import.",
+      "unsupportedVersion": "The link was created with a format version this app doesn't know.",
+      "badPrefix": "This is not a Combo Lab link.",
+      "corrupt": "The link is damaged: check that you copied all of it."
+    }
   }
 }
