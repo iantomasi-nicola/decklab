@@ -103,7 +103,7 @@ test('duello vero pilotato (Sky Striker): ogni richiesta del motore ha il suo co
     if (kind === 'place') await expect(page.getByTestId('place-banner')).toBeVisible()
     if (n % 6 === 0) await page.screenshot({ path: `test-results/visual-engine/real-sky-${n}-${kind}.png` })
     const ok = await page.evaluate(async (n) => {
-      const { drive } = await import(/* @vite-ignore */ '/tests/engine/driver.ts')
+      const { drive } = await import(/* @vite-ignore */ ('/tests/engine/' + 'driver.ts'))
       const d = (window as unknown as { __duel: { getState(): { state: { pending: unknown } | null; respond(a: unknown): Promise<boolean> } } }).__duel.getState()
       return d.respond(drive(d.state!.pending as never, { step: n, idleOrder: n % 2 ? ['activate', 'specialSummon', 'summon'] : ['summon', 'activate', 'specialSummon'], chain: 'first' }))
     }, n)
