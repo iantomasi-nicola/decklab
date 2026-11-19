@@ -192,3 +192,8 @@ Le risposte a D1–D5 in `ARCHITECTURE.md` §15 (le più importanti: **D1** imma
 - **Alpha (subito)**: note a campo unico, barra delle fasi e indicatori di stato (Normal Summon fatta, effetti OPT usati), icone specifiche per tipo di effetto e di evocazione, selezione bersagli chiara, suoni WebAudio, gesture, ottimizzazione responsive di ogni schermata.
 - **Side plan contro i matchup**: sezione per piani di side (OUT/IN evidenziati in verde, controlli di legalità e di conteggio, copia tra piani, suggerimenti dai tag handtrap/anti-archetipo, impatto sulle probabilità con Stats Lab, esporta immagine PNG).
 - **Compatibilità C2 e probabilità post-side** (richiesta utente): le carte C2 non sono tutte compatibili tra loro (matrice/gruppi di compatibilità, derivata dalle combo salvate e modificabile, coppie non coperte = "da confermare" con incertezza mostrata); ogni statistica ha una modalità Pre-side / Post-side per matchup (piani di side) con le differenze.
+
+## Cambio di priorità (utente): la prima versione pubblica include la modalità automatica EDOPro
+- Decisione: la versione 1 pubblicata deve avere la modalità **Automatica** (motore EDOPro) e permettere di **salvare decklist e combo** (già presente: salvataggio locale + sync).
+- Motore (core in Web Worker, script, normalizzazione, politica automatica, annulla/ripeti) e interfaccia delle richieste (21 tipologie, touch-first) sono in sviluppo in parallelo dal 2026-11-19.
+- Resta dopo la v1: avversario con handtrap (Fase 6), Impara (Fase 7), MP4 (Fase 4).
