@@ -1,6 +1,11 @@
+import Dexie from 'dexie'
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb'
 import { createDb, type DecklabDB } from './db'
 import type { Clock } from './outbox'
+
+// liveQuery controlla le dipendenze globali di Dexie (non quelle passate al costruttore).
+Dexie.dependencies.indexedDB ??= new IDBFactory()
+Dexie.dependencies.IDBKeyRange ??= IDBKeyRange
 
 /** Database isolato in memoria (una IDBFactory propria per ogni "dispositivo"). Solo per i test. */
 export function createTestDb(name = 'test'): DecklabDB {
