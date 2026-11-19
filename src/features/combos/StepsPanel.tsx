@@ -21,6 +21,7 @@ import { Menu, type MenuItem } from '@/ui/Menu'
 import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
 import { incoherentSteps } from './incoherence'
+import { pickText, withNoteLang, withText } from './model'
 
 const PHASES = ['draw', 'standby', 'main1', 'battle', 'main2', 'end'] as const
 const textareaCls =
@@ -60,7 +61,7 @@ function segmentsOf(steps: Step[]): Segment[] {
   return out
 }
 
-const noteOf = (s: Step, lang: 'it' | 'en') => s.note?.[lang] ?? s.note?.it ?? s.note?.en ?? ''
+const noteOf = (s: Step, lang: string, order: readonly string[]) => pickText(s.note, lang, order)
 
 interface RowProps {
   s: Step
@@ -164,7 +165,7 @@ export function StepsPanel({
 
   // testo di ogni passo (per la ricerca e le righe): calcolato una volta per documento
   const labels = useMemo(() => doc.steps.map((s) => describeStep(s, nameOf, t)), [doc.steps, nameOf, t])
-  const notes = useMemo(() => doc.steps.map((s) => noteOf(s, lang)), [doc.steps, lang])
+  const notes = useMemo(() => doc.steps.map((s) => noteOf(s, lang, doc.meta.noteLang)), [doc.steps, doc.meta.noteLang, lang])
 
   // ricerca: numero = salto a quel passo; testo = passi che contengono le parole (azione, carta, nota)
   const matches = useMemo(() => {
@@ -317,13 +318,19 @@ export function StepsPanel({
 }
 
 function StepEditor({ step }: { step: Step }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language === 'it' ? 'it' : 'en'
   const store = useEditor.getState()
-  const note = (lang: 'it' | 'en', value: string) => {
-    const next = { ...step.note, [lang]: value }
-    if (!value) delete next[lang]
-    store.patchStep(step.id, { note: next })
-  }
+  const noteLang = useEditor((x) => x.doc?.meta.noteLang) ?? []
+  // un solo campo: mostra la lingua corrente (o la prima disponibile) e salva sotto la lingua corrente
+  const note = (value: string) =>
+    store.edit((d) => ({
+      doc: {
+        ...d,
+        meta: { ...d.meta, noteLang: withNoteLang(d.meta.noteLang, lang) },
+        steps: d.steps.map((x) => (x.id === step.id ? { ...x, note: withText(x.note, lang, value) } : x)),
+      },
+    }))
   return (
     <div className="flex flex-col gap-3 border-t border-line px-3 pb-3 pt-3" data-step-editor>
       {step.action === 'custom' ? (
@@ -337,12 +344,8 @@ function StepEditor({ step }: { step: Step }) {
         </label>
       ) : null}
       <label className="flex flex-col gap-1 text-sm font-medium">
-        {t('combos.step.noteIt')}
-        <textarea className={textareaCls} value={step.note?.it ?? ''} onChange={(e) => note('it', e.target.value)} data-testid="note-it" />
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
-        {t('combos.step.noteEn')}
-        <textarea className={textareaCls} value={step.note?.en ?? ''} onChange={(e) => note('en', e.target.value)} data-testid="note-en" />
+        {t('combos.step.note')}
+        <textarea className={textareaCls} value={pickText(step.note, lang, noteLang)} onChange={(e) => note(e.target.value)} data-testid="note" />
       </label>
       <label className="flex flex-col gap-1 text-sm font-medium">
         {t('combos.step.phase')}

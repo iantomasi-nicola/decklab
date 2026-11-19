@@ -6,6 +6,7 @@ import { Field, Input } from '@/ui/Input'
 import { Segmented } from '@/ui/Segmented'
 import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
+import { pickText, withText } from './model'
 import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
 
 export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: ComboRecord[]; mother: ComboRecord | undefined }) {
@@ -14,19 +15,17 @@ export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: 
   const fanPiles = useFieldPrefs((x) => x.fanPiles)
   const pilesPref = useFieldPrefs((x) => x.pilesPanel)
   const meta = (patch: Partial<ComboDoc['meta']>) => store.edit((d) => ({ doc: { ...d, meta: { ...d.meta, ...patch } } }))
-  const title = (lang: 'it' | 'en', v: string) => {
-    const next = { ...doc.meta.title, [lang]: v }
-    if (!v) delete next[lang]
-    meta({ title: next })
-  }
   const lang = i18n.language === 'it' ? 'it' : 'en'
+  // un solo campo: mostra la lingua corrente (o la prima disponibile) e salva sotto la lingua corrente
+  const title = (v: string) => meta({ title: withText(doc.meta.title, lang, v) })
   const from = doc.meta.derivedFrom
   const stepNo = (id: string | null | undefined) => (id ? doc.steps.findIndex((s) => s.id === id) + 1 : 0)
   const nameOf = (r: ComboRecord) => r.name?.[lang] ?? r.name?.it ?? r.name?.en ?? t('combos.untitled')
   return (
     <div className="flex flex-col gap-5">
-      <Field label={t('combos.info.titleIt')}>{({ id }) => <Input id={id} value={doc.meta.title.it ?? ''} onChange={(e) => title('it', e.target.value)} data-testid="title-it" />}</Field>
-      <Field label={t('combos.info.titleEn')}>{({ id }) => <Input id={id} value={doc.meta.title.en ?? ''} onChange={(e) => title('en', e.target.value)} data-testid="title-en" />}</Field>
+      <Field label={t('combos.info.title')}>
+        {({ id }) => <Input id={id} value={pickText(doc.meta.title, lang, doc.meta.noteLang)} onChange={(e) => title(e.target.value)} data-testid="title" />}
+      </Field>
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium">{t('combos.info.rules')}</h3>
         <Segmented<'TCG' | 'OCG'> label={t('combos.info.rules')} value={doc.meta.rules} onValueChange={(v) => meta({ rules: v })} options={[{ value: 'TCG', label: 'TCG' }, { value: 'OCG', label: 'OCG' }]} />

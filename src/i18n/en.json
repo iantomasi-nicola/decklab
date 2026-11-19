@@ -422,8 +422,7 @@
       "delete": "Delete step",
       "freeOrder": "Free order",
       "label": "Action name",
-      "noteIt": "Note (Italian)",
-      "noteEn": "Note (English)",
+      "note": "Note",
       "phase": "Phase",
       "phaseNone": "Not specified",
       "optional": "Optional step"
@@ -449,8 +448,7 @@
       "opponent": "Opponent: add their cards with \"Add opponent card\" and change LP by tapping them."
     },
     "info": {
-      "titleIt": "Title (Italian)",
-      "titleEn": "Title (English)",
+      "title": "Title",
       "rules": "Rules",
       "tags": "Tags",
       "tagsHint": "Separated by commas.",

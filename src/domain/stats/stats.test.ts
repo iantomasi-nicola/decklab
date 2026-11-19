@@ -286,7 +286,7 @@ describe('formato Deckspace', () => {
   })
 
   it('etichette nuove finiscono nel gruppo per dimensione; quelle tolte spariscono', () => {
-    const q = { ...p, labels: { ...p.labels, '1,2': 'PLAYABLE' as Label } }
+    const q = { ...p, labels: { ...p.labels, '1,2': 'PLAYABLE' } as Record<string, Label> }
     delete q.labels['26236560,26236560']
     const j = JSON.parse(serializeDeckspace(q)) as { combo_labels: Record<string, Record<string, string>> }
     expect(j.combo_labels.C2PAIR_NE_FILL!['1,2']).toBe('PLAYABLE')

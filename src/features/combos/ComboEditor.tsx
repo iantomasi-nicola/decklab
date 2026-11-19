@@ -27,7 +27,7 @@ import { Board, type BoardHandle } from './Board'
 import { FIELD_ASPECT_RATIO } from './Field'
 import { useEditor } from './editorStore'
 import { InfoPanel } from './InfoPanel'
-import { deriveDoc, finalizeDoc } from './model'
+import { deriveDoc, finalizeDoc, pickText } from './model'
 import { SetupPanel } from './SetupPanel'
 import { describeStep, StepsPanel } from './StepsPanel'
 import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
@@ -199,7 +199,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   if (!doc || !state) return <Skeleton className="h-96 w-full" />
 
   const lang = i18n.language === 'it' ? 'it' : 'en'
-  const title = doc.meta.title[lang] ?? doc.meta.title.it ?? doc.meta.title.en ?? t('combos.untitled')
+  const title = pickText(doc.meta.title, lang, doc.meta.noteLang) || t('combos.untitled')
   const store = useEditor.getState()
   const setPanelState = (p: PanelState) => {
     setPanel(p)

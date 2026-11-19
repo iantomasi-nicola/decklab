@@ -1,0 +1,1965 @@
+{
+  "format": "combolab.combo",
+  "v": 1,
+  "meta": {
+    "id": "00000000-0000-4000-8000-000000000060",
+    "title": {
+      "it": "Apertura lunga di prova (60 passi)"
+    },
+    "scope": "archetype",
+    "archetype": {
+      "name": {
+        "it": "Prova combo lunghe",
+        "en": "Long combo test"
+      }
+    },
+    "variant": null,
+    "rules": "TCG",
+    "banlist": {
+      "format": "TCG",
+      "id": "2026.10"
+    },
+    "tags": [
+      "demo",
+      "long"
+    ],
+    "noteLang": [
+      "it",
+      "en"
+    ],
+    "favorite": false,
+    "createdAt": "2026-11-19T10:00:00Z",
+    "updatedAt": "2026-11-19T10:00:00Z",
+    "source": "manual"
+  },
+  "deck": {
+    "main": [
+      10028593,
+      8843569,
+      16719802,
+      10028593,
+      23899727,
+      31571902,
+      46104361,
+      53309998,
+      60999392,
+      68809475,
+      76830505,
+      84592800,
+      91870448,
+      65268179,
+      17956906,
+      25123082,
+      33907039,
+      58577036,
+      66380357,
+      6763530,
+      15693423,
+      23270035,
+      31044787,
+      38960450,
+      1003028,
+      1003840,
+      1005587,
+      1006081,
+      1033312,
+      1036974,
+      1045143,
+      1050186,
+      1050355,
+      1050684,
+      1061200,
+      1073952,
+      1082946,
+      1102515,
+      1118137,
+      1127737
+    ],
+    "extra": [
+      29208536,
+      63767246,
+      49032236,
+      66547759,
+      74689476,
+      68396121,
+      90590303,
+      698785,
+      23338098,
+      47710198,
+      47158777,
+      65711558,
+      11738489
+    ],
+    "side": []
+  },
+  "cards": {
+    "o1": 14558127,
+    "o2": 10060427,
+    "o3": 84592800,
+    "o4": 91870448,
+    "o5": 10045474,
+    "u1": 10028593,
+    "u2": 8843569,
+    "u3": 16719802,
+    "u4": 10045474,
+    "u101": 10028593,
+    "u102": 16719802,
+    "u103": 23899727,
+    "u104": 31571902,
+    "u105": 46104361,
+    "u106": 29208536,
+    "u107": 8843569,
+    "u108": 6763530,
+    "u109": 17956906,
+    "u110": 53309998,
+    "u111": 10080320,
+    "u112": 47158777,
+    "u113": 25123082,
+    "u114": 15693423,
+    "u115": 60999392,
+    "u116": 23338098,
+    "u117": 68809475,
+    "u118": 76830505,
+    "u119": 84592800,
+    "u120": 63767246,
+    "u121": 33907039,
+    "u122": 23270035,
+    "u123": 58577036,
+    "u124": 91870448,
+    "u125": 65268179,
+    "u126": 29913783,
+    "u127": 92652813,
+    "u128": 46809548,
+    "u129": 28423537,
+    "u130": 49032236,
+    "u131": 66380357,
+    "u132": 31044787,
+    "u133": 73680966,
+    "u134": 3428069,
+    "u135": 66547759,
+    "u136": 10065487,
+    "u901": 66380357,
+    "u902": 16719802,
+    "u903": 10065487,
+    "u904": 29208536
+  },
+  "setup": {
+    "first": true,
+    "hand": {
+      "required": [
+        "u1",
+        "u2",
+        "u3"
+      ],
+      "size": 5,
+      "fill": "random"
+    },
+    "own": {
+      "lp": 8000,
+      "places": [
+        {
+          "uid": "u4",
+          "place": {
+            "loc": "szone",
+            "seq": 4,
+            "pos": "FACEDOWN"
+          }
+        }
+      ]
+    },
+    "opponent": {
+      "board": {
+        "lp": 8000,
+        "places": [
+          {
+            "uid": "o1",
+            "place": {
+              "p": 1,
+              "loc": "hand"
+            }
+          },
+          {
+            "uid": "o2",
+            "place": {
+              "p": 1,
+              "loc": "mzone",
+              "seq": 2,
+              "pos": "FACEUP_ATK"
+            }
+          },
+          {
+            "uid": "o3",
+            "place": {
+              "p": 1,
+              "loc": "mzone",
+              "seq": 1,
+              "pos": "FACEUP_DEF"
+            }
+          },
+          {
+            "uid": "o4",
+            "place": {
+              "p": 1,
+              "loc": "mzone",
+              "seq": 3,
+              "pos": "FACEUP_ATK"
+            }
+          },
+          {
+            "uid": "o5",
+            "place": {
+              "p": 1,
+              "loc": "szone",
+              "seq": 2,
+              "pos": "FACEDOWN"
+            }
+          }
+        ]
+      },
+      "interrupts": [
+        {
+          "uid": "o1",
+          "mode": "ask",
+          "target": "manual"
+        }
+      ]
+    }
+  },
+  "steps": [
+    {
+      "id": "s1",
+      "action": "normalSummon",
+      "card": "u1",
+      "to": {
+        "loc": "mzone",
+        "seq": 2,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u1",
+          "to": {
+            "loc": "mzone",
+            "seq": 2,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Usa @u1 per cercare @u1; tienila in mano per dopo, serve alla seconda parte della linea."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s2",
+      "action": "activate",
+      "card": "u1",
+      "effect": {
+        "kind": "trigger",
+        "index": 1
+      },
+      "searched": [
+        "u101"
+      ],
+      "moves": [
+        {
+          "uid": "u101",
+          "to": {
+            "loc": "hand"
+          },
+          "why": "search"
+        }
+      ],
+      "note": {
+        "it": "Attiva @u1 e scegli @u101 come bersaglio: se l’avversario non risponde, prosegui con il passo successivo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s3",
+      "action": "activate",
+      "card": "u2",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "chain": {
+        "id": "c1",
+        "link": 1
+      },
+      "moves": [
+        {
+          "uid": "u2",
+          "to": {
+            "loc": "szone",
+            "seq": 1,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Questo è il punto in cui @Ash Blossom è più pericolosa: valuta se attivare prima @u2."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s4",
+      "action": "chainActivate",
+      "card": "u4",
+      "chain": {
+        "id": "c1",
+        "link": 2
+      },
+      "targets": [
+        "o2"
+      ],
+      "moves": [
+        {
+          "uid": "u4",
+          "to": {
+            "loc": "szone",
+            "seq": 4,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Questo è il punto in cui @Ash Blossom è più pericolosa: valuta se attivare prima @u4."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s5",
+      "action": "resolve",
+      "ref": "s4",
+      "moves": [
+        {
+          "uid": "u4",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "o2",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "destroy"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s6",
+      "action": "resolve",
+      "ref": "s3",
+      "moves": [
+        {
+          "uid": "u2",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "u102",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "La catena si chiude: ricevi un mostro.",
+        "en": "The chain closes: you get a monster."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s7",
+      "action": "specialSummon",
+      "method": "procedure",
+      "card": "u103",
+      "group": "g1",
+      "to": {
+        "loc": "mzone",
+        "seq": 3,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u103",
+          "to": {
+            "loc": "mzone",
+            "seq": 3,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Questi tre passi si possono fare in qualsiasi ordine.",
+        "en": "These three steps can be done in any order."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s8",
+      "action": "specialSummon",
+      "method": "effect",
+      "card": "u104",
+      "group": "g1",
+      "to": {
+        "loc": "mzone",
+        "seq": 0,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u104",
+          "to": {
+            "loc": "mzone",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Attiva @u104 e scegli @u1 come bersaglio: se l’avversario non risponde, prosegui con il passo successivo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s9",
+      "action": "specialSummon",
+      "method": "effect",
+      "card": "u105",
+      "group": "g1",
+      "optional": true,
+      "to": {
+        "loc": "mzone",
+        "seq": 4,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u105",
+          "to": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s10",
+      "action": "specialSummon",
+      "method": "xyz",
+      "card": "u106",
+      "to": {
+        "loc": "mzone",
+        "seq": 2,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u1",
+          "to": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u106"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u102",
+          "to": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u106"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u106",
+          "to": {
+            "loc": "mzone",
+            "seq": 2,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Qui si ferma la catena."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s11",
+      "action": "activate",
+      "card": "u107",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "chain": {
+        "id": "c2",
+        "link": 1
+      },
+      "moves": [
+        {
+          "uid": "u107",
+          "to": {
+            "loc": "szone",
+            "seq": 1,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s12",
+      "action": "chainActivate",
+      "card": "u108",
+      "chain": {
+        "id": "c2",
+        "link": 2
+      },
+      "targets": [
+        "o3"
+      ],
+      "moves": [
+        {
+          "uid": "u108",
+          "to": {
+            "loc": "szone",
+            "seq": 3,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s13",
+      "action": "chainActivate",
+      "card": "u109",
+      "chain": {
+        "id": "c2",
+        "link": 3
+      },
+      "moves": [
+        {
+          "uid": "u109",
+          "to": {
+            "loc": "szone",
+            "seq": 0,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Usa @u109 per cercare @u1; tienila in mano per dopo, serve alla seconda parte della linea."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s14",
+      "action": "resolve",
+      "ref": "s13",
+      "moves": [
+        {
+          "uid": "u109",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s15",
+      "action": "resolve",
+      "ref": "s12",
+      "moves": [
+        {
+          "uid": "u108",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "o3",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "destroy"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s16",
+      "action": "resolve",
+      "ref": "s11",
+      "moves": [
+        {
+          "uid": "u107",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "u110",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "La catena si chiude: ricevi un mostro.",
+        "en": "The chain closes: you get a monster."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s17",
+      "action": "changeLP",
+      "lp": [
+        {
+          "p": 0,
+          "delta": -1000
+        }
+      ],
+      "moves": [],
+      "note": {
+        "it": "Paghi 1000 LP.",
+        "en": "Pay 1000 LP."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s18",
+      "action": "activate",
+      "card": "u111",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "moves": [
+        {
+          "uid": "u111",
+          "to": {
+            "loc": "fzone",
+            "seq": 0,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Terreno attivato: resta per tutto il turno.",
+        "en": "Field Spell activated: it stays for the whole turn."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s19",
+      "action": "specialSummon",
+      "method": "link",
+      "card": "u112",
+      "to": {
+        "loc": "emz",
+        "seq": 0,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u103",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u104",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u112",
+          "to": {
+            "loc": "emz",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s20",
+      "action": "activate",
+      "card": "u113",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "chain": {
+        "id": "c3",
+        "link": 1
+      },
+      "moves": [
+        {
+          "uid": "u113",
+          "to": {
+            "loc": "szone",
+            "seq": 1,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Mandi @u113 al Cimitero come costo, poi @u1 resta sul campo come materiale per il passo dopo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s21",
+      "action": "chainActivate",
+      "card": "u114",
+      "chain": {
+        "id": "c3",
+        "link": 2
+      },
+      "targets": [
+        "o4"
+      ],
+      "moves": [
+        {
+          "uid": "u114",
+          "to": {
+            "loc": "szone",
+            "seq": 3,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s22",
+      "action": "resolve",
+      "ref": "s21",
+      "moves": [
+        {
+          "uid": "u114",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "o4",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "destroy"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s23",
+      "action": "resolve",
+      "ref": "s20",
+      "moves": [
+        {
+          "uid": "u113",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "u115",
+          "to": {
+            "loc": "mzone",
+            "seq": 3,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "La catena si chiude: ricevi un mostro.",
+        "en": "The chain closes: you get a monster."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s24",
+      "action": "specialSummon",
+      "method": "synchro",
+      "card": "u116",
+      "to": {
+        "loc": "mzone",
+        "seq": 4,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u105",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u110",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u116",
+          "to": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Costo: scarta @u116."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s25",
+      "action": "normalSummon",
+      "card": "u3",
+      "to": {
+        "loc": "mzone",
+        "seq": 1,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u3",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s26",
+      "action": "activate",
+      "card": "u3",
+      "effect": {
+        "kind": "trigger",
+        "index": 1
+      },
+      "searched": [
+        "u117"
+      ],
+      "moves": [
+        {
+          "uid": "u117",
+          "to": {
+            "loc": "hand"
+          },
+          "why": "search"
+        }
+      ],
+      "note": {
+        "it": "Costo: scarta @u3."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s27",
+      "action": "sendToGY",
+      "card": "u3",
+      "moves": [
+        {
+          "uid": "u3",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "note": {
+        "it": "Libera una zona Mostro.",
+        "en": "Free up a Monster Zone."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s28",
+      "action": "specialSummon",
+      "method": "procedure",
+      "card": "u118",
+      "group": "g2",
+      "to": {
+        "loc": "mzone",
+        "seq": 1,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u118",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Questi tre passi si possono fare in qualsiasi ordine.",
+        "en": "These three steps can be done in any order."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s29",
+      "action": "specialSummon",
+      "method": "effect",
+      "card": "u119",
+      "group": "g2",
+      "optional": true,
+      "to": {
+        "loc": "mzone",
+        "seq": 0,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u119",
+          "to": {
+            "loc": "mzone",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Questo è il punto in cui @Ash Blossom è più pericolosa: valuta se attivare prima @u119."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s30",
+      "action": "specialSummon",
+      "method": "xyz",
+      "card": "u120",
+      "to": {
+        "loc": "mzone",
+        "seq": 3,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u115",
+          "to": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u120"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u116",
+          "to": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u120"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u120",
+          "to": {
+            "loc": "mzone",
+            "seq": 3,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Mandi @u120 al Cimitero come costo, poi @u115 resta sul campo come materiale per il passo dopo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s31",
+      "action": "activate",
+      "card": "u121",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "chain": {
+        "id": "c4",
+        "link": 1
+      },
+      "moves": [
+        {
+          "uid": "u121",
+          "to": {
+            "loc": "szone",
+            "seq": 1,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s32",
+      "action": "chainActivate",
+      "card": "u122",
+      "chain": {
+        "id": "c4",
+        "link": 2
+      },
+      "moves": [
+        {
+          "uid": "u122",
+          "to": {
+            "loc": "szone",
+            "seq": 3,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Riferimento: https://example.com/guide/combo/lunga/passo-molto-lungo-senza-spazi-per-provare-il-ritorno-a-capo?utm_source=prova&utm_medium=test&utm_campaign=layout con @u122."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s33",
+      "action": "chainActivate",
+      "card": "u123",
+      "chain": {
+        "id": "c4",
+        "link": 3
+      },
+      "moves": [
+        {
+          "uid": "u123",
+          "to": {
+            "loc": "szone",
+            "seq": 0,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "it": "Mandi @u123 al Cimitero come costo, poi @u1 resta sul campo come materiale per il passo dopo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s34",
+      "action": "resolve",
+      "ref": "s33",
+      "moves": [
+        {
+          "uid": "u123",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s35",
+      "action": "resolve",
+      "ref": "s32",
+      "moves": [
+        {
+          "uid": "u122",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "phase": "main1"
+    },
+    {
+      "id": "s36",
+      "action": "resolve",
+      "ref": "s31",
+      "moves": [
+        {
+          "uid": "u121",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "u124",
+          "to": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "La catena si chiude: ricevi un mostro.",
+        "en": "The chain closes: you get a monster."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s37",
+      "action": "draw",
+      "card": "u125",
+      "moves": [
+        {
+          "uid": "u125",
+          "to": {
+            "loc": "hand"
+          },
+          "why": "draw"
+        }
+      ],
+      "note": {
+        "it": "Pesca una carta.",
+        "en": "Draw a card."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s38",
+      "action": "discard",
+      "card": "u101",
+      "moves": [
+        {
+          "uid": "u101",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "discard"
+        }
+      ],
+      "note": {
+        "it": "Attiva @u101 e scegli @u1 come bersaglio: se l’avversario non risponde, prosegui con il passo successivo."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s39",
+      "action": "sendToGY",
+      "card": "u126",
+      "moves": [
+        {
+          "uid": "u126",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "note": {
+        "en": "Reference: https://example.com/guide/combo/long/very-long-step-without-any-spaces-to-test-wrapping?utm_source=test&utm_medium=test&utm_campaign=layout with @u126."
+      },
+      "phase": "main1"
+    },
+    {
+      "id": "s40",
+      "action": "enterPhase",
+      "moves": [],
+      "note": {
+        "it": "Passi alla Battle Phase.",
+        "en": "Go to the Battle Phase."
+      },
+      "phase": "battle"
+    },
+    {
+      "id": "s41",
+      "action": "attack",
+      "card": "u106",
+      "lp": [
+        {
+          "p": 1,
+          "delta": -2400
+        }
+      ],
+      "moves": [],
+      "note": {
+        "it": "Attacco diretto.",
+        "en": "Direct attack."
+      },
+      "phase": "battle"
+    },
+    {
+      "id": "s42",
+      "action": "attack",
+      "card": "u106",
+      "lp": [
+        {
+          "p": 1,
+          "delta": -2400
+        }
+      ],
+      "moves": [],
+      "note": {
+        "it": "Attacco diretto.",
+        "en": "Direct attack."
+      },
+      "phase": "battle"
+    },
+    {
+      "id": "s43",
+      "action": "enterPhase",
+      "moves": [],
+      "note": {
+        "it": "Torni alla Main Phase 2.",
+        "en": "Back to Main Phase 2."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s44",
+      "action": "sendToGY",
+      "card": "u118",
+      "moves": [
+        {
+          "uid": "u118",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "note": {
+        "it": "Libera una zona Mostro.",
+        "en": "Free up a Monster Zone."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s45",
+      "action": "sendToGY",
+      "card": "u119",
+      "moves": [
+        {
+          "uid": "u119",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "note": {
+        "it": "Libera una zona Mostro.",
+        "en": "Free up a Monster Zone."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s46",
+      "action": "sendToGY",
+      "card": "u124",
+      "moves": [
+        {
+          "uid": "u124",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "note": {
+        "it": "Libera una zona Mostro.",
+        "en": "Free up a Monster Zone."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s47",
+      "action": "specialSummon",
+      "method": "procedure",
+      "card": "u127",
+      "group": "g3",
+      "to": {
+        "loc": "mzone",
+        "seq": 1,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u127",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Questi tre passi si possono fare in qualsiasi ordine.",
+        "en": "These three steps can be done in any order."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s48",
+      "action": "specialSummon",
+      "method": "effect",
+      "card": "u128",
+      "group": "g3",
+      "to": {
+        "loc": "mzone",
+        "seq": 0,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u128",
+          "to": {
+            "loc": "mzone",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "en": "Cost: discard @u128."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s49",
+      "action": "specialSummon",
+      "method": "effect",
+      "card": "u129",
+      "group": "g3",
+      "optional": true,
+      "to": {
+        "loc": "mzone",
+        "seq": 4,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u129",
+          "to": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "phase": "main2"
+    },
+    {
+      "id": "s50",
+      "action": "specialSummon",
+      "method": "xyz",
+      "card": "u130",
+      "to": {
+        "loc": "mzone",
+        "seq": 1,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u127",
+          "to": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u130"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u128",
+          "to": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u130"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u130",
+          "to": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Usa @u130 per cercare @u127; tienila in mano per dopo, serve alla seconda parte della linea."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s51",
+      "action": "activate",
+      "card": "u131",
+      "effect": {
+        "kind": "activation",
+        "index": 1
+      },
+      "chain": {
+        "id": "c5",
+        "link": 1
+      },
+      "moves": [
+        {
+          "uid": "u131",
+          "to": {
+            "loc": "szone",
+            "seq": 1,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "note": {
+        "en": "Activate @u131 and target @u1: if the opponent does not respond, move on to the next step."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s52",
+      "action": "chainActivate",
+      "card": "u132",
+      "chain": {
+        "id": "c5",
+        "link": 2
+      },
+      "moves": [
+        {
+          "uid": "u132",
+          "to": {
+            "loc": "szone",
+            "seq": 3,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main2"
+    },
+    {
+      "id": "s53",
+      "action": "chainActivate",
+      "card": "u133",
+      "chain": {
+        "id": "c5",
+        "link": 3
+      },
+      "moves": [
+        {
+          "uid": "u133",
+          "to": {
+            "loc": "szone",
+            "seq": 0,
+            "pos": "FACEUP"
+          },
+          "why": "other"
+        }
+      ],
+      "phase": "main2"
+    },
+    {
+      "id": "s54",
+      "action": "resolve",
+      "ref": "s53",
+      "moves": [
+        {
+          "uid": "u133",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "phase": "main2"
+    },
+    {
+      "id": "s55",
+      "action": "resolve",
+      "ref": "s52",
+      "moves": [
+        {
+          "uid": "u132",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        }
+      ],
+      "phase": "main2"
+    },
+    {
+      "id": "s56",
+      "action": "resolve",
+      "ref": "s51",
+      "moves": [
+        {
+          "uid": "u131",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "send"
+        },
+        {
+          "uid": "u134",
+          "to": {
+            "loc": "mzone",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "La catena si chiude: ricevi un mostro.",
+        "en": "The chain closes: you get a monster."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s57",
+      "action": "specialSummon",
+      "method": "xyz",
+      "card": "u135",
+      "to": {
+        "loc": "mzone",
+        "seq": 4,
+        "pos": "FACEUP_ATK"
+      },
+      "moves": [
+        {
+          "uid": "u129",
+          "to": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u135"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u134",
+          "to": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u135"
+          },
+          "why": "material"
+        },
+        {
+          "uid": "u135",
+          "to": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          },
+          "why": "summon"
+        }
+      ],
+      "note": {
+        "it": "Costo: scarta @u135."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s58",
+      "action": "declare",
+      "card": "u136",
+      "moves": [],
+      "note": {
+        "en": "Long test note: @u136 and @u1 are both required, but the order matters. The last chain link resolves first, then the middle one, and finally the first; remember to declare every target when you activate, not on resolution. On Master Duel the timer is tighter: rehearse this sequence ahead of time."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s59",
+      "action": "discard",
+      "card": "u117",
+      "moves": [
+        {
+          "uid": "u117",
+          "to": {
+            "loc": "gy"
+          },
+          "why": "discard"
+        }
+      ],
+      "note": {
+        "it": "Nota lunga di prova: @u117 e @u1 sono entrambe necessarie, ma l’ordine conta. Si risolve prima l’ultimo anello della catena, poi quello centrale, infine il primo; ricorda di dichiarare ogni bersaglio nel momento in cui attivi, non alla risoluzione. Su Master Duel il timer è più stretto: prepara questa sequenza in anticipo."
+      },
+      "phase": "main2"
+    },
+    {
+      "id": "s60",
+      "action": "endTurn",
+      "moves": [],
+      "note": {
+        "it": "Fine del turno: board pronto.",
+        "en": "End of turn: board is ready."
+      },
+      "phase": "end"
+    }
+  ],
+  "branches": [
+    {
+      "id": "b1",
+      "title": {
+        "it": "Ash sulla ricerca",
+        "en": "Ash on the search"
+      },
+      "condition": {
+        "afterStep": "s2",
+        "window": "activation",
+        "opponent": {
+          "code": 14558127,
+          "effect": 1
+        }
+      },
+      "steps": [
+        {
+          "id": "b1s1",
+          "action": "chainActivate",
+          "card": "u901",
+          "targets": [
+            "o1"
+          ],
+          "chain": {
+            "id": "cb1",
+            "link": 2
+          },
+          "moves": [
+            {
+              "uid": "u901",
+              "to": {
+                "loc": "szone",
+                "seq": 0,
+                "pos": "FACEUP"
+              },
+              "why": "other"
+            }
+          ],
+          "note": {
+            "it": "Rispondi con @u901 su @Ash Blossom.",
+            "en": "Respond with @u901 on @Ash Blossom."
+          }
+        },
+        {
+          "id": "b1s2",
+          "action": "resolve",
+          "ref": "b1s1",
+          "moves": [
+            {
+              "uid": "u901",
+              "to": {
+                "loc": "gy"
+              },
+              "why": "send"
+            },
+            {
+              "uid": "o1",
+              "to": {
+                "p": 1,
+                "loc": "gy"
+              },
+              "why": "destroy"
+            }
+          ]
+        },
+        {
+          "id": "b1s3",
+          "action": "normalSummon",
+          "card": "u902",
+          "to": {
+            "loc": "mzone",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          },
+          "moves": [
+            {
+              "uid": "u902",
+              "to": {
+                "loc": "mzone",
+                "seq": 0,
+                "pos": "FACEUP_ATK"
+              },
+              "why": "summon"
+            }
+          ],
+          "note": {
+            "it": "Ora la linea riprende normalmente.",
+            "en": "Now the line resumes as usual."
+          }
+        },
+        {
+          "id": "b1s4",
+          "action": "activate",
+          "card": "u902",
+          "effect": {
+            "kind": "trigger",
+            "index": 1
+          },
+          "searched": [
+            "u903"
+          ],
+          "moves": [
+            {
+              "uid": "u903",
+              "to": {
+                "loc": "hand"
+              },
+              "why": "search"
+            }
+          ],
+          "note": {
+            "it": "Cerca la carta che avresti cercato prima.",
+            "en": "Search the card you would have searched before."
+          }
+        }
+      ],
+      "rejoin": "s6",
+      "note": {
+        "it": "Se Ash nega la ricerca, la linea B recupera il pezzo con una risposta.",
+        "en": "If Ash negates the search, line B gets the piece back with a response."
+      }
+    },
+    {
+      "id": "b2",
+      "title": {
+        "it": "Maxx \"C\" alla risoluzione",
+        "en": "Maxx \"C\" on resolution"
+      },
+      "condition": {
+        "afterStep": "s3",
+        "window": "resolution",
+        "opponent": {
+          "code": 23434538,
+          "effect": 1
+        }
+      },
+      "steps": [
+        {
+          "id": "b2s1",
+          "action": "declare",
+          "card": "u1",
+          "moves": [],
+          "note": {
+            "it": "Dichiari di giocare attorno a @Maxx \"C\": niente altre Evocazioni.",
+            "en": "You declare you play around @Maxx \"C\": no more Summons."
+          }
+        },
+        {
+          "id": "b2s3",
+          "action": "endTurn",
+          "moves": [],
+          "note": {
+            "it": "Fine della linea: ti fermi qui.",
+            "en": "End of the line: you stop here."
+          }
+        }
+      ],
+      "rejoin": null,
+      "note": {
+        "it": "Linea corta e sicura contro @Maxx \"C\".",
+        "en": "Short and safe line against @Maxx \"C\"."
+      }
+    }
+  ],
+  "endboard": {
+    "own": {
+      "lp": 7000,
+      "places": [
+        {
+          "uid": "u1",
+          "place": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u106"
+          }
+        },
+        {
+          "uid": "u102",
+          "place": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u106"
+          }
+        },
+        {
+          "uid": "u106",
+          "place": {
+            "loc": "mzone",
+            "seq": 2,
+            "pos": "FACEUP_ATK"
+          }
+        },
+        {
+          "uid": "u111",
+          "place": {
+            "loc": "fzone",
+            "seq": 0,
+            "pos": "FACEUP"
+          }
+        },
+        {
+          "uid": "u112",
+          "place": {
+            "loc": "emz",
+            "seq": 0,
+            "pos": "FACEUP_ATK"
+          }
+        },
+        {
+          "uid": "u115",
+          "place": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u120"
+          }
+        },
+        {
+          "uid": "u116",
+          "place": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u120"
+          }
+        },
+        {
+          "uid": "u120",
+          "place": {
+            "loc": "mzone",
+            "seq": 3,
+            "pos": "FACEUP_ATK"
+          }
+        },
+        {
+          "uid": "u127",
+          "place": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u130"
+          }
+        },
+        {
+          "uid": "u128",
+          "place": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u130"
+          }
+        },
+        {
+          "uid": "u129",
+          "place": {
+            "loc": "overlay",
+            "seq": 0,
+            "host": "u135"
+          }
+        },
+        {
+          "uid": "u130",
+          "place": {
+            "loc": "mzone",
+            "seq": 1,
+            "pos": "FACEUP_ATK"
+          }
+        },
+        {
+          "uid": "u134",
+          "place": {
+            "loc": "overlay",
+            "seq": 1,
+            "host": "u135"
+          }
+        },
+        {
+          "uid": "u135",
+          "place": {
+            "loc": "mzone",
+            "seq": 4,
+            "pos": "FACEUP_ATK"
+          }
+        }
+      ]
+    },
+    "opponent": {
+      "lp": 3200,
+      "places": [
+        {
+          "uid": "o5",
+          "place": {
+            "p": 1,
+            "loc": "szone",
+            "seq": 2,
+            "pos": "FACEDOWN"
+          }
+        }
+      ]
+    },
+    "summary": {
+      "it": "Board finale: 4 mostri Xyz con i loro materiali, 0 carte nella zona Magie e Trappole.",
+      "en": "End board: 4 Xyz monsters with their materials, 0 cards in the Spell & Trap Zone."
+    }
+  }
+}

@@ -157,21 +157,23 @@ export function makeLong(N = 60, opts = {}) {
     if (r < 0.28) return undefined
     const set = r < 0.58 ? SHORT : r < 0.88 ? MEDIUM : LONG
     const [it, en] = pick(set)
-    const n = { it: fill(it, a, b), en: fill(en, a, b) }
-    if (rand() < 0.04) delete n.en // alcune note solo in italiano (fallback)
-    return n
+    // le note sono un campo unico: una sola lingua (la guida mostra quella corrente, altrimenti la prima disponibile)
+    return rand() < 0.65 ? { it: fill(it, a, b) } : { en: fill(en, a, b) }
   }
   // una nota con il nome completo tra parentesi quadre (lingua per lingua)
   const bracketNote = (code) => ({
     it: `Questa è la carta chiave della linea: @[${nameOf(code, 'it')}] va protetta a ogni costo.`,
-    en: `This is the key card of the line: @[${nameOf(code, 'en')}] must be protected at all costs.`,
   })
 
   /* --- zone libere */
-  function roomM(n) {
+  function roomM(n, keepPlain = false) {
     while (!(5 - ofLoc(0, 'mzone').length >= n)) {
       const mons = ofLoc(0, 'mzone')
-      const victim = mons.find((u) => !isKind(u, 'xyz') && !isKind(u, 'link')) ?? mons[0]
+      const plain = plainMonsters()
+      // di norma si libera un mostro semplice; se servono mostri semplici come materiali, si sacrifica un Xyz/Link
+      const victim = keepPlain
+        ? mons.find((u) => !plain.includes(u)) ?? mons[0]
+        : mons.find((u) => plain.includes(u)) ?? mons[0]
       const moves = [...overlaysOf(victim).map((o) => mv(o, { loc: 'gy' }, 'send')), mv(victim, { loc: 'gy' }, 'send')]
       push({ action: 'sendToGY', card: victim, moves, note: { it: 'Libera una zona Mostro.', en: 'Free up a Monster Zone.' } })
     }
@@ -237,8 +239,8 @@ export function makeLong(N = 60, opts = {}) {
         push({ action: 'resolve', ref: ids[k - 1], moves, ...(k === 1 ? { note: { it: 'La catena si chiude: ricevi un mostro.', en: 'The chain closes: you get a monster.' } } : {}) })
       }
     },
-    free(n) {
-      roomM(n)
+    free(n, keepPlain = false) {
+      roomM(n, keepPlain)
       const gid = `g${++G.groupN}`
       for (let i = 0; i < n; i++) {
         const m = fresh('mon')
@@ -252,7 +254,7 @@ export function makeLong(N = 60, opts = {}) {
     xyz() {
       const have = plainMonsters()
       const need = Math.max(0, 2 - have.length)
-      if (need) blocks.free(need)
+      if (need) blocks.free(need, true)
       const [a, b] = plainMonsters()
       const x = fresh('xyz')
       const seq = G.places[a].seq
@@ -264,7 +266,7 @@ export function makeLong(N = 60, opts = {}) {
     },
     synchro() {
       const have = plainMonsters()
-      if (have.length < 2) blocks.free(2 - have.length)
+      if (have.length < 2) blocks.free(2 - have.length, true)
       const [a, b] = plainMonsters()
       const x = fresh('synchro')
       const seq = G.places[a].seq
@@ -272,7 +274,7 @@ export function makeLong(N = 60, opts = {}) {
     },
     link() {
       const have = plainMonsters()
-      if (have.length < 2) blocks.free(2 - have.length)
+      if (have.length < 2) blocks.free(2 - have.length, true)
       const [a, b] = plainMonsters()
       const x = fresh('link')
       const emz = freeSeq(0, 'emz', [0, 1])
@@ -470,7 +472,7 @@ export function makeLong(N = 60, opts = {}) {
     v: 1,
     meta: {
       id: opts.id ?? `00000000-0000-4000-8000-${String(N).padStart(12, '0')}`,
-      title: { it: `Apertura lunga di prova (${N} passi)`, en: `Long test opener (${N} steps)` },
+      title: { it: `Apertura lunga di prova (${N} passi)` }, // campo unico
       scope: 'archetype',
       archetype: { name: { it: 'Prova combo lunghe', en: 'Long combo test' } },
       variant: null,

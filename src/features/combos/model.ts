@@ -240,12 +240,35 @@ export function finalizeDoc(doc: ComboDoc, now: string): ComboDoc {
   for (const s of doc.steps) scan(s.note)
   let state = initialState(doc)
   for (const s of doc.steps) state = applyStep(state, s)
+  // ordine delle lingue: quello già scelto (la corrente per prima), senza quelle non più presenti
+  const noteLang = [...doc.meta.noteLang.filter((l) => langs.has(l)), ...[...langs].filter((l) => !doc.meta.noteLang.includes(l))]
   return {
     ...doc,
-    meta: { ...doc.meta, noteLang: [...langs], updatedAt: now },
+    meta: { ...doc.meta, noteLang, updatedAt: now },
     endboard: { ...deriveEndboard(state), ...(doc.endboard?.summary ? { summary: doc.endboard.summary } : {}) },
   }
 }
+
+/** Testo da mostrare: lingua corrente, altrimenti la prima disponibile (ordine: `order`, poi it, en). */
+export function pickText(l: Localized | undefined, lang: string, order: readonly string[] = []): string {
+  if (!l) return ''
+  const rec = l as Record<string, string | undefined>
+  const own = rec[lang]
+  if (own?.trim()) return own
+  for (const k of [...order, 'it', 'en']) if (rec[k]?.trim()) return rec[k]!
+  return ''
+}
+
+/** Scrive il testo nella lingua corrente (chiave vuota = rimossa). */
+export function withText(l: Localized | undefined, lang: string, value: string): Localized {
+  const next: Record<string, string | undefined> = { ...(l as Record<string, string | undefined>) }
+  if (value) next[lang] = value
+  else delete next[lang]
+  return next as Localized
+}
+
+/** `noteLang` con la lingua corrente per prima (è la lingua in cui si sta annotando). */
+export const withNoteLang = (noteLang: readonly string[], lang: string): string[] => [lang, ...noteLang.filter((x) => x !== lang)]
 
 export const handSize = (first: boolean) => (first ? 5 : 6)
 

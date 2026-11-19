@@ -422,8 +422,7 @@
       "delete": "Elimina passo",
       "freeOrder": "Ordine libero",
       "label": "Nome dell'azione",
-      "noteIt": "Nota (italiano)",
-      "noteEn": "Nota (inglese)",
+      "note": "Nota",
       "phase": "Fase",
       "phaseNone": "Non indicata",
       "optional": "Passo facoltativo"
@@ -449,8 +448,7 @@
       "opponent": "Avversario: aggiungi le sue carte con «Aggiungi carta avversaria» e cambia gli LP toccandoli."
     },
     "info": {
-      "titleIt": "Titolo (italiano)",
-      "titleEn": "Titolo (inglese)",
+      "title": "Titolo",
       "rules": "Regole",
       "tags": "Tag",
       "tagsHint": "Separati da virgola.",
