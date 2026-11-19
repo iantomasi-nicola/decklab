@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { DeckLists } from '@/domain/types'
 import type { CardIndex } from '@/domain/deck/cardIndex'
@@ -16,7 +16,7 @@ function Bar({ label, value, max, tone = 'bg-accent' }: { label: string; value: 
   )
 }
 
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-lg border border-line bg-surface-1 p-4">
       <h3 className="mb-3 text-base font-semibold text-fg">{title}</h3>

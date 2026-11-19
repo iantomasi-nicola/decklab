@@ -115,8 +115,8 @@ export function createSearchEngine(cards: readonly Card[]): SearchEngine {
       for (const name of n[l]) {
         let bonus = 0
         if (name === q) bonus = 1000
-        else if (name.startsWith(q)) bonus = 500 - name.length * 0.5
-        else if (name.includes(' ' + q)) bonus = 200 - name.length * 0.5
+        else if (name.startsWith(q)) bonus = 500 - name.length * 2
+        else if (name.includes(' ' + q)) bonus = 200 - name.length * 2
         else if (name.includes(q)) bonus = 100
         else if (q.includes(' ')) {
           // ogni termine è prefisso di una parola, nell'ordine digitato
@@ -128,7 +128,7 @@ export function createSearchEngine(cards: readonly Card[]): SearchEngine {
             if (i < 0) { ok = false; break }
             from = i + 1
           }
-          if (ok) bonus = 150 - name.length * 0.5
+          if (ok) bonus = 150 - name.length * 2
         }
         best = Math.max(best, bonus * langBoost)
       }
