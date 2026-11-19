@@ -58,7 +58,6 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language === 'it' ? 'it' : 'en'
   const cards = useCards()
-  const isMd = useMediaQuery('(min-width: 768px)')
   const isLg = useMediaQuery('(min-width: 1024px)')
 
   const [branchId, setBranchId] = useState<string | null>(null)
@@ -70,9 +69,9 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
   const index = Math.min(p.index, last)
   const frame = tl.frames[index]!
 
-  // barra: aperta di default da 768 px (telefono: solo i controlli, campo al massimo); la scelta si ricorda
+  // barra: aperta di default (il campo ha rapporto fisso: in verticale lo spazio in più è per la descrizione); la scelta si ricorda
   const [stored, setStored] = useState<boolean | null>(readExpanded)
-  const expanded = stored ?? isMd
+  const expanded = stored ?? true
   const setExpanded = (v: boolean) => {
     setStored(v)
     try {
@@ -194,14 +193,14 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
         </Tooltip>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-semibold leading-6">{title}</h1>
-          <p className="truncate text-sm leading-5 text-muted">{t('replay.title')}</p>
+          <p className="truncate text-sm leading-5 text-muted">{activeBranch ? `${t('replay.title')} · ${branchName(activeBranch, branches.indexOf(activeBranch) + 1)}` : t('replay.title')}</p>
         </div>
         {branches.length ? (
           <Menu
             items={lineItems}
             trigger={
-              <Button icon={<GitBranch size={18} />} aria-label={`${t('replay.line')}: ${activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}`} data-testid="rp-line" className="max-w-[55%] min-w-0 shrink">
-                <span className="truncate">{activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}</span>
+              <Button icon={<GitBranch size={18} />} aria-label={`${t('replay.line')}: ${activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}`} data-testid="rp-line" className="w-11 shrink-0 px-0 sm:w-auto sm:max-w-[50%] sm:shrink sm:px-4">
+                <span className="hidden truncate sm:inline">{activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}</span>
               </Button>
             }
           />
@@ -242,7 +241,6 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
           label={counter}
           expanded={expanded}
           hasSteps={hasSteps}
-          onToggle={() => dispatch({ type: 'toggle' })}
           onPrev={() => dispatch({ type: 'prev' })}
           onNext={() => dispatch({ type: 'next' })}
           onFirst={() => dispatch({ type: 'seek', index: 0 })}

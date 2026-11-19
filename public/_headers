@@ -1,0 +1,25 @@
+# Cloudflare Pages: intestazioni di cache. Le regole si sommano; "!" rimuove un'intestazione ereditata.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Dataset carte: i file hanno la versione nel nome (cards.147.89-xxxx.json) quindi sono immutabili...
+/data/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ...tranne il manifest, che punta all'ultima versione.
+/data/manifest.json
+  ! Cache-Control
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

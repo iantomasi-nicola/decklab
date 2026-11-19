@@ -1,0 +1,52 @@
+name: CI
+on:
+  push:
+    branches: [ccr-66bffddf-j9bdnn]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      e2e:
+        description: "Esegui anche i test Playwright"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Verifica file Cloudflare Pages
+        run: test -f dist/_headers && test -f dist/_redirects
+
+  e2e:
+    # Manuale (Actions > CI > Run workflow > e2e): più lento, non blocca le modifiche normali.
+    if: github.event_name == 'workflow_dispatch' && inputs.e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: test-results

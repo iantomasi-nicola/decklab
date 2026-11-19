@@ -162,7 +162,6 @@ export function ControlBar({
   label,
   expanded,
   hasSteps,
-  onToggle,
   onPrev,
   onNext,
   onFirst,
@@ -178,7 +177,6 @@ export function ControlBar({
   label: string
   expanded: boolean
   hasSteps: boolean
-  onToggle: () => void
   onPrev: () => void
   onNext: () => void
   onFirst: () => void
@@ -188,10 +186,9 @@ export function ControlBar({
   onExpand: () => void
 }) {
   const { t } = useTranslation()
-  void onToggle
   return (
     <div role="group" aria-label={t('replay.controls')} data-testid="replay-controls" className="flex min-h-14 items-center gap-1 rounded-lg border border-line bg-surface-1 px-1.5">
-      <Tool label={t('replay.first')} onClick={onFirst} disabled={index === 0} className="hidden sm:inline-flex" testid="rp-first">
+      <Tool label={t('replay.first')} onClick={onFirst} disabled={index === 0} className="max-sm:hidden" testid="rp-first">
         <SkipBack aria-hidden size={20} />
       </Tool>
       <Tool label={t('replay.prev')} onClick={onPrev} disabled={index === 0} testid="rp-prev">
@@ -213,7 +210,7 @@ export function ControlBar({
       <Tool label={t('replay.next')} onClick={onNext} disabled={index >= last} testid="rp-next">
         <StepForward aria-hidden size={20} />
       </Tool>
-      <Tool label={t('replay.last')} onClick={onLast} disabled={index >= last} className="hidden sm:inline-flex" testid="rp-last">
+      <Tool label={t('replay.last')} onClick={onLast} disabled={index >= last} className="max-sm:hidden" testid="rp-last">
         <SkipForward aria-hidden size={20} />
       </Tool>
       <Tooltip label={t('replay.speed', { speed })}>
