@@ -15,3 +15,8 @@
 - Editor combo: il campo (board) deve essere il più grande possibile (più largo di un playmat di allenamento tipico), senza mai superare il viewport; tutto il resto in menu/pannelli riducibili. Priorità assoluta: board grande.
 - Priorità di progetto: arrivare presto alle funzionalità principali per i test manuali dell'utente, poi il resto.
 - Quando il limite d'uso di Claude si resetta, ripartire subito con nuove task a piena velocità (sub-agenti in parallelo).
+
+## Qualità visiva (regola permanente)
+- Mai grafiche, pulsanti o elementi disallineati, sovrapposti, tagliati o "brutti". Ogni schermata consegnata deve avere allineamenti, spaziature (griglia 8px), altezze e icone coerenti.
+- Prima di consegnare: guardare gli screenshot (375/768/1024/1440, scuro e chiaro, it/en), cercare difetti di allineamento e correggerli; i controlli automatici Playwright (nessun overflow, nessun elemento fuori viewport, target ≥44px) sono il minimo, non il sostituto dell'occhio.
+- Se un difetto è noto e non risolto, dirlo esplicitamente all'utente: non consegnarlo come "fatto".
