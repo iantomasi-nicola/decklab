@@ -86,6 +86,7 @@ for (const width of WIDTHS) {
         await page.locator('.tpick-hit').first().click()
         await expect(page.locator('.tpick-num').first()).toHaveText('1')
         await checks(page, '.tpick')
+        await page.waitForTimeout(400) // fine delle animazioni di apertura
         await page.screenshot({ path: `${OUT}/pick-${tag}.png` })
       })
     }

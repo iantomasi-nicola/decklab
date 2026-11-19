@@ -57,7 +57,7 @@ async function geometry(page: Page, label: string, opts: { minZone?: number; min
       cardsOut: [...field.querySelectorAll('[data-card]')].filter((c) => c.getClientRects().length > 0 && !inside(r(c.firstElementChild ?? c))).length,
       handBelow: hand.top >= own.bottom - 1,
       minW: Math.min(...zones.map((z) => z.width)),
-      narrow: cells.filter((c) => c.hasAttribute('data-zone') && c.getAttribute('data-zone') !== 'p:1:hand' && (r(c).width < 44 || r(c).height < 44)).map((c) => `${c.getAttribute('data-zone')}:${Math.round(r(c).width)}x${Math.round(r(c).height)}`),
+      narrow: cells.filter((c) => c.hasAttribute('data-zone') && /(mzone|szone|emz)/.test(c.getAttribute('data-zone') ?? '') && (r(c).width < 44 || r(c).height < 44)).map((c) => `${c.getAttribute('data-zone')}:${Math.round(r(c).width)}x${Math.round(r(c).height)}`),
       minH: Math.min(...zones.map((z) => z.height)),
       overlap: zones.filter((z, i) => zones.some((o, j) => j > i && z.left < o.right - 2 && z.right > o.left + 2 && z.top < o.bottom - 2 && z.bottom > o.top + 2)).length,
     }

@@ -70,7 +70,7 @@ function Harness() {
   return (
     <main className="mx-auto grid max-w-[1100px] gap-4 p-4" style={{ filter: gray ? 'grayscale(1)' : undefined }}>
       <style>{`
-        .h-field{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+        .h-field{max-width:560px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
         .h-card{position:relative;aspect-ratio:59/86;border-radius:8px;border:1px solid var(--border-strong);background:var(--surface-3);display:grid;place-items:center;padding:26px 4px 4px;font-size:10px;line-height:1.15;font-weight:600;text-align:center;overflow-wrap:anywhere;align-content:start}
         .h-card .opt-marks{position:absolute;top:4px;right:6px}
         .h-step{display:flex;align-items:center;gap:8px}
