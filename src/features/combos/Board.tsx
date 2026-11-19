@@ -3,6 +3,7 @@
  * da tastiera. Ogni azione diventa una bozza di passo (`Draft`) applicata dallo store.
  */
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react'
+import { createPortal } from 'react-dom'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, rectIntersection, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useTranslation } from 'react-i18next'
 import { type ComboDoc, type Move, type Place, type PlayerIdx, type Uid } from '@/domain/combo/types'
@@ -20,6 +21,7 @@ import { useEditor } from './editorStore'
 import { Field, type FieldView } from './Field'
 import { nextUid, remainingPool, poolTotal, type Draft } from './model'
 import { PileSheet } from './PileSheet'
+import { PilesPanel } from './PilesPanel'
 import { PopMenu, type PopItem } from './PopMenu'
 import type { Sel } from './selection'
 import { useCards } from './useCards'
@@ -80,6 +82,7 @@ export function Board({
   cursor,
   readOnly,
   handle,
+  pilesEl,
 }: {
   doc: ComboDoc
   state: GameState
@@ -87,6 +90,8 @@ export function Board({
   cursor: number
   readOnly?: boolean
   handle?: Ref<BoardHandle>
+  /** contenitore (nel pannello laterale) dove mostrare l'elenco di Cimitero e Bandite; resta nello stesso DndContext */
+  pilesEl?: HTMLElement | null
 }) {
   const { t } = useTranslation()
   const cards = useCards()
@@ -251,9 +256,19 @@ export function Board({
         const o = optionsFor(src, d, ctx)[0]
         if (o) items.push({ id: `q-${id}`, label: t(`combos.act.${o.id}`), onSelect: () => execute(s, o) })
       }
+      // Cimitero/Bandite/Deck → Evocazione Speciale nella prima zona Mostro libera
+      if (['gy', 'banished', 'deck'].includes(src.place.loc) && src.info.kind === 'monster') {
+        const seq = freeSeq(state, src.place.p, 'mzone')
+        const sp = seq === undefined ? undefined : optionsFor(src, { t: 'zone', p: src.place.p, loc: 'mzone', seq }, ctx).find((o) => o.id === 'specialSummon')
+        if (sp) items.push({ id: 'q-special', label: t('combos.act.specialSummon'), onSelect: () => execute(s, sp) })
+      }
       quick('gy', 'gy')
       quick('banished', 'ban')
       quick('hand', 'hand')
+      if (src.place.loc !== 'deck') {
+        const dk = optionsFor(src, { t: 'pile', p: src.place.p, loc: 'deck' }, ctx)[0]
+        if (dk && ['gy', 'banished', 'hand'].includes(src.place.loc)) items.push({ id: 'q-deck', label: t('combos.act.deckTop'), onSelect: () => execute(s, dk) })
+      }
       items.push({ id: 'moveTo', label: t('combos.moveTo'), onSelect: () => setMoveFor(s) })
       items.push({ id: 'counter', label: t('combos.counter.menu'), onSelect: () => setCounterFor(uid) })
       for (const ov of Object.entries(state.places).filter(([, pl]) => pl.loc === 'overlay' && pl.host === uid)) {
@@ -367,6 +382,7 @@ export function Board({
 
   const selOfDrag = (id: string): Sel | null => {
     if (id.startsWith('card:')) return { kind: 'uid', uid: id.slice(5) }
+    if (id.startsWith('pile:')) return { kind: 'uid', uid: id.slice(5) }
     if (id.startsWith('fresh:')) return null // la carta si sceglie dopo il rilascio
     return null
   }
@@ -581,6 +597,8 @@ export function Board({
       </DndContext>
 
       <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
+
+      {pilesEl && !readOnly ? createPortal(<PilesPanel view={view} onMenu={openMenu} />, pilesEl) : null}
 
       {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} onClose={() => setMenu(null)} /> : null}
 

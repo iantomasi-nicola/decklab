@@ -28,10 +28,11 @@ import { InfoPanel } from './InfoPanel'
 import { deriveDoc, finalizeDoc } from './model'
 import { SetupPanel } from './SetupPanel'
 import { StepsPanel } from './StepsPanel'
+import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
 import { useCards, useMediaQuery } from './useCards'
 
 type SaveState = 'saved' | 'saving' | 'error'
-type PanelTab = 'steps' | 'setup' | 'info'
+type PanelTab = 'steps' | 'setup' | 'info' | 'piles'
 interface PanelState { open: boolean; tab: PanelTab }
 
 const PANEL_KEY = 'combolab.combo.panel'
@@ -39,7 +40,7 @@ const PANEL_KEY = 'combolab.combo.panel'
 function readPanel(): PanelState {
   try {
     const v = JSON.parse(localStorage.getItem(PANEL_KEY) ?? 'null') as Partial<PanelState> | null
-    const tab = v?.tab === 'setup' || v?.tab === 'info' ? v.tab : 'steps'
+    const tab = v?.tab === 'setup' || v?.tab === 'info' || v?.tab === 'piles' ? v.tab : 'steps'
     // senza preferenza salvata: su schermi larghi (>= 1024) lo spazio che avanza al campo va ai pannelli
     const open = v ? !!v.open : window.matchMedia('(min-width: 1024px)').matches
     return { open: open && window.matchMedia('(min-width: 768px)').matches, tab }
@@ -66,6 +67,8 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const [save, setSave] = useState<SaveState>('saved')
   const [panel, setPanel] = useState<PanelState>(readPanel)
   const boardRef = useRef<BoardHandle>(null)
+  const [pilesEl, setPilesEl] = useState<HTMLElement | null>(null)
+  const pilesPref = useFieldPrefs((s) => s.pilesPanel)
   const isMd = useMediaQuery('(min-width: 768px)')
   const isLg = useMediaQuery('(min-width: 1024px)')
 
@@ -201,15 +204,23 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     writePanel(p)
   }
   const inlinePanel = isLg && panel.open
+  const showPiles = pilesPanelEnabled(pilesPref)
+  const activeTab: PanelTab = panel.tab === 'piles' && !showPiles ? 'steps' : panel.tab
   const togglePanel = () => setPanelState({ ...panel, open: !panel.open })
 
   const panelBody = (
-    <Tabs value={panel.tab} onValueChange={(v) => setPanelState({ ...panel, tab: v as PanelTab })} className="min-w-0">
+    <Tabs value={activeTab} onValueChange={(v) => setPanelState({ ...panel, tab: v as PanelTab })} className="min-w-0">
       <TabsList aria-label={t('combos.panels')}>
         <TabsTrigger value="steps">{t('combos.tab.steps')}</TabsTrigger>
         <TabsTrigger value="setup">{t('combos.tab.setup')}</TabsTrigger>
+        {showPiles ? <TabsTrigger value="piles">{t('combos.tab.piles')}</TabsTrigger> : null}
         <TabsTrigger value="info">{t('combos.tab.info')}</TabsTrigger>
       </TabsList>
+      {showPiles ? (
+        <TabsContent value="piles">
+          <div ref={setPilesEl} />
+        </TabsContent>
+      ) : null}
       <TabsContent value="steps">
         <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={(i, incl) => void derive(i, incl)} />
       </TabsContent>
@@ -302,7 +313,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             data-mode={mode}
             style={{ width: inlinePanel ? `min(calc(100cqw - 328px), calc(100cqh * ${FIELD_ASPECT_RATIO}))` : '100%', flex: inlinePanel ? 'none' : '1 1 0%' }}
           >
-            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} />
+            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
             {mode === 'setup' ? (
               <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
                 {t('combos.modeSetupBadge')}

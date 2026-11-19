@@ -61,7 +61,6 @@ const isSubMultiset = (small: Map<number, number>, big: Map<number, number>) => 
 export function buildRules(input: HandInput, handSize: number): number[][] {
   const cards = mergeCards(input.cards)
   const count = new Map(cards.map((c) => [c.id, c.count]))
-  const byId = new Map(cards.map((c) => [c.id, c]))
   const rules = new Map<string, number[]>()
   const feasible = (ids: number[]) => {
     if (ids.length === 0 || ids.length > handSize) return false
@@ -90,7 +89,6 @@ export function buildRules(input: HandInput, handSize: number): number[][] {
     if (label === 'PLAYABLE') add(ids)
     else rules.delete(labelKey(ids))
   }
-  void byId
   // riduzione: toglie i superinsiemi di una regola già presente (non cambiano nulla)
   const all = [...rules.values()].sort((a, b) => a.length - b.length)
   const kept: { ids: number[]; ms: Map<number, number> }[] = []
@@ -120,7 +118,7 @@ export interface EnumOptions {
 /** Cuore del calcolo: probabilità PLAYABLE/BRICK per una mano di `handSize` carte. */
 export function computeHand(input: HandInput, handSize: number, opts: EnumOptions = {}): HandResult {
   const cards = mergeCards(input.cards)
-  const { total, size, blanks } = deckSize({ cards, assumedDeckSize: input.assumedDeckSize })
+  const { size, blanks } = deckSize({ cards, assumedDeckSize: input.assumedDeckSize })
   const empty: HandResult = {
     handSize, deckSize: size, blanks, playable: 0, brick: 0, engineHist: new Array(handSize + 1).fill(0),
     topBricks: [], cardOdds: [], roleOdds: [], ruleCount: 0,
@@ -211,6 +209,5 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const roles = new Map<string, number>()
   for (const c of cards) for (const t of c.tags) roles.set(t, (roles.get(t) ?? 0) + c.count)
   res.roleOdds = [...roles.entries()].map(([role, copies]) => ({ role, copies, p: atLeastOne(size, copies, handSize) }))
-  void total
   return res
 }

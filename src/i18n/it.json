@@ -200,7 +200,8 @@
     "tab": {
       "steps": "Passi",
       "setup": "Configurazione",
-      "info": "Dettagli"
+      "info": "Dettagli",
+      "piles": "Pile"
     },
     "panels": "Pannelli",
     "field": "Campo di gioco",
@@ -458,7 +459,19 @@
     "prefs": {
       "title": "Campo",
       "fanPiles": "Mostra le ultime carte in Cimitero e Bandite",
-      "fanPilesHint": "Le ultime 10 carte a ventaglio, la più recente in cima. Se spento resta la carta in cima con il contatore."
+      "fanPilesHint": "Le ultime 10 carte a ventaglio, la più recente in cima. Se spento resta la carta in cima con il contatore.",
+      "pilesPanel": "Pannello Cimitero e Bandite",
+      "pilesPanelHint": "Elenca le carte di entrambi i giocatori e permette di agire su ciascuna. Predefinito: acceso da 768 px, spento sul telefono."
+    },
+    "piles": {
+      "gyOwn": "Il tuo Cimitero",
+      "banishedOwn": "Le tue Bandite",
+      "gyOpp": "Cimitero avversario",
+      "banishedOpp": "Bandite avversarie",
+      "empty": "Nessuna carta.",
+      "newest": "Più recente",
+      "actions": "Azioni per {{name}}",
+      "hint": "In ordine di arrivo. Tocca una carta per attivarla, evocarla o spostarla; su PC puoi anche trascinare la miniatura su una zona del campo."
     }
   },
   "learn": {

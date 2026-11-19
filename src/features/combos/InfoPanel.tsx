@@ -6,12 +6,13 @@ import { Field, Input } from '@/ui/Input'
 import { Segmented } from '@/ui/Segmented'
 import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
-import { useFieldPrefs } from './fieldPrefs'
+import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
 
 export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: ComboRecord[]; mother: ComboRecord | undefined }) {
   const { t, i18n } = useTranslation()
   const store = useEditor.getState()
   const fanPiles = useFieldPrefs((x) => x.fanPiles)
+  const pilesPref = useFieldPrefs((x) => x.pilesPanel)
   const meta = (patch: Partial<ComboDoc['meta']>) => store.edit((d) => ({ doc: { ...d, meta: { ...d.meta, ...patch } } }))
   const title = (lang: 'it' | 'en', v: string) => {
     const next = { ...doc.meta.title, [lang]: v }
@@ -37,6 +38,12 @@ export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: 
           description={t('combos.prefs.fanPilesHint')}
           checked={fanPiles}
           onCheckedChange={(v) => useFieldPrefs.getState().setFanPiles(v)}
+        />
+        <Switch
+          label={t('combos.prefs.pilesPanel')}
+          description={t('combos.prefs.pilesPanelHint')}
+          checked={pilesPanelEnabled(pilesPref)}
+          onCheckedChange={(v) => useFieldPrefs.getState().setPilesPanel(v)}
         />
       </section>
       <Field label={t('combos.info.tags')} hint={t('combos.info.tagsHint')}>

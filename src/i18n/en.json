@@ -200,7 +200,8 @@
     "tab": {
       "steps": "Steps",
       "setup": "Setup",
-      "info": "Details"
+      "info": "Details",
+      "piles": "Piles"
     },
     "panels": "Panels",
     "field": "Game field",
@@ -458,7 +459,19 @@
     "prefs": {
       "title": "Field",
       "fanPiles": "Show the last cards in Graveyard and Banished",
-      "fanPilesHint": "The last 10 cards fanned out, the most recent on top. When off, only the top card and a counter are shown."
+      "fanPilesHint": "The last 10 cards fanned out, the most recent on top. When off, only the top card and a counter are shown.",
+      "pilesPanel": "Graveyard and Banished panel",
+      "pilesPanelHint": "Lists both players' cards and lets you act on each one. Default: on from 768 px, off on phones."
+    },
+    "piles": {
+      "gyOwn": "Your Graveyard",
+      "banishedOwn": "Your Banished",
+      "gyOpp": "Opponent Graveyard",
+      "banishedOpp": "Opponent Banished",
+      "empty": "No cards.",
+      "newest": "Most recent",
+      "actions": "Actions for {{name}}",
+      "hint": "In order of arrival. Tap a card to activate, summon or move it; on desktop you can also drag the thumbnail onto a field zone."
     }
   },
   "learn": {
