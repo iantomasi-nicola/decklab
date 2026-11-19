@@ -39,7 +39,9 @@ function readPanel(): PanelState {
   try {
     const v = JSON.parse(localStorage.getItem(PANEL_KEY) ?? 'null') as Partial<PanelState> | null
     const tab = v?.tab === 'setup' || v?.tab === 'info' ? v.tab : 'steps'
-    return { open: !!v?.open && window.matchMedia('(min-width: 768px)').matches, tab }
+    // senza preferenza salvata: su schermi larghi (>= 1280) lo spazio che avanza al campo va ai pannelli
+    const open = v ? !!v.open : window.matchMedia('(min-width: 1280px)').matches
+    return { open: open && window.matchMedia('(min-width: 768px)').matches, tab }
   } catch {
     return { open: false, tab: 'steps' }
   }

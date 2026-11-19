@@ -23,13 +23,6 @@
     border: 1px solid var(--border);
     background: linear-gradient(180deg, var(--surface-1) 0%, var(--surface-1) 42%, color-mix(in srgb, var(--accent-soft) 55%, var(--surface-1)) 100%);
   }
-  .cl-seam {
-    position: absolute;
-    inset-inline: 2cqw;
-    top: 50%;
-    height: 1px;
-    background: var(--border);
-  }
   .cl-grid {
     --g: 1.5cqw;
     --pad: 1.9cqw;

@@ -50,7 +50,7 @@ export interface FieldHandlers {
   onLp: (p: PlayerIdx) => void
 }
 
-interface Ctx extends FieldHandlers { view: FieldView; readOnly: boolean; emphasis: FieldEmphasis }
+interface Ctx extends FieldHandlers { view: FieldView; readOnly: boolean; emphasis: FieldEmphasis; pilesOpen: boolean }
 const FieldCtx = createContext<Ctx | null>(null)
 const useField = () => {
   const c = useContext(FieldCtx)
@@ -239,7 +239,7 @@ function PileBack({ loc }: { loc: PileLoc }) {
 
 function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSProperties }) {
   const { t } = useTranslation()
-  const { view, onPile, readOnly } = useField()
+  const { view, onPile, readOnly, pilesOpen } = useField()
   const placed = zoneCards(view.state, p, loc)
   const unrevealed = p === 0 ? (loc === 'deck' ? view.unrevealed.deck : loc === 'extra' ? view.unrevealed.extra : 0) : 0
   const count = placed.length + unrevealed
@@ -255,7 +255,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
       dest={{ t: 'pile', p, loc }}
       p={p}
       style={style}
-      onOpen={count > 0 ? () => onPile(p, loc) : undefined}
+      onOpen={count > 0 && pilesOpen ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
           <span className="flex flex-col items-center gap-1">
@@ -265,7 +265,9 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
         ) : undefined
       }
       overlay={
-        count > 0 ? (
+        count > 0 && !pilesOpen ? (
+          <span className="cl-badge -bottom-1 -right-1">{count}</span>
+        ) : count > 0 ? (
           <button
             type="button"
             aria-label={`${name}: ${count}`}
@@ -447,12 +449,12 @@ export function Field({
   onCardMenu = NOOP,
   onCardKey = NOOP,
   onZone = NOOP,
-  onPile = NOOP,
+  onPile,
   onLp = NOOP,
 }: { view: FieldView; ring?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
   const { t } = useTranslation()
   return (
-    <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile, onLp }}>
+    <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile: onPile ?? NOOP, pilesOpen: !!onPile, onLp }}>
       <FieldFrame ring={ring}>
         <div className="cl-grid">
           <Side p={1} />
