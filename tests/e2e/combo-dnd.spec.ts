@@ -14,7 +14,7 @@ const BASE: SeedCombo = {
     { uid: 'u10', place: { loc: 'mzone', seq: 0, pos: 'FACEUP_ATK' } },
   ],
   opp: [{ uid: 'o1', place: { loc: 'mzone', seq: 0, pos: 'FACEUP_ATK' } }],
-  deck: { main: [C.ash, C.ash, C.tengu], extra: [C.link, C.xyz] },
+  deck: { main: [C.tengu, C.rooklord, C.spell, C.trap, C.field, C.equip, C.pendulum, C.ash, C.tengu, C.ash, C.ash], extra: [C.xyz, C.link] },
 }
 
 async function last(page: Page) {
@@ -192,6 +192,6 @@ test.describe('mouse', () => {
 for (const w of [768, 1024]) {
   test.describe(`touch ${w}`, () => {
     test.use({ viewport: { width: w, height: w === 768 ? 1024 : 768 }, hasTouch: true, isMobile: false })
-    pairs(`tablet ${w}`, touchDrag)
+    pairs(`tablet ${w}`, (page, from, to) => touchDrag(page, from, to))
   })
 }

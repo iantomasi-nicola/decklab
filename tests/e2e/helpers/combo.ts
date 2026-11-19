@@ -54,7 +54,7 @@ export async function seedCombo(page: Page, s: SeedCombo): Promise<string> {
       cards: s.cards,
       setup: {
         first: true,
-        hand: { required: s.hand ?? [], size: 5, fill: 'none' },
+        hand: { required: s.hand ?? [], size: Math.max(5, (s.hand ?? []).length), fill: 'none' },
         own: { lp: 8000, places: s.own ?? [] },
         opponent: { board: { lp: 8000, places: (s.opp ?? []).map((o) => ({ ...o, place: { p: 1, ...o.place } })) }, interrupts: [] },
       },
@@ -118,7 +118,7 @@ export async function touchDrag(page: Page, from: Locator, to: Locator, o: { hol
   const a = await center(from)
   const b = await center(to)
   const cdp = await page.context().newCDPSession(page)
-  const send = (type: string, x?: number, y?: number) =>
+  const send = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number, y?: number) =>
     cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: x!, y: y!, id: 1 }] })
   await send('touchStart', a.x, a.y)
   await page.waitForTimeout(o.hold ?? 260)

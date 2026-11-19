@@ -10,6 +10,8 @@ export interface Draft {
   /** istanze nate con questo passo (uid → passcode) */
   register?: Record<Uid, number>
   tokens?: Uid[]
+  /** carta aggiunta da fuori mazzo (ricerca): entra nel Deck/Extra della combo, così le carte "necessarie" restano valide (V8) */
+  deckAdd?: { code: number; extra: boolean }
 }
 
 export interface BlankOptions {
@@ -105,7 +107,7 @@ export function setupFromState(doc: ComboDoc, state: GameState): ComboDoc {
     ...doc,
     setup: {
       ...doc.setup,
-      hand: { ...doc.setup.hand, required: handUids },
+      hand: { ...doc.setup.hand, required: handUids, size: Math.max(doc.setup.hand.size, handUids.length) },
       own: ownBoard,
       opponent: { ...doc.setup.opponent, board: opp },
     },
@@ -113,8 +115,13 @@ export function setupFromState(doc: ComboDoc, state: GameState): ComboDoc {
 }
 
 const withCards = (doc: ComboDoc, d: Draft): ComboDoc => {
-  if (!d.register && !d.tokens?.length) return doc
+  if (!d.register && !d.tokens?.length && !d.deckAdd) return doc
   const next: ComboDoc = { ...doc, cards: { ...doc.cards, ...d.register } }
+  if (d.deckAdd) {
+    const { ydke: _y, ...deck } = doc.deck // l'impronta ydke non coincide più (V6): si ricalcola in export
+    void _y
+    next.deck = d.deckAdd.extra ? { ...deck, extra: [...deck.extra, d.deckAdd.code] } : { ...deck, main: [...deck.main, d.deckAdd.code] }
+  }
   if (d.tokens?.length) next.x = { ...doc.x, tokens: [...tokensOf(doc), ...d.tokens] }
   return next
 }

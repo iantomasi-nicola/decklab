@@ -216,7 +216,8 @@ function Pile({ p, loc, col, kind }: { p: PlayerIdx; loc: PileLoc; col: number; 
   const hidden = loc === 'deck' || loc === 'extra'
   const Icon = loc === 'gy' ? Skull : loc === 'banished' ? Ban : loc === 'deck' ? Layers : Sparkles
   const draggableFresh = hidden && p === 0 && unrevealed > 0
-  const fresh = useDraggable({ id: freshDragId(p, loc === 'extra' ? 'extra' : 'deck'), data: { fresh: loc }, disabled: !draggableFresh })
+  // un id per pila (anche se disattivata): ids duplicati si sovrascriverebbero nel registro di dnd-kit
+  const fresh = useDraggable({ id: hidden ? freshDragId(p, loc as 'deck' | 'extra') : `none:${p}:${loc}`, data: { fresh: loc }, disabled: !draggableFresh })
   const name = t(`combos.pile.${loc}`)
   return (
     <Slot

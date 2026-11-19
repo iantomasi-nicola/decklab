@@ -30,7 +30,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const cards = useCards()
   const [record, setRecord] = useState<ComboRecord | null | undefined>(undefined)
   const [all, setAll] = useState<ComboRecord[]>([])
-  const [readError, setReadError] = useState(false)
+  const [readError, setReadError] = useState<string[] | null>(null)
   const [readOnly, setReadOnly] = useState(false)
   const [save, setSave] = useState<SaveState>('saved')
   const [tabSel, setTabSel] = useState<'steps' | 'setup' | 'info'>('steps')
@@ -48,13 +48,13 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     let live = true
     useEditor.getState().close()
     setRecord(undefined)
-    setReadError(false)
+    setReadError(null)
     void repos.combos.get(comboId).then((r) => {
       if (!live) return
       if (!r || r.deletedAt !== null) return setRecord(null)
       const res = readCombo(r.payload)
       if (!res.ok) {
-        setReadError(true)
+        setReadError(res.errors.map((e) => `${e.code} ${JSON.stringify(e.params ?? {})} ${e.path.join('.')}`))
         return setRecord(r)
       }
       recordRef.current = r
@@ -150,7 +150,9 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   if (record === null || readError) {
     return (
       <div className="flex flex-col gap-4">
-        <Banner tone="danger" title={t(readError ? 'combos.readError' : 'combos.notFound')} />
+        <Banner tone="danger" title={t(readError ? 'combos.readError' : 'combos.notFound')}>
+          {readError ? <ul className="mt-1 list-disc pl-5 text-sm">{readError.map((e) => <li key={e}>{e}</li>)}</ul> : null}
+        </Banner>
         <Link to="/combo" className="text-accent-text underline">{t('combos.backToList')}</Link>
       </div>
     )

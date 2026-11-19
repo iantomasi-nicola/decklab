@@ -469,7 +469,9 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
   const overlayCode = dragSel ? codeOf(dragSel) : 0
 
   // ---------- aggiunta carta/token
-  const addCard = (p: PlayerIdx, a: { code: number; dest: AddDest; token: boolean }) => {
+  const addCard = (p: PlayerIdx, a0: { code: number; dest: AddDest; token: boolean }) => {
+    // un token non può essere una carta "necessaria" in mano (non è nel mazzo)
+    const a = a0.token && a0.dest === 'hand' ? { ...a0, dest: 'mzone' as AddDest } : a0
     const uid = nextUid(doc, p)
     const to = ((): Place => {
       if (a.dest === 'hand') return { p, loc: 'hand', seq: Object.values(state.places).filter((pl) => pl.p === p && pl.loc === 'hand').length }
@@ -487,7 +489,11 @@ export function Board({ doc, state, mode, cursor, readOnly }: { doc: ComboDoc; s
     if (a.dest === 'mzone' && mode === 'steps') step.method = 'effect'
     if (a.dest === 'hand' && mode === 'steps') step.searched = [uid]
     if (a.token) step.x = { token: true }
-    useEditor.getState().apply({ step, register: { [uid]: a.code }, ...(a.token ? { tokens: [uid] } : {}) })
+    const info = cardInfo(cards.byId(a.code))
+    const draft: Draft = { step, register: { [uid]: a.code } }
+    if (a.token) draft.tokens = [uid]
+    else if (p === 0 && ((info.extra ? pool.extra : pool.main).get(a.code) ?? 0) === 0) draft.deckAdd = { code: a.code, extra: !!info.extra }
+    useEditor.getState().apply(draft)
     announce(t('combos.announce.added', { card: cards.nameOf(a.code) }))
     setAddFor(null)
   }

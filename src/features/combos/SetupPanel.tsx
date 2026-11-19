@@ -17,7 +17,7 @@ export function SetupPanel({ doc, nameOf }: { doc: ComboDoc; nameOf: (uid: strin
         <Segmented<'first' | 'second'>
           label={t('combos.setup.turn')}
           value={doc.setup.first ? 'first' : 'second'}
-          onValueChange={(v) => set({ first: v === 'first', hand: { ...hand, size: handSize(v === 'first') } })}
+          onValueChange={(v) => set({ first: v === 'first', hand: { ...hand, size: Math.max(handSize(v === 'first'), hand.required.length) } })}
           options={[
             { value: 'first', label: t('combos.setup.first') },
             { value: 'second', label: t('combos.setup.second') },
@@ -36,7 +36,6 @@ export function SetupPanel({ doc, nameOf }: { doc: ComboDoc; nameOf: (uid: strin
           ]}
         />
         <p className="text-sm text-muted">{t('combos.setup.handInfo', { size: hand.size, n: hand.required.length })}</p>
-        {hand.required.length > hand.size ? <p role="alert" className="text-sm text-danger">{t('combos.setup.tooMany')}</p> : null}
       </section>
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium">{t('combos.setup.required')}</h3>
