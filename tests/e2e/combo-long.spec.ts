@@ -7,7 +7,9 @@ import { longDoc, openCombo, openPanel, seedDoc } from './helpers/combo'
 const OUT = process.env.SHOT_DIR ?? 'test-results/visual'
 mkdirSync(OUT, { recursive: true })
 const FIXTURE = 'tests/fixtures/combo/long-60.json'
-const doc = () => (existsSync(FIXTURE) ? JSON.parse(readFileSync(FIXTURE, 'utf8')) : longDoc(60))
+/** Test strutturali: documento generato qui (struttura nota). Schermate: la fixture condivisa se esiste. */
+const doc = () => longDoc(60)
+const fixture = () => (existsSync(FIXTURE) ? JSON.parse(readFileSync(FIXTURE, 'utf8')) : longDoc(60))
 
 async function open(page: Page, w: number, h: number, lang: 'it' | 'en' = 'en', theme: 'dark' | 'light' = 'dark') {
   await page.setViewportSize({ width: w, height: h })
@@ -115,7 +117,7 @@ for (const [w, h] of [[375, 812], [768, 1024], [1024, 768], [1440, 900]] as cons
     for (const lang of ['it', 'en'] as const) {
       test(`lista 60 passi ${w}x${h} ${theme} ${lang}`, async ({ page }) => {
         await page.setViewportSize({ width: w, height: h })
-        await openCombo(page, await seedDoc(page, doc()), lang, theme)
+        await openCombo(page, await seedDoc(page, fixture()), lang, theme)
         await openPanel(page).catch(async () => undefined)
         if ((await page.locator('[data-panel]').count()) === 0) await page.getByTestId('panel-toggle').click()
         await page.getByRole('tab', { name: /Steps|Passi/ }).click()
