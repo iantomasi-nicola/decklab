@@ -118,9 +118,11 @@ export async function seedGuideWithIds(page: Page, ids: Seeded): Promise<void> {
     sampleDoc({ id: ids.illegalId, archetypeId, legal: false, now, title: { it: 'Con carta proibita', en: 'With a forbidden card' } }),
     { ...sampleDoc({ id: ids.emptyId, archetypeId, legal: true, now, title: { it: 'Combo vuota', en: 'Empty combo' } }), steps: [], branches: [] },
   ]
-  await page.goto('/combo')
-  await page.getByTestId('new-combo').waitFor()
-  await page.evaluate(
+  const write = async () => {
+    await page.goto('/combo')
+    await page.getByTestId('new-combo').waitFor()
+    await page.waitForLoadState('networkidle')
+    await page.evaluate(
     async ({ docs, archetypeId, now }) => {
       const db = await new Promise<IDBDatabase>((res, rej) => {
         const r = indexedDB.open('decklab')
@@ -138,5 +140,15 @@ export async function seedGuideWithIds(page: Page, ids: Seeded): Promise<void> {
       db.close()
     },
     { docs, archetypeId, now },
-  )
+    )
+  }
+  // il service worker / un reload può distruggere il contesto durante il primo avvio: un nuovo tentativo basta
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await write()
+      return
+    } catch (e) {
+      if (attempt >= 2) throw e
+    }
+  }
 }

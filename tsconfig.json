@@ -15,7 +15,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "types": ["vite/client", "node"],
-    "paths": { "@/*": ["./src/*"] }
+    "paths": { "@/*": ["./src/*"], "@n1xx1/ocgcore-wasm": ["./node_modules/@n1xx1/ocgcore-wasm/dist/index.d.ts"] }
   },
   "include": ["src", "tests", "vite.config.ts", "playwright.config.ts", "playwright.decks.config.ts"]
 }

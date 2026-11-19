@@ -13,6 +13,8 @@ const alias = [
         { find: '@/features/cards/CardImage', replacement: path.resolve(__dirname, 'tests/mocks/CardImage.tsx') },
       ]
     : []),
+  // il pacchetto del core non riesporta `default` da mod.js: si importa dist/index.js (vedi docs/SPIKE-ENGINE.md)
+  { find: /^@n1xx1\/ocgcore-wasm$/, replacement: path.resolve(__dirname, 'node_modules/@n1xx1/ocgcore-wasm/dist/index.js') },
   { find: '@', replacement: path.resolve(__dirname, 'src') },
 ]
 
@@ -34,7 +36,7 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,woff2,png,webmanifest}'],
         // i dataset (public/data) e le immagini si scaricano a runtime, non fanno parte della shell
-        globIgnores: ['**/data/**'],
+        globIgnores: ['**/data/**', '**/ocgcore*'],
       },
       manifest: {
         id: '/',

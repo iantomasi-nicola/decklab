@@ -61,9 +61,9 @@ export function HandSection({ doc, nameOf, className }: { doc: ComboDoc; nameOf:
         <p className="text-[15px] text-muted">{t('guide.hand.none')}</p>
       ) : (
         <>
-          <ul className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-3" data-testid="guide-hand">
+          <ul className="flex flex-wrap gap-2 sm:gap-3" data-testid="guide-hand">
             {groups.map(({ code, n }) => (
-              <li key={code} className="flex min-w-0 flex-col gap-1.5">
+              <li key={code} className="flex w-[clamp(80px,26vw,104px)] min-w-0 flex-col gap-1.5">
                 <div className="relative">
                   <CardImage id={code} alt={nameOf(code)} size="small" className="shadow-2" />
                   {n > 1 ? (
@@ -76,7 +76,7 @@ export function HandSection({ doc, nameOf, className }: { doc: ComboDoc; nameOf:
               </li>
             ))}
             {random > 0 ? (
-              <li className="flex min-w-0 flex-col gap-1.5" data-testid="guide-hand-random">
+              <li className="flex w-[clamp(80px,26vw,104px)] min-w-0 flex-col gap-1.5" data-testid="guide-hand-random">
                 <div
                   className="grid place-items-center rounded-[6px] border border-dashed border-line-strong text-muted"
                   style={{ aspectRatio: '59 / 86' }}
