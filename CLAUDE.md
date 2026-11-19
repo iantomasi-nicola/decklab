@@ -10,3 +10,8 @@
 - Dire all'utente, passo passo, cosa si sta facendo (breve, prima e dopo ogni passo significativo).
 - Allegare screenshot dove servono (schermate UI, difetti, confronti) con SendUserFile.
 - Sub-agenti: riportare all'utente la percentuale di completamento di ciascuno, aggiornata ogni 10%. I sub-agenti devono inviare al principale una riga di avanzamento a ogni 10% (SendMessage), e il principale la inoltra.
+
+## Requisiti di prodotto permanenti
+- Editor combo: il campo (board) deve essere il più grande possibile (più largo di un playmat di allenamento tipico), senza mai superare il viewport; tutto il resto in menu/pannelli riducibili. Priorità assoluta: board grande.
+- Priorità di progetto: arrivare presto alle funzionalità principali per i test manuali dell'utente, poi il resto.
+- Quando il limite d'uso di Claude si resetta, ripartire subito con nuove task a piena velocità (sub-agenti in parallelo).
