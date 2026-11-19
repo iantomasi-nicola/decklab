@@ -31,7 +31,7 @@ test.describe('integrazioni (desktop)', () => {
     const bar = page.locator('[data-turn-ui]').first()
     await expect(bar).toBeVisible()
     const boxes = await bar.locator('button').evaluateAll((els) => els.map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0).map((r) => [Math.round(r.width), Math.round(r.height)]))
-    for (const [w, h] of boxes) expect(Math.min(w, h), `bersaglio ${w}x${h}`).toBeGreaterThanOrEqual(43)
+    for (const [w = 0, h = 0] of boxes) expect(Math.min(w, h), `bersaglio ${w}x${h}`).toBeGreaterThanOrEqual(43)
     await bar.getByRole('button', { name: /Battle|Battaglia/ }).first().click()
     const s = await steps(page, 1)
     expect(s[0]).toMatchObject({ action: 'enterPhase', phase: 'battle' })

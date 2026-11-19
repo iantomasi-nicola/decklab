@@ -15,6 +15,7 @@ import { overlaysOf, zoneCards, type GameState, type NPlace } from '@/domain/com
 import { useFieldPrefs } from './fieldPrefs'
 import type { PlayerIdx, Uid } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
+import { GameIcon } from '@/ui/gameIcons'
 import { CardFace, isDefPos } from './CardFace'
 import './field.css'
 import { destKey, occupantAt, type Dest, type PileLoc, type ZoneLoc } from './zones'
@@ -280,7 +281,10 @@ const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
             active && 'shadow-[0_0_0_4px_var(--accent-text),0_0_16px_2px_var(--accent-text)]',
           )}
         />
-        {!inPile && p.counters ? <span className="cl-badge -left-1 -top-1" data-counters={p.counters}>●{p.counters}</span> : null}
+        {!inPile && p.counters ? <span className="cl-badge -left-1 -top-1 inline-flex items-center justify-center gap-0.5" data-counters={p.counters}>
+            <GameIcon name="counter" size={11} label={false} />
+            {p.counters}
+          </span> : null}
         {!inPile && p.overlays ? <span className="cl-badge -bottom-1 -left-1" data-overlays={p.overlays}>×{p.overlays}</span> : null}
         {p.marks}
         {chosen ? (

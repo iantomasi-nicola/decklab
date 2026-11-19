@@ -694,6 +694,7 @@ export function Board({
           onClose={() => setLpFor(null)}
           onApply={(delta) => {
             useEditor.getState().apply({ step: { action: 'changeLP', lp: [{ p: lpFor, delta }], moves: [] } })
+            playSound(delta < 0 ? 'damage' : 'uiTap')
             announce(t('combos.announce.lp', { lp: state.lp[lpFor] + delta }))
             setLpFor(null)
           }}

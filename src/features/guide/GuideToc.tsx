@@ -8,6 +8,7 @@ import Shuffle from 'lucide-react/icons/shuffle'
 import type { ComboDoc } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
 import { pickLoc, type OutlineBlock, type OutlineSection } from './guideModel'
+import { headlineText, stepHeadline } from './stepText'
 
 const rowCls = 'flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left text-[15px] leading-5 text-fg transition-colors duration-150 hover:bg-surface-2'
 
@@ -32,7 +33,9 @@ export function TocBody({
   const [closed, setClosed] = useState<ReadonlySet<number>>(new Set())
   const range = (from: number, to: number) => (from === to ? String(from) : t('guide.nav.range', { from, to }))
   const label = (b: OutlineBlock) => {
-    const card = b.uid ? nameOfUid(b.uid) : ''
+    const step = doc.steps[b.from - 1]
+    const head = step ? headlineText(stepHeadline(step, t, nameOfUid)) : ''
+    const card = b.kind === 'steps' ? head : b.uid ? nameOfUid(b.uid) : ''
     const kind = b.kind === 'chain' ? ((b.links ?? 0) > 0 ? t('guide.nav.chain', { count: b.links }) : t('guide.nav.chainResolve')) : b.kind === 'group' ? t('guide.nav.free') : ''
     return [kind, card].filter(Boolean).join(' · ') || t('guide.nav.plain')
   }

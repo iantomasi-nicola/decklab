@@ -366,6 +366,7 @@ export function StepsSection({ ctx, variants }: { ctx: GuideCtx; variants: Varia
     const input = jumpRef.current
     const n = Number(input?.value)
     if (Number.isInteger(n) && n >= 1) request({ kind: 'step', n })
+    if (input) input.value = ''
     input?.blur()
   }
   const lastIdx = items.length - 1
