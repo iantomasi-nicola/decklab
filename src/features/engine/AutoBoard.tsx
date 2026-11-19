@@ -298,6 +298,16 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     }
   }
 
+  useEffect(() => {
+    const k = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setSel(null)
+      setWhy(null)
+    }
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [])
+
   // ---- scelta della zona (SELECT_PLACE / SELECT_DISFIELD)
   const [zones, setZones] = useState<string[]>([])
   useEffect(() => setZones([]), [reqKey])

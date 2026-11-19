@@ -114,3 +114,27 @@ test('duello vero pilotato (Sky Striker): ogni richiesta del motore ha il suo co
   expect(seen.size).toBeGreaterThan(2)
   console.log('kind incontrati:', [...seen].join(', '))
 })
+
+for (const [width, theme, lang] of [[375, 'dark', 'it'], [375, 'light', 'en'], [768, 'dark', 'en'], [1440, 'light', 'it']] as const) {
+  test(`editor in automatica a ${width} ${theme} ${lang}: interruttore, avvio, dock, campo`, async ({ page }) => {
+    test.setTimeout(120_000)
+    await serveScripts(page)
+    const main = [...times('Gagaga Magician', 3), ...times('Wind-Up Soldier', 3), ...times('Pot of Desires', 3), ...times('Dark Hole', 3), ...times('Foolish Burial', 3), ...times('Raigeki', 3)]
+    const id = await seedCombo(page, { cards: {}, deck: { main, extra: [] } })
+    await page.setViewportSize({ width, height: width < 768 ? 800 : 900 })
+    await openCombo(page, id, lang, theme)
+    await page.getByTestId('mode-auto').click()
+    await page.getByTestId('start-panel').waitFor()
+    await page.waitForTimeout(300)
+    await page.screenshot({ path: `test-results/visual-engine/editor-start-${width}-${theme}-${lang}.png` })
+    const sw = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth])
+    expect(sw[0]).toBeLessThanOrEqual(sw[1]!)
+    await page.getByRole('radio', { name: lang === 'it' ? 'A caso' : 'Random' }).click()
+    await page.getByTestId('start-duel').click()
+    await page.getByTestId('auto-board').waitFor({ timeout: 60_000 })
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: `test-results/visual-engine/editor-duel-${width}-${theme}-${lang}.png` })
+    const sw2 = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth])
+    expect(sw2[0]).toBeLessThanOrEqual(sw2[1]!)
+  })
+}
