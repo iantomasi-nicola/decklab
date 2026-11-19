@@ -3,6 +3,8 @@ import Monitor from 'lucide-react/icons/monitor'
 import Moon from 'lucide-react/icons/moon'
 import Sun from 'lucide-react/icons/sun'
 import { useLangPref, type LangPref } from '@/i18n'
+import { AccountSection } from '@/features/backup/AccountSection'
+import { DataSection } from '@/features/backup/DataSection'
 import { Segmented } from '@/ui/Segmented'
 import { Surface } from '@/ui/Surface'
 import { toast } from '@/ui/Toast'
@@ -31,7 +33,7 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader title={t('settings.title')} />
-      <div className="flex max-w-2xl flex-col gap-4">
+      <div className="flex max-w-3xl flex-col gap-4">
         <Section id="set-lang" title={t('settings.language.title')} description={t('settings.language.description')}>
           <Segmented<LangPref>
             label={t('settings.language.title')}
@@ -62,6 +64,14 @@ export function SettingsPage() {
               { value: 'light', label: t('settings.theme.light'), icon: <Sun size={16} /> },
             ]}
           />
+        </Section>
+
+        <Section id="set-data" title={t('backup.title')} description={t('backup.description')}>
+          <DataSection />
+        </Section>
+
+        <Section id="set-account" title={t('account.title')} description={t('account.description')}>
+          <AccountSection />
         </Section>
 
         <Section id="set-about" title={t('settings.about.title')}>
