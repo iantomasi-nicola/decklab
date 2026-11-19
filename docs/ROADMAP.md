@@ -85,6 +85,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 **Contenuto**
 - Scena di rendering condivisa DOM/Canvas; export verticale 1080×1920 e orizzontale 1920×1080: titolo iniziale, passo, azione, nota, board aggiornato, board finale.
 - WebCodecs + Mediabunny in worker, avanzamento e annullamento; fallback `MediaRecorder`.
+- **Copertina del video = board finale** (poster/prima immagine e miniatura PNG).
 - **Immagine del board finale condivisibile** (PNG, verticale e orizzontale) con elenco dei passi, come alternativa leggera al video; stessa scena di rendering dell'MP4.
 - Rifinitura di animazioni (150–250 ms, ease-out, solo transform/opacity, "riduci movimento"), microinterazioni, accessibilità, polish di tutte le schermate delle fasi 2–3.
 
@@ -185,3 +186,8 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 
 ## Cosa mi serve da te prima di iniziare la Fase 2
 Le risposte a D1–D5 in `ARCHITECTURE.md` §15 (le più importanti: **D1** immagini, **D2** funzioni di thedeckspace da replicare).
+
+
+## Aggiunte richieste dall'utente (priorità dopo l'alpha, salvo dove indicato)
+- **Alpha (subito)**: note a campo unico, barra delle fasi e indicatori di stato (Normal Summon fatta, effetti OPT usati), icone specifiche per tipo di effetto e di evocazione, selezione bersagli chiara, suoni WebAudio, gesture, ottimizzazione responsive di ogni schermata.
+- **Side plan contro i matchup**: sezione per piani di side (OUT/IN evidenziati in verde, controlli di legalità e di conteggio, copia tra piani, suggerimenti dai tag handtrap/anti-archetipo, impatto sulle probabilità con Stats Lab, esporta immagine PNG).
