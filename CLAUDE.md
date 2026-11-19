@@ -20,3 +20,6 @@
 - Mai grafiche, pulsanti o elementi disallineati, sovrapposti, tagliati o "brutti". Ogni schermata consegnata deve avere allineamenti, spaziature (griglia 8px), altezze e icone coerenti.
 - Prima di consegnare: guardare gli screenshot (375/768/1024/1440, scuro e chiaro, it/en), cercare difetti di allineamento e correggerli; i controlli automatici Playwright (nessun overflow, nessun elemento fuori viewport, target ≥44px) sono il minimo, non il sostituto dell'occhio.
 - Se un difetto è noto e non risolto, dirlo esplicitamente all'utente: non consegnarlo come "fatto".
+
+## Combo lunghe (requisito permanente)
+- Le combo possono avere 50+ passi (anche 100). Editor, guida e replay devono restare ordinati, fluidi e senza elementi sovrapposti o tagliati: liste virtualizzate, timeline compatta e scorrevole (raggruppata per fasi/catene, con salto a un passo e ricerca), blocchi di catena comprimibili, scroll automatico al passo corrente, nessuno scroll orizzontale della pagina, prestazioni senza long task. Ogni schermata di combo va testata con una combo di prova da 60 passi a 375/768/1024/1440, scuro/chiaro, it/en.
