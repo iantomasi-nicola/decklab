@@ -2,7 +2,8 @@
 import { DatabaseSync } from 'node:sqlite'
 
 export const COMMIT = '5b613bfc3c122f48238e32f85015b32892577a42'
-export const BASE = `https://cdn.jsdelivr.net/gh/ProjectIgnis/CardScripts@${COMMIT}/`
+export const BASE = `https://raw.githubusercontent.com/ProjectIgnis/CardScripts/${COMMIT}/` // jsDelivr@sha answers 403 on ~16% of files (package >50MB)
+export const BASE_JSDELIVR = `https://cdn.jsdelivr.net/gh/ProjectIgnis/CardScripts@${COMMIT}/`
 export const CDB = new URL('../../.cache/cards.cdb', import.meta.url).pathname
 export * from './engine.mjs'
 

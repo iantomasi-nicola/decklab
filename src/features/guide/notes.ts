@@ -16,11 +16,6 @@ export interface NoteResolver {
   byNamePrefix(normalized: string): number | undefined
 }
 
-export interface NameSource {
-  code: number
-  names: string[]
-}
-
 /** Costruisce un resolver sulle carte citate dal documento (registro + mazzo). `namesOf` restituisce i nomi (IT/EN) di un passcode. */
 export function makeNoteResolver(doc: Pick<ComboDoc, 'cards' | 'deck'>, namesOf: (code: number) => string[]): NoteResolver {
   const codes = new Set<number>([...Object.values(doc.cards), ...doc.deck.main, ...doc.deck.extra, ...doc.deck.side])

@@ -6,7 +6,7 @@ const cdb = openCdb(); const store = new ScriptStore()
 let t = performance.now(); const lib = await createCore({ sync: true }); console.log('createCore(sync) ms', (performance.now() - t).toFixed(1), 'core', lib.getVersion())
 const decks = resolveDecks(cdb, which)
 const seed = [11n, 22n, 33n, 44n]
-const r = await runWithPreload(lib, { cards: cdb, scripts: store, decks, seed, maxNew: 10 }, store)
+const r = await runWithPreload(lib, { cards: cdb, scripts: store, decks, seed, maxNew: +(process.argv[3] ?? 10) }, store)
 console.log('passes', r.passes, JSON.stringify(r.log))
 console.log('scripts in store', store.map.size, 'bytes', store.bytes, 'notFound', JSON.stringify(store.nf), 'http requests', store.requests, 'fetch ms', store.fetchMs.toFixed(0))
 console.log('responses', r.responses.length, 'ended', r.ended, 'pending', r.pending && msgName(r.pending), 'lua errors', r.errors.length, r.errors.slice(0,5))
