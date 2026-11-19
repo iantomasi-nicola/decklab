@@ -50,3 +50,10 @@ export function countAt(state: GameState, p: PlayerIdx, loc: Loc): number {
 
 export const samePlace = (a: NPlace, d: Dest): boolean =>
   d.t === 'zone' ? a.p === d.p && a.loc === d.loc && a.seq === d.seq : d.t === 'pile' ? a.p === d.p && a.loc === d.loc : false
+
+/** Prossimo `seq` di arrivo per Cimitero/Bandite (l'ordine = ordine di arrivo, la più recente ha seq maggiore). */
+export function pileSeq(state: GameState, p: PlayerIdx, loc: Loc, offset = 0): number {
+  let max = -1
+  for (const pl of Object.values(state.places)) if (pl.p === p && pl.loc === loc) max = Math.max(max, pl.seq ?? 0)
+  return max + 1 + offset
+}

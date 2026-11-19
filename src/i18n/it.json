@@ -225,7 +225,8 @@
       "extra": "Extra Deck",
       "gy": "Cimitero",
       "banished": "Bandite",
-      "hand": "Mano"
+      "hand": "Mano",
+      "more": "Altre {{count}} carte nella pila"
     },
     "pileSheet": {
       "hint": "Tocca una carta per spostarla, oppure usa «Sposta in…».",
@@ -453,7 +454,12 @@
     "modeSetup": "Modifica la situazione iniziale",
     "modeSetupBadge": "Configurazione iniziale: le carte che sposti non creano passi",
     "panelToggle": "Pannelli: passi, configurazione, dettagli",
-    "randomHandLong": "{{count}} carte casuali dal Deck"
+    "randomHandLong": "{{count}} carte casuali dal Deck",
+    "prefs": {
+      "title": "Campo",
+      "fanPiles": "Mostra le ultime carte in Cimitero e Bandite",
+      "fanPilesHint": "Le ultime 10 carte a ventaglio, la più recente in cima. Se spento resta la carta in cima con il contatore."
+    }
   },
   "learn": {
     "title": "Impara",

@@ -225,7 +225,8 @@
       "extra": "Extra Deck",
       "gy": "Graveyard",
       "banished": "Banished",
-      "hand": "Hand"
+      "hand": "Hand",
+      "more": "{{count}} more cards in the pile"
     },
     "pileSheet": {
       "hint": "Tap a card to move it, or use \"Move to…\".",
@@ -453,7 +454,12 @@
     "modeSetup": "Edit the starting situation",
     "modeSetupBadge": "Starting setup: cards you move do not create steps",
     "panelToggle": "Panels: steps, setup, details",
-    "randomHandLong": "{{count}} random cards from the Deck"
+    "randomHandLong": "{{count}} random cards from the Deck",
+    "prefs": {
+      "title": "Field",
+      "fanPiles": "Show the last cards in Graveyard and Banished",
+      "fanPilesHint": "The last 10 cards fanned out, the most recent on top. When off, only the top card and a counter are shown."
+    }
   },
   "learn": {
     "title": "Learn",

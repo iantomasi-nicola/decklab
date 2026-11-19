@@ -4,11 +4,14 @@ import type { ComboDoc } from '@/domain/combo/types'
 import type { ComboRecord } from '@/data/repo'
 import { Field, Input } from '@/ui/Input'
 import { Segmented } from '@/ui/Segmented'
+import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
+import { useFieldPrefs } from './fieldPrefs'
 
 export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: ComboRecord[]; mother: ComboRecord | undefined }) {
   const { t, i18n } = useTranslation()
   const store = useEditor.getState()
+  const fanPiles = useFieldPrefs((x) => x.fanPiles)
   const meta = (patch: Partial<ComboDoc['meta']>) => store.edit((d) => ({ doc: { ...d, meta: { ...d.meta, ...patch } } }))
   const title = (lang: 'it' | 'en', v: string) => {
     const next = { ...doc.meta.title, [lang]: v }
@@ -26,6 +29,15 @@ export function InfoPanel({ doc, variants, mother }: { doc: ComboDoc; variants: 
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium">{t('combos.info.rules')}</h3>
         <Segmented<'TCG' | 'OCG'> label={t('combos.info.rules')} value={doc.meta.rules} onValueChange={(v) => meta({ rules: v })} options={[{ value: 'TCG', label: 'TCG' }, { value: 'OCG', label: 'OCG' }]} />
+      </section>
+      <section className="flex flex-col gap-1" aria-label={t('combos.prefs.title')}>
+        <h3 className="text-sm font-medium">{t('combos.prefs.title')}</h3>
+        <Switch
+          label={t('combos.prefs.fanPiles')}
+          description={t('combos.prefs.fanPilesHint')}
+          checked={fanPiles}
+          onCheckedChange={(v) => useFieldPrefs.getState().setFanPiles(v)}
+        />
       </section>
       <Field label={t('combos.info.tags')} hint={t('combos.info.tagsHint')}>
         {({ id, describedBy }) => (

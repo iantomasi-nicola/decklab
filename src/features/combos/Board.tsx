@@ -23,7 +23,7 @@ import { PileSheet } from './PileSheet'
 import { PopMenu, type PopItem } from './PopMenu'
 import type { Sel } from './selection'
 import { useCards } from './useCards'
-import { destKey, freeSeq, occupantAt, parseDest, type Dest, type PileLoc } from './zones'
+import { destKey, freeSeq, occupantAt, parseDest, pileSeq, type Dest, type PileLoc } from './zones'
 
 const clean = (pl: NPlace): Place => {
   const out: Place = { p: pl.p, loc: pl.loc }
@@ -258,7 +258,7 @@ export function Board({
       items.push({ id: 'counter', label: t('combos.counter.menu'), onSelect: () => setCounterFor(uid) })
       for (const ov of Object.entries(state.places).filter(([, pl]) => pl.loc === 'overlay' && pl.host === uid)) {
         const [ouid, opl] = ov
-        const to: Place = { p: opl.p, loc: 'gy' }
+        const to: Place = { p: opl.p, loc: 'gy', seq: pileSeq(state, opl.p, 'gy') }
         items.push({
           id: `detach-${ouid}`,
           label: t('combos.act.detach', { name: cards.nameOf(doc.cards[ouid] ?? 0) }),
@@ -316,9 +316,9 @@ export function Board({
     const store = useEditor.getState()
     if (pending.kind === 'tribute') {
       if (pending.chosen.length === 0) return
-      const moves: Move[] = pending.chosen.map((uid) => {
+      const moves: Move[] = pending.chosen.map((uid, i) => {
         const pl = state.places[uid]!
-        return { uid, from: clean(pl), to: { p: pl.p, loc: 'gy' }, why: 'tribute' }
+        return { uid, from: clean(pl), to: { p: pl.p, loc: 'gy', seq: pileSeq(state, pl.p, 'gy', i) }, why: 'tribute' }
       })
       const sel = pending.sel
       const src = srcOf(sel)
@@ -333,7 +333,7 @@ export function Board({
       if (cur && host && pending.chosen.length) {
         const moves: Move[] = pending.chosen.map((uid, i) => {
           const pl = state.places[uid]!
-          const to: Place = pending.xyz ? { p: host.p, loc: 'overlay', seq: i, host: pending.host } : { p: pl.p, loc: 'gy' }
+          const to: Place = pending.xyz ? { p: host.p, loc: 'overlay', seq: i, host: pending.host } : { p: pl.p, loc: 'gy', seq: pileSeq(state, pl.p, 'gy', i) }
           return { uid, from: clean(pl), to, why: 'material' }
         })
         store.patchStep(pending.stepId, { moves: [...moves, ...cur.moves], costs: [...(cur.costs ?? []), { kind: 'material', cards: pending.chosen }] })
@@ -500,7 +500,7 @@ export function Board({
       if (a.dest === 'hand') return { p, loc: 'hand', seq: Object.values(state.places).filter((pl) => pl.p === p && pl.loc === 'hand').length }
       if (a.dest === 'mzone') return { p, loc: 'mzone', seq: freeSeq(state, p, 'mzone') ?? 0, pos: 'FACEUP_ATK' }
       if (a.dest === 'szone') return { p, loc: 'szone', seq: freeSeq(state, p, 'szone', [1, 2, 3, 0, 4]) ?? 0, pos: 'FACEUP' }
-      return { p, loc: a.dest }
+      return { p, loc: a.dest, seq: pileSeq(state, p, a.dest) }
     })()
     if ((a.dest === 'mzone' && freeSeq(state, p, 'mzone') === undefined) || (a.dest === 'szone' && freeSeq(state, p, 'szone') === undefined)) {
       toast(t('combos.zoneFull'))

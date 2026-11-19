@@ -156,7 +156,10 @@ for (const width of WIDTHS) {
         await page.waitForTimeout(500)
         await page.screenshot({ path: `${OUT}/replay-start-${width}-${theme}-${lang}.png` })
         // passo 4: catena in corso (anelli evidenziati)
-        for (let i = 0; i < 3; i++) await page.getByTestId('rp-next').click()
+        for (let i = 1; i <= 3; i++) {
+          await page.getByTestId('rp-next').click()
+          await expect(page.getByTestId('rp-counter')).toContainText(String(i))
+        }
         await page.waitForTimeout(350) // fine animazioni
         await expect(page.locator('[data-card][data-chain]')).toHaveCount(2)
         await expect(page.locator('[data-card][data-active]')).toHaveCount(1)
@@ -172,8 +175,8 @@ for (const width of WIDTHS) {
         expect(f.y + f.height).toBeLessThanOrEqual(height + 1)
         const bar = (await page.getByTestId('replay-controls').boundingBox())!
         expect(bar.y + bar.height).toBeLessThanOrEqual(height + 1)
-        const hand = (await page.locator('[data-zone="pile:0:hand"]').boundingBox())!
-        const ownDeck = (await page.locator('[data-zone="pile:0:deck"]').boundingBox())!
+        const hand = (await page.locator('[data-zone="p:0:hand"]').boundingBox())!
+        const ownDeck = (await page.locator('[data-zone="p:0:deck"]').boundingBox())!
         expect(hand.y).toBeGreaterThan(ownDeck.y)
         expect(errors).toEqual([])
       })
@@ -199,7 +202,7 @@ test('replay: play/pausa, passi, velocità, salto, scorciatoie e ramo', async ({
   // velocità: ciclo fino a 3× e riproduzione fino alla fine
   const speed = page.getByTestId('rp-speed')
   await expect(speed).toHaveText('1×')
-  for (let i = 0; i < 4; i++) await speed.click()
+  for (let i = 0; i < 3; i++) await speed.click()
   await expect(speed).toHaveText('3×')
   await page.locator('body').click({ position: { x: 5, y: 5 } })
   await page.keyboard.press('Space')

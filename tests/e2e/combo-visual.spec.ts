@@ -73,6 +73,60 @@ async function checkField(page: Page, label: string) {
   return g
 }
 
+/** 14 carte nel Cimitero e 13 tra le Bandite per ciascun giocatore (ordine di arrivo = seq). */
+const FAN: SeedCombo = (() => {
+  const codes = [C.ash, C.tengu, C.rooklord, C.spell, C.trap, C.field, C.equip, C.xyz, C.link, C.pendulum]
+  const cards: Record<string, number> = { ...RICH.cards }
+  const own = [...(RICH.own ?? [])]
+  const opp = [...(RICH.opp ?? [])]
+  const add = (list: typeof own, prefix: 'u' | 'o', from: number, n: number, loc: 'gy' | 'banished') => {
+    for (let i = 0; i < n; i++) {
+      const uid = `${prefix}${from + i}`
+      cards[uid] = codes[(from + i) % codes.length]!
+      list.push({ uid, place: { loc, seq: i } })
+    }
+  }
+  add(own, 'u', 100, 14, 'gy')
+  add(own, 'u', 120, 13, 'banished')
+  add(opp, 'o', 100, 14, 'gy')
+  add(opp, 'o', 120, 13, 'banished')
+  return { ...RICH, cards, own: own.filter((o) => o.uid !== 'u8' && o.uid !== 'u14' && o.uid !== 'u15'), opp: opp.filter((o) => o.uid !== 'o5'), hand: RICH.hand }
+})()
+
+for (const [w, h] of [[375, 812], [768, 1024], [1024, 768], [1440, 900]] as const) {
+  for (const fan of [true, false]) {
+    test(`ventaglio Cimitero/Bandite ${w}x${h} ${fan ? 'attivo' : 'disattivo'}`, async ({ page }) => {
+      await page.setViewportSize({ width: w, height: h })
+      await page.addInitScript((on) => localStorage.setItem('combolab.field.fanPiles', on ? '1' : '0'), fan)
+      await openCombo(page, await seedCombo(page, FAN), 'it', 'dark')
+      await page.waitForTimeout(400)
+      await checkField(page, `${w}x${h} fan=${fan}`)
+      // contatori: 14 nel Cimitero, 13 tra le Bandite (anche con il ventaglio spento)
+      await expect(page.locator('[data-pile="0:gy"]')).toHaveText('14')
+      await expect(page.locator('[data-pile="0:banished"]')).toHaveText('13')
+      await expect(page.locator('[data-pile="1:gy"]')).toHaveText('14')
+      await expect(page.locator('[data-more]')).toHaveCount(fan ? 4 : 0)
+      // con il ventaglio le carte visibili sono al massimo 10 per pila; spento ne resta 1
+      const own = await page.locator('[data-zone="p:0:gy"] [data-card]').count()
+      expect(own).toBe(fan ? 10 : 1)
+      expect(await page.locator('[data-zone="p:0:banished"] [data-card]').count()).toBe(fan ? 10 : 1)
+      await page.screenshot({ path: `${OUT}/combo-fan-${w}-${fan ? 'on' : 'off'}.png` })
+    })
+  }
+}
+
+test('ventaglio: la carta più recente è in cima e il clic apre la pila completa', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await openCombo(page, await seedCombo(page, FAN), 'en')
+  const newest = page.locator('[data-zone="p:0:gy"] [data-card="u113"]')
+  await expect(newest).toBeVisible()
+  const boxes = await page.locator('[data-zone="p:0:gy"] [data-card]').evaluateAll((els) => els.map((e) => ({ uid: e.getAttribute('data-card'), z: Number(getComputedStyle(e).zIndex) })))
+  expect(boxes.sort((a, b) => b.z - a.z)[0]!.uid).toBe('u113')
+  await page.locator('[data-pile="0:banished"]').click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.locator('[data-pile-list] li')).toHaveCount(13)
+})
+
 const SHOTS = [
   [375, 812],
   [768, 1024],

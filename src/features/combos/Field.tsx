@@ -12,6 +12,7 @@ import Layers from 'lucide-react/icons/layers'
 import Skull from 'lucide-react/icons/skull'
 import Sparkles from 'lucide-react/icons/sparkles'
 import { overlaysOf, zoneCards, type GameState } from '@/domain/combo/state'
+import { useFieldPrefs } from './fieldPrefs'
 import type { PlayerIdx, Uid } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
 import { CardFace, isDefPos } from './CardFace'
@@ -29,7 +30,7 @@ export interface FieldView {
 }
 
 /** Larghezza / altezza del blocco campo + mano (mano propria SEMPRE sotto il campo). */
-export const FIELD_ASPECT_RATIO = 100 / 103.07
+export const FIELD_ASPECT_RATIO = 100 / 95.19
 
 /** Evidenziazione per replay/guida: carta attiva e carte della catena. */
 export interface FieldEmphasis {
@@ -82,6 +83,7 @@ function Cell({
   overlay,
   occupant,
   filled,
+  anchor,
   onOpen,
 }: {
   dest: Dest
@@ -94,6 +96,8 @@ function Cell({
   occupant?: Uid | undefined
   /** c'è una carta nella zona: la cornice tratteggiata sparisce (restano visibili solo carta e, se serve, l'evidenziazione) */
   filled?: boolean
+  /** zona più larga di una carta: la carta "in cima" sta a questa estremità */
+  anchor?: 'start' | 'end'
   onOpen?: () => void
 }) {
   const { highlight, onZone } = useField()
@@ -101,6 +105,7 @@ function Cell({
   const { setNodeRef, isOver } = useDroppable({ id })
   const valid = !!highlight && (highlight.has(id) || (occupant !== undefined && highlight.has(`c:${occupant}`)))
   const dim = !!highlight && !valid
+  const boxStyle: CSSProperties | undefined = anchor ? { left: anchor === 'end' ? 'auto' : 0, right: anchor === 'end' ? 0 : 'auto', transform: 'translateY(-50%)' } : undefined
   return (
     <div
       ref={setNodeRef}
@@ -113,10 +118,14 @@ function Cell({
       className={cn('cl-cell', p === 0 && 'cl-own', (filled ?? occupant !== undefined) && 'cl-filled', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
       style={style}
     >
-      <div aria-hidden className="cl-box cl-zone" />
-      {label ? <div className="cl-label">{label}</div> : null}
+      <div aria-hidden className="cl-box cl-zone" style={boxStyle} />
+      {label ? (
+        <div className="cl-box" style={boxStyle}>
+          <div className="cl-label">{label}</div>
+        </div>
+      ) : null}
       {children}
-      {overlay ? <div className="cl-box z-20">{overlay}</div> : null}
+      {overlay ? <div className="cl-box z-20" style={boxStyle}>{overlay}</div> : null}
     </div>
   )
 }
@@ -136,7 +145,7 @@ function CardBadges({ uid }: { uid: Uid }) {
 }
 
 /** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
-function FieldCard({ uid, inPile }: { uid: Uid; inPile?: boolean }) {
+function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { left: string; dy: string; z: number } }) {
   const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey, readOnly, emphasis } = useField()
   const place = view.state.places[uid]
   const code = view.registry[uid] ?? 0
@@ -189,8 +198,10 @@ function FieldCard({ uid, inPile }: { uid: Uid; inPile?: boolean }) {
       data-chain={inChain || undefined}
       aria-label={name}
       title={name}
+      style={fan ? { top: 0, bottom: 0, right: 'auto', left: fan.left, width: 'var(--tw)', transform: fan.dy, zIndex: fan.z } : undefined}
       className={cn(
         'absolute inset-0 flex select-none items-center justify-center outline-none',
+        fan && 'cl-fan-card',
         readOnly ? 'pointer-events-none' : 'touch-none',
         isDragging && 'opacity-30',
         picking && !cand && 'opacity-45',
@@ -240,25 +251,52 @@ function PileBack({ loc }: { loc: PileLoc }) {
   )
 }
 
+const FAN_MAX = 10
+
 function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSProperties }) {
   const { t } = useTranslation()
   const { view, onPile, readOnly, pilesOpen } = useField()
+  const fanPiles = useFieldPrefs((s) => s.fanPiles)
   const placed = zoneCards(view.state, p, loc)
   const unrevealed = p === 0 ? (loc === 'deck' ? view.unrevealed.deck : loc === 'extra' ? view.unrevealed.extra : 0) : 0
   const count = placed.length + unrevealed
-  const top = placed[placed.length - 1]
   const hidden = loc === 'deck' || loc === 'extra'
   const Icon = loc === 'gy' ? Skull : loc === 'banished' ? Ban : loc === 'deck' ? Layers : Sparkles
   const draggableFresh = !readOnly && hidden && p === 0 && unrevealed > 0
   // un id per pila (anche se disattivata): ids duplicati si sovrascriverebbero nel registro di dnd-kit
   const fresh = useDraggable({ id: hidden ? freshDragId(p, loc as 'deck' | 'extra') : `none:${p}:${loc}`, data: { fresh: loc }, disabled: !draggableFresh })
   const name = t(`combos.pile.${loc}`)
+
+  // Cimitero e Bandite: ultime 10 carte a ventaglio (la più recente in cima e intera). La Bandite è una fascia orizzontale
+  // su due colonne; il Cimitero sfalsa le carte in diagonale dentro la sua colonna. Opzione disattivabile.
+  const wide = loc === 'banished' // la zona occupa due colonne
+  const newestAtEnd = p === 0 // il giocatore ha Cimitero/Bandite a destra, l'avversario (specchiato) a sinistra
+  const shown = hidden ? [] : placed.slice(-FAN_MAX)
+  const hiddenN = hidden ? 0 : placed.length - shown.length
+  const avail = wide ? '(var(--th) + var(--ts) + var(--g) - var(--tw))' : '(var(--ts) - var(--tw))'
+  const step = wide ? `min(var(--tw) * 0.3, ${avail} / 9)` : `(${avail} / 9)`
+  const fanAt = (age: number) => ({
+    left: newestAtEnd ? `calc(${avail} - ${age} * ${step})` : `calc(${age} * ${step})`,
+    dy: wide ? 'none' : `translateY(calc(${age} * var(--th) * -0.011))`,
+    z: 10 - age,
+  })
+  const anchor: 'start' | 'end' | undefined = wide || (fanPiles && (loc === 'gy')) ? (newestAtEnd ? 'end' : 'start') : undefined
+  const style2: CSSProperties = wide ? { ...style, gridColumn: p === 0 ? '6 / 8' : '1 / 3' } : style
+  const asFan = (loc === 'gy' || loc === 'banished') && (fanPiles || wide)
+  const cards = !hidden
+    ? asFan
+      ? (fanPiles ? shown : shown.slice(-1)).map((uid, i, arr) => <FieldCard key={uid} uid={uid} inPile fan={fanAt(arr.length - 1 - i)} />)
+      : shown.slice(-1).map((uid) => <FieldCard key={uid} uid={uid} inPile />)
+    : null
+  const top = shown[shown.length - 1]
+
   return (
     <Cell
       dest={{ t: 'pile', p, loc }}
       p={p}
-      style={style}
+      style={style2}
       filled={count > 0}
+      anchor={anchor}
       onOpen={count > 0 && pilesOpen ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
@@ -278,18 +316,23 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
                 <Icon className="size-[11px]" />
               </span>
             ) : null}
-          <button
-            type="button"
-            aria-label={`${name}: ${count}`}
-            data-pile={`${p}:${loc}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              onPile(p, loc)
-            }}
-            className="cl-badge pointer-events-auto -bottom-1 -right-1 cursor-pointer before:absolute before:-inset-2.5 before:content-[''] hover:border-accent-text"
-          >
-            {count}
-          </button>
+            {hiddenN > 0 && fanPiles ? (
+              <span className="cl-badge -right-1 -top-1" data-more={hiddenN} title={t('combos.pile.more', { count: hiddenN })}>
+                +{hiddenN}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              aria-label={`${name}: ${count}`}
+              data-pile={`${p}:${loc}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onPile(p, loc)
+              }}
+              className="cl-badge pointer-events-auto -bottom-1 -right-1 cursor-pointer before:absolute before:-inset-2.5 before:content-[''] hover:border-accent-text"
+            >
+              {count}
+            </button>
           </>
         ) : undefined
       }
@@ -305,7 +348,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
             <PileBack loc={loc} />
           </div>
         ) : top ? (
-          <FieldCard uid={top} inPile />
+          cards
         ) : null
       ) : null}
     </Cell>

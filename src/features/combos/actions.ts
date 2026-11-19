@@ -6,7 +6,7 @@
 import { ownerOfUid, type GameState, type NPlace } from '@/domain/combo/state'
 import type { ActionKind, Move, MoveWhy, Place, PlayerIdx, Position, Step, SummonMethod, Uid } from '@/domain/combo/types'
 import type { CardInfo } from './cardKind'
-import { countAt, freeSeq, occupantAt, PENDULUM_SEQS, ZONE_COUNT, type Dest, type PileLoc, type ZoneLoc } from './zones'
+import { countAt, freeSeq, occupantAt, pileSeq, PENDULUM_SEQS, ZONE_COUNT, type Dest, type PileLoc, type ZoneLoc } from './zones'
 
 export type StepDraft = Omit<Step, 'id'>
 
@@ -206,7 +206,8 @@ export function optionsFor(src: Src, dest: Dest, ctx: Ctx): Option[] {
 
   // ---- piles ----
   const owner = src.place.p
-  const pileTo = (loc: PileLoc, seq?: number): Place => toPlace({ t: 'pile', p: owner, loc }, undefined, seq)
+  const pileTo = (loc: PileLoc, seq?: number): Place =>
+    toPlace({ t: 'pile', p: owner, loc }, undefined, seq ?? (loc === 'gy' || loc === 'banished' ? pileSeq(ctx.state, owner, loc) : undefined))
   if (ctx.mode === 'setup') {
     if (dest.loc === 'hand') push('placeHand', 'custom', [move(src, pileTo('hand', handSeq(ctx, owner)), 'other')])
     else push(`place_${dest.loc}`, 'custom', [move(src, pileTo(dest.loc), 'other')])

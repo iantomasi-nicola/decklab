@@ -17,8 +17,8 @@
   .cl-field {
     container-type: size;
     position: relative;
-    width: min(100cqw, calc(100cqh * 100 / 103.07));
-    aspect-ratio: 100 / 103.07;
+    width: min(100cqw, calc(100cqh * 100 / 95.19));
+    aspect-ratio: 100 / 95.19;
     overflow: hidden;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
@@ -28,15 +28,16 @@
     --g: 1.6cqw;
     --pad: 2cqw;
     /* le 5 colonne centrali sono larghe quanto l'ALTEZZA della carta: ci sta anche la carta in DEF (ruotata) a grandezza piena;
-       le 2 colonne laterali (Terreno/Cimitero/Extra/Deck/LP) hanno la larghezza della carta */
-    --th: calc((100cqw - 2 * var(--pad) - 6 * var(--g)) / 6.3721);
+       le 2 colonne laterali (Terreno/Cimitero/Extra/Deck/LP) sono un po' più larghe della carta (ventaglio del Cimitero) */
+    --th: calc((100cqw - 2 * var(--pad) - 6 * var(--g)) / 6.9895);
     --tw: calc(var(--th) * 59 / 86);
+    --ts: calc(var(--tw) * 1.45); /* colonna laterale: carta + spazio per il ventaglio del Cimitero */
     position: absolute;
     inset: 0;
     display: grid;
     gap: var(--g);
     padding: var(--pad);
-    grid-template-columns: var(--tw) repeat(5, var(--th)) var(--tw);
+    grid-template-columns: var(--ts) repeat(5, var(--th)) var(--ts);
     grid-template-rows: calc(var(--th) * 0.6) repeat(6, var(--th));
     justify-content: center;
     align-content: center;
@@ -144,7 +145,17 @@
     container-type: size;
   }
   .cl-hand-item:not(:first-child) {
-    margin-left: min(var(--g), calc((5 * var(--th) + var(--tw) + 5 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
+    margin-left: min(var(--g), calc((5 * var(--th) + var(--ts) + 5 * var(--g) - var(--n) * var(--tw) * var(--hs)) / (var(--n) - 1)));
+  }
+  /* ventaglio Cimitero/Bandite: le carte precedenti sporgono; al passaggio del mouse la carta si ingrandisce */
+  .cl-fan-card .cl-fit {
+    transition: transform 150ms var(--ease);
+  }
+  .cl-fan-card:hover {
+    z-index: 60 !important;
+  }
+  .cl-fan-card:hover .cl-fit {
+    transform: scale(1.5);
   }
   .cl-hand-item:hover,
   .cl-hand-item:focus-within {
