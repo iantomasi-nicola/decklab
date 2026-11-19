@@ -6,7 +6,7 @@ export const K = {
   ash: 14558127,
   tengu: 10028593,
   rooklord: 10060427,
-  xyz: 10000030,
+  xyz: 698785, // Thunder End Dragon (Xyz TCG)
   spell: 10065487,
   trap: 10045474,
   pend: 10024317,
