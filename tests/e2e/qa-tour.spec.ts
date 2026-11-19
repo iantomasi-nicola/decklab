@@ -137,7 +137,13 @@ for (const theme of themes) {
             await page.waitForLoadState('networkidle')
             await page.evaluate(() => document.fonts.ready)
             await page.waitForTimeout(name.includes('stat') ? 1800 : 700)
-            await page.screenshot({ path: `${OUT}/${name}-${w}-${theme}-${lang}.png`, fullPage: !/editor|replay/.test(name) })
+            await page.screenshot({ path: `${OUT}/${name}-${w}-${theme}-${lang}-vp.png` })
+            if (!/editor|replay/.test(name)) {
+              // pagina intera: niente barra fissa in mezzo e niente content-visibility (altrimenti i passi sotto la piega restano vuoti)
+              await page.addStyleTag({ content: 'nav.fixed{display:none!important}*{content-visibility:visible!important}' })
+              await page.waitForTimeout(150)
+              await page.screenshot({ path: `${OUT}/${name}-${w}-${theme}-${lang}.png`, fullPage: true })
+            }
             const sw = await page.evaluate(() => ({ s: document.documentElement.scrollWidth, w: window.innerWidth }))
             issues[w] = {
               hscroll: sw.s > sw.w ? sw : null,
