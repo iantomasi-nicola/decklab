@@ -292,7 +292,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       {readOnly ? <Banner tone="warn" title={t('combos.readOnly')}>{t('combos.readOnlyBody')}</Banner> : null}
 
       <div className="relative flex min-h-0 flex-1 gap-2">
-        <div className={cn('relative min-w-0 flex-1 rounded-lg', mode === 'setup' && 'ring-2 ring-accent-text ring-offset-2 ring-offset-bg')} data-mode={mode}>
+        <div className="relative min-w-0 flex-1" data-mode={mode}>
           <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} />
           {mode === 'setup' ? (
             <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">

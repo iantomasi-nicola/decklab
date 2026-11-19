@@ -52,27 +52,16 @@ const useField = () => {
 export const cardDragId = (uid: Uid) => `card:${uid}`
 export const freshDragId = (p: PlayerIdx, loc: 'deck' | 'extra') => `fresh:${p}:${loc}`
 
-/* ---------------------------------------------------------------- posizionamento (verticale / orizzontale) */
+/* ---------------------------------------------------------------- posizionamento */
 type Row = 'hand' | 'back' | 'front' | 'mid'
-const PORTRAIT_ROW: Record<PlayerIdx, Record<Row, number>> = {
+const ROW: Record<PlayerIdx, Record<Row, number>> = {
   1: { hand: 1, back: 2, front: 3, mid: 4 },
   0: { mid: 4, front: 5, back: 6, hand: 7 },
 }
-const LANDSCAPE_ROW: Record<PlayerIdx, Record<Row, number>> = {
-  1: { hand: 0, back: 1, front: 2, mid: 3 },
-  0: { mid: 3, front: 4, back: 5, hand: 0 },
-}
 const mirror = (p: PlayerIdx, col: number) => (p === 1 ? 8 - col : col)
 
-/** `col` = colonna 1–7 dal punto di vista del proprietario; nel campo orizzontale le colonne partono da 2 (1 e 9 sono le mani). */
-function at(p: PlayerIdx, row: Row, col: number, landscape?: { row?: Row; col?: number }): CSSProperties {
-  return {
-    ['--pr' as string]: PORTRAIT_ROW[p][row],
-    ['--pc' as string]: mirror(p, col),
-    ['--lr' as string]: LANDSCAPE_ROW[p][landscape?.row ?? row],
-    ['--lc' as string]: mirror(p, landscape?.col ?? col) + 1,
-  }
-}
+/** `col` = colonna 1–7 dal punto di vista del proprietario (l'avversario è specchiato). */
+const at = (p: PlayerIdx, row: Row, col: number): CSSProperties => ({ gridRow: ROW[p][row], gridColumn: mirror(p, col) })
 
 /* ---------------------------------------------------------------- cella */
 function Cell({
@@ -298,20 +287,14 @@ function Hand({ p }: { p: PlayerIdx }) {
   const valid = !!highlight && highlight.has(id)
   const dim = !!highlight && !valid
   const random = p === 0 ? view.randomHand : 0
-  const style = {
-    ['--pr' as string]: p === 1 ? 1 : 7,
-    ['--pc' as string]: '2 / 7',
-    ['--lr' as string]: '1 / 6',
-    ['--lc' as string]: p === 1 ? 1 : 9,
-    ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2),
-  } as CSSProperties
+  const style = { gridRow: ROW[p].hand, gridColumn: '2 / 7', ['--n' as string]: Math.max(uids.length + (random > 0 ? 1 : 0), 2) } as CSSProperties
   return (
     <div
       ref={setNodeRef}
       data-zone={id}
       data-valid={valid || undefined}
       aria-label={t('combos.pile.hand')}
-      className={cn('cl-cell cl-hand rounded-md', p === 0 && 'cl-own', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
+      className={cn('cl-cell cl-hand rounded-md', p === 0 ? 'cl-own' : 'cl-hand-opp', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
       style={{ ...style, containerType: 'normal' }}
     >
       <div
@@ -349,7 +332,7 @@ function Hand({ p }: { p: PlayerIdx }) {
 function LpBox({ p }: { p: PlayerIdx }) {
   const { t } = useTranslation()
   const { view, onLp } = useField()
-  const style = at(p, 'hand', 7, { row: 'mid' })
+  const style = at(p, 'hand', 7)
   return (
     <div className="cl-cell" style={style}>
       <button
@@ -404,18 +387,19 @@ function Side({ p }: { p: PlayerIdx }) {
       <Pile p={p} loc="gy" style={at(p, 'front', 7)} />
       <Pile p={p} loc="extra" style={at(p, 'back', 1)} />
       <Pile p={p} loc="deck" style={at(p, 'back', 7)} />
-      <Pile p={p} loc="banished" style={at(p, 'hand', 1, { row: 'mid', col: 6 })} />
+      <Pile p={p} loc="banished" style={at(p, 'hand', 1)} />
       <Hand p={p} />
       <LpBox p={p} />
     </>
   )
 }
 
-export function Field({ view, ...handlers }: { view: FieldView } & FieldHandlers) {
+export function Field({ view, ring, ...handlers }: { view: FieldView; ring?: boolean } & FieldHandlers) {
   const { t } = useTranslation()
   return (
     <FieldCtx.Provider value={{ view, ...handlers }}>
-      <div data-field role="group" aria-label={t('combos.field')} className="cl-field">
+      <div className="cl-stage">
+      <div data-field role="group" aria-label={t('combos.field')} className={cn('cl-field', ring && 'outline outline-2 outline-offset-2 outline-accent-text')}>
         <div aria-hidden className="cl-seam" />
         <div className="cl-grid">
           <Side p={1} />
@@ -426,7 +410,7 @@ export function Field({ view, ...handlers }: { view: FieldView } & FieldHandlers
                 key={`e${i}`}
                 dest={{ t: 'zone', p: 0, loc: 'emz', seq: i }}
                 p={0}
-                style={{ ['--pr' as string]: 4, ['--pc' as string]: 3 + i * 2, ['--lr' as string]: 3, ['--lc' as string]: 4 + i * 2 }}
+                style={{ gridRow: 4, gridColumn: 3 + i * 2 }}
                 label={t('combos.zone.emz')}
                 occupant={occ}
               >
@@ -436,6 +420,7 @@ export function Field({ view, ...handlers }: { view: FieldView } & FieldHandlers
           })}
           <Side p={0} />
         </div>
+      </div>
       </div>
     </FieldCtx.Provider>
   )

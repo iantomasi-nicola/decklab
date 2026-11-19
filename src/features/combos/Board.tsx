@@ -555,6 +555,7 @@ export function Board({
       >
         <Field
           view={view}
+          ring={mode === 'setup'}
           selected={sel?.kind === 'uid' ? sel.uid : null}
           highlight={highlight}
           picking={pending ? { candidates, chosen: new Set(pending.chosen) } : null}
