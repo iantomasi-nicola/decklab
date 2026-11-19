@@ -86,7 +86,7 @@ export function findHardcoded(src: string): string[] {
 
 describe('i18n: nessun testo hardcoded evidente', () => {
   const root = join(__dirname, '..')
-  const files = [...walk(join(root, 'app')), ...walk(join(root, 'ui'))]
+  const files = [...walk(join(root, 'app')), ...walk(join(root, 'ui')), ...walk(join(root, 'features/archetypes')), ...walk(join(root, 'features/decks'))]
 
   it('trova almeno un file da controllare', () => {
     expect(files.length).toBeGreaterThan(0)

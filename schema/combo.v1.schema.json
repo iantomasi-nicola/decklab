@@ -145,6 +145,33 @@
             "engine",
             "import"
           ]
+        },
+        "derivedFrom": {
+          "type": "object",
+          "properties": {
+            "comboId": {
+              "type": "string"
+            },
+            "afterStep": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "comboId",
+            "afterStep"
+          ]
         }
       },
       "required": [

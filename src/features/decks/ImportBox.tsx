@@ -10,7 +10,7 @@ import { Button } from '@/ui/Button'
 import { cn } from '@/ui/cn'
 import { toast } from '@/ui/Toast'
 import { Textarea } from './fields'
-import { countCards, interpretImport, type SharedImport } from './importHelpers'
+import { baseName, countCards, interpretImport, type SharedImport } from './importHelpers'
 import { ReviewDialog } from './ReviewDialog'
 
 export interface ImportInfo {
@@ -59,7 +59,7 @@ export function ImportBox({ index, lang, onDeck, initial, className, rows = 4 }:
       setValue('')
       if (o.fuzzy) toast(t('import.fuzzyDone', { count: o.fuzzy }))
       toast(t('import.done', { count: countCards(o.deck), format: t(`import.format.${o.format}`) }), { tone: 'ok' })
-      onDeck(o.deck, { format: o.format, name })
+      onDeck(o.deck, { format: o.format, name: baseName(name) })
     },
     [index, onDeck, t],
   )
@@ -196,7 +196,7 @@ export function ImportBox({ index, lang, onDeck, initial, className, rows = 4 }:
           setReview(null)
           setValue('')
           toast(t('import.done', { count: countCards(deck), format: t('import.format.text') }), { tone: 'ok' })
-          onDeck(deck, { format: 'text', name })
+          onDeck(deck, { format: 'text', name: baseName(name) })
         }}
       />
     </section>

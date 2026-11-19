@@ -60,6 +60,7 @@ Campi sconosciuti vengono **preservati** in lettura/scrittura (non si perdono da
 | `createdAt`, `updatedAt` | ISO 8601 UTC | |
 | `author` | `string?` | Facoltativo. |
 | `source` | `"manual"` \| `"engine"` \| `"import"` | Come è stata creata. |
+| `derivedFrom` | `{ comboId, afterStep, title? }` (opz.) | La combo è una **variante creata "da questo passo"** di un'altra: `comboId` = madre, `afterStep` = ultimo passo copiato (`null` = dall'inizio). Il campo è additivo (nessun cambio di `v`). Distinta dai `branches` (che descrivono interruzioni dell'avversario). |
 
 ---
 

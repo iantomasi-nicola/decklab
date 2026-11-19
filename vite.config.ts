@@ -4,8 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
+// E2E_MOCK_CARDS=1: i test e2e di archetipi/mazzi usano dati carte di prova (tests/mocks) al posto di src/features/cards
+const mockCards = process.env.E2E_MOCK_CARDS === '1'
+const alias = [
+  ...(mockCards
+    ? [
+        { find: '@/features/cards/api', replacement: path.resolve(__dirname, 'tests/mocks/cardsApi.ts') },
+        { find: '@/features/cards/CardImage', replacement: path.resolve(__dirname, 'tests/mocks/CardImage.tsx') },
+      ]
+    : []),
+  { find: '@', replacement: path.resolve(__dirname, 'src') },
+]
+
 export default defineConfig({
-  resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
+  resolve: { alias },
   plugins: [
     react(),
     tailwindcss(),

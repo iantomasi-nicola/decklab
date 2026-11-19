@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test --trace off",
+    "test:e2e:decks": "playwright test -c playwright.decks.config.ts --trace off",
     "data:build": "node scripts/build-data/index.mjs",
     "schema:combo": "node scripts/gen-combo-schema.mjs",
     "schema:combo:check": "node scripts/gen-combo-schema.mjs --check"

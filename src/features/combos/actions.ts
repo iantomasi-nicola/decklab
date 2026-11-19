@@ -80,7 +80,7 @@ export function destinations(src: Src, ctx: Ctx): Dest[] {
   for (let seq = 0; seq < ZONE_COUNT.emz; seq++) {
     // la EMZ è condivisa: la occupa chiunque, ma ci vanno solo mostri dell'Extra Deck
     if (monster && info.extra && occupantAt(ctx.state, 0, 'emz', seq) === undefined && occupantAt(ctx.state, 1, 'emz', seq) === undefined) {
-      add({ t: 'zone', p: here.loc === 'emz' ? here.p : p, loc: 'emz', seq })
+      add({ t: 'zone', p: 0, loc: 'emz', seq })
     }
   }
   for (let seq = 0; seq < ZONE_COUNT.szone; seq++) {
@@ -146,7 +146,8 @@ export function optionsFor(src: Src, dest: Dest, ctx: Ctx): Option[] {
   }
 
   if (dest.t === 'zone') {
-    const to = (pos: Position): Place => toPlace(dest, pos)
+    // la EMZ è condivisa (chiave p:0), ma la carta resta del suo proprietario
+    const to = (pos: Position): Place => ({ ...toPlace(dest, pos), p: src.place.p })
     const sameKind = isField(from)
     if (ctx.mode === 'setup') {
       const poss: [string, Position][] =

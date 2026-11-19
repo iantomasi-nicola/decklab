@@ -39,7 +39,7 @@ interface Props extends DeckActions {
 export function SectionCounter({ section, count }: { section: Section; count: number }) {
   const { t } = useTranslation()
   const { min, max } = SECTION_LIMITS[section]
-  const tone = count > max ? 'text-danger' : count < min ? 'text-warn' : 'text-ok'
+  const tone = count < min ? 'text-warn' : count > max ? 'text-danger' : 'text-ok'
   return (
     <span
       data-testid={`counter-${section}`}

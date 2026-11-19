@@ -114,6 +114,7 @@ export const comboSchema = obj({
     updatedAt: z.string(),
     author: z.string().optional(),
     source: z.enum(['manual', 'engine', 'import']),
+    derivedFrom: z.object({ comboId: z.string(), afterStep: z.string().nullable(), title: z.record(z.string(), z.string()).optional() }).optional(),
   }),
   deck: obj({
     main: z.array(z.number().int()),

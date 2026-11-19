@@ -101,6 +101,8 @@ export interface ComboDoc {
     updatedAt: string
     author?: string
     source: 'manual' | 'engine' | 'import'
+    /** Se la combo è una variante creata da un'altra "da questo passo": id della combo madre e ultimo passo copiato (null = dallo stato iniziale). */
+    derivedFrom?: { comboId: string; afterStep: string | null; title?: Localized }
   }
   deck: { main: number[]; extra: number[]; side: number[]; ydke?: string }
   cards: Record<Uid, number> // uid → passcode

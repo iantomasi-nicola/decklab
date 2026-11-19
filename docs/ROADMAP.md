@@ -57,6 +57,8 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 - Campo di gioco completo (entrambi i giocatori: 5 mostri, 2 EMZ, 5 S/T, Terreno, Pendulum, Deck, Extra, Cimitero, Bandite, mano), drag & drop touch/mouse, menu contestuale (pressione lunga / clic destro), posizioni, coperte/scoperte, materiali Xyz, token, segnalini, LP; alternativa da tastiera.
 - Editor manuale: ogni azione diventa un passo annotabile (note IT/EN), gruppi "ordine libero", rami.
 - Annulla/ripeti illimitati.
+- **Modifica di una combo esistente** (inserisci, elimina, sostituisci un passo in qualunque punto) con ricalcolo dello stato e **evidenza dei passi successivi che diventano incoerenti**.
+- **"Crea variante da questo passo"**: su ogni passo, copia la combo fino a quel passo (compreso, oppure prima di esso) in una nuova combo collegata (`meta.derivedFrom`), che continui con una linea diversa. Nella guida: elenco "Varianti di questa combo" con il passo in cui divergono e il confronto affiancato delle due linee dal punto di divergenza. Alternativa nello stesso documento: "salva come ramo".
 - Pagina combo in stile guida (mano iniziale, passi, board finale, rami, badge legalità con banlist attuale) e pagina archetipo (piano di gioco, carte chiave, starter/extender, handtrap, collegamenti).
 - Replay: play/pausa, passo avanti/indietro, velocità, salto, timeline, animazioni, carta attiva e catena evidenziate.
 - Export JSON, testo numerato e compatto Discord (copia con un tocco), link compresso + QR, import da link/file/appunti, backup/ripristino completo.
@@ -71,6 +73,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 - Creo da zero una combo di 15 passi con 1 ramo da telefono e da PC, la rivedo in replay, la esporto in tutti i formati e la reimporto identica (test "round-trip").
 - Un link con una combo da 20 passi si genera, si apre sull'altro dispositivo e la importa; il QR è scansionabile (test automatico di lettura).
 - Backup → cancellazione dati → ripristino: nulla di perso.
+- Da un passo qualsiasi creo una variante, ne modifico la parte finale e la combo madre non cambia; la guida mostra madre e figlia collegate.
 - Ogni coppia origine→destinazione della tabella di `ARCHITECTURE.md` §8.1 funziona con mouse e con tocco (test Playwright su 768 e 1024 px); lo scroll della pagina non interferisce con il trascinamento.
 - Il campo si scala da 360 a 2560 px senza scroll orizzontale né carte tagliate, in verticale e orizzontale.
 
