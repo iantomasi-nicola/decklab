@@ -53,6 +53,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 ## Fase 3 — Combo manuali, guida, replay, annulla, export base
 **Contenuto**
 - Formato `combolab.combo` v1 implementato (tipi, JSON Schema generato, validazioni V1–V9, migrazioni, test).
+- **Drag & drop come modo principale di giocare** (PC e tablet, anche telefono): trascinare carte su zone per Evocazione Normale/Speciale, Cala, Attiva, manda al Cimitero, bandisci, materiali Xyz, ecc., con menu di scelta al rilascio, scorciatoie `Shift/Alt/Ctrl`, doppio clic = attiva, alternativa a due tocchi e da tastiera (`ARCHITECTURE.md` §8.1).
 - Campo di gioco completo (entrambi i giocatori: 5 mostri, 2 EMZ, 5 S/T, Terreno, Pendulum, Deck, Extra, Cimitero, Bandite, mano), drag & drop touch/mouse, menu contestuale (pressione lunga / clic destro), posizioni, coperte/scoperte, materiali Xyz, token, segnalini, LP; alternativa da tastiera.
 - Editor manuale: ogni azione diventa un passo annotabile (note IT/EN), gruppi "ordine libero", rami.
 - Annulla/ripeti illimitati.
@@ -65,6 +66,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 - Creo da zero una combo di 15 passi con 1 ramo da telefono e da PC, la rivedo in replay, la esporto in tutti i formati e la reimporto identica (test "round-trip").
 - Un link con una combo da 20 passi si genera, si apre sull'altro dispositivo e la importa; il QR è scansionabile (test automatico di lettura).
 - Backup → cancellazione dati → ripristino: nulla di perso.
+- Ogni coppia origine→destinazione della tabella di `ARCHITECTURE.md` §8.1 funziona con mouse e con tocco (test Playwright su 768 e 1024 px); lo scroll della pagina non interferisce con il trascinamento.
 - Il campo si scala da 360 a 2560 px senza scroll orizzontale né carte tagliate, in verticale e orizzontale.
 
 **Rischi**: complessità del drag & drop su touch (scroll vs trascinamento); precisione della conversione "azione → stato" in manuale.
@@ -90,6 +92,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 
 **Contenuto**
 - Motore nel worker, protocollo UI⇄worker, precaricamento degli script e "rigioca da capo" se ne manca uno.
+- Stesso drag & drop della fase 3, ma le destinazioni evidenziate sono **solo quelle con un'azione legale del motore**.
 - Interfaccia per ogni richiesta del motore (selezioni, catene, posizioni, zone, somme di livelli, dichiarazioni, sì/no, ordinamenti), ottimizzata per touch.
 - Catene automatiche e livello di pausa (sempre / solo se posso rispondere / mai); risoluzione automatica delle scelte uniche.
 - Primo/secondo con regole corrette.

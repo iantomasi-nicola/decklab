@@ -203,6 +203,35 @@ Relazioni: `archetype 1—N variant`, `variant 1—N combo` (con `variantId` nul
 - **Automatica**: il normalizzatore trasforma i messaggi del core in `steps` ("evoca per Synchro", "attiva effetto", "cerca"…), con id stabili; le righe di significato le puoi annotare dopo.
 - **Rami**: un `branch` ha condizione (carta avversaria + `afterStepId`) e passi propri; quando l'avversario interrompe e cambia la linea, "Salva come ramo" riusa i passi registrati dal punto di divergenza.
 
+
+### 8.1 Drag & drop del campo (manuale e automatico)
+
+Principio: **trascinare una carta su una destinazione è il modo principale di giocare**; il menu contestuale resta come alternativa.
+
+| Origine → destinazione | Azione proposta (la prima è il default) |
+|---|---|
+| Mano (mostro) → Zona Mostro | Evocazione Normale · Evocazione Speciale · Calata (coperta in DEF) · Evocazione per Tributo (se servono tributi, si scelgono toccando i mostri) |
+| Mano (Magia/Trappola) → Zona M/T | Attiva · Cala |
+| Mano → Terreno / Zona Pendulum | Attiva · Cala |
+| Extra Deck → Zona Mostro / EMZ | Evocazione Speciale; il metodo (Fusione/Synchro/Xyz/Link) è dedotto dal tipo, i materiali si scelgono dopo |
+| Cimitero / Bandite / Deck → Zona | Evocazione Speciale · Attiva · Cala (a seconda del tipo) |
+| Carta in campo → altra zona | Cambia zona (Link) · Cambia posizione (tocco/doppio clic) |
+| Carta qualsiasi → Cimitero / Bandite / mano / Deck (cima, fondo, mescola) | Manda · Bandisci · Riprendi · Rimetti |
+| Carta → su un mostro Xyz | Aggiungi come materiale · Equipaggia (se è un equipaggiamento) |
+| Doppio clic / doppio tocco su una carta | Attiva (effetto principale) |
+
+Comportamento:
+- Alla presa si **evidenziano solo le destinazioni sensate**; le altre restano opache. Nel **manuale** valgono solo regole di buon senso (nessuna regola di gioco); nell'**automatico** si evidenziano **solo le destinazioni per cui il motore ha un'azione legale** (richiesta di tipo "azione libera"): se l'azione non è legale la zona non accetta il rilascio e un tooltip ne spiega il motivo quando possibile.
+- Se l'azione è unica, il rilascio la esegue subito; se ce ne sono più di una appare un **piccolo menu sul punto di rilascio** (ordinato per probabilità, con l'ultima scelta ricordata per quella carta). Scorciatoie PC: `Shift` = Speciale, `Alt` = Cala, `Ctrl` = Attiva durante il rilascio.
+- Ogni rilascio crea **un passo "di significato"** (`normalSummon`, `specialSummon`+`method`, `setMonster`/`setSpellTrap`, `activate`, …) con i relativi `moves`. Il formato non cambia (`COMBO_FORMAT.md` §7).
+- **Annulla/ripeti** sempre disponibili (`Ctrl+Z`/`Ctrl+Shift+Z`, pulsanti, gesto a due dita).
+- **Touch/tablet**: un trascinamento inizia dopo una pressione di ~200 ms (per non confondersi con lo scroll) o subito se la carta è già selezionata; sul campo lo scroll è disattivato (`touch-action: none` solo sulle carte). In alternativa: **tocca la carta, poi tocca la zona** (due tocchi), e menu contestuale con pressione lunga.
+- **Mouse**: trascinamento immediato oltre 4 px di movimento; clic destro = menu contestuale.
+- **Tastiera / screen reader**: Invio sulla carta apre "Sposta in…" con l'elenco delle destinazioni; frecce per scegliere; annunci ARIA dell'azione eseguita.
+- **Libreria**: `@dnd-kit/core` (sensori pointer, touch e tastiera separati, overlay di trascinamento, accessibilità integrata). Versione e compatibilità si verificano in fase 2/3; se non soddisfa i criteri di fluidità si ripiega su una implementazione con Pointer Events.
+- **Prestazioni**: durante il trascinamento si animano solo `transform`/`opacity` dell'overlay; le zone calcolano l'hit-test con `getBoundingClientRect` memorizzati all'inizio del trascinamento.
+- **Test**: Playwright con mouse (drag reale) e con `touchscreen` emulato su tablet (768/1024), per ogni coppia origine→destinazione della tabella.
+
 ---
 
 ## 9. Export (fasi 3–4)
@@ -285,8 +314,8 @@ Piazzamento in roadmap: fase 8, con le parti 1, 3, 4 anticipabili alla fine dell
 
 | # | Domanda | Mia proposta |
 |---|---|---|
-| D1 | Immagini su Supabase Storage o su Cloudflare R2? | **R2** (egress gratuito); Supabase solo dati/login. |
-| D2 | Per "Stats Lab": cosa vuoi esattamente da thedeckspace.com? Il sito non mi mostra le sue funzioni. | Lista/screenshot da te; intanto vale l'elenco del §11. |
+| D1 | Immagini su Supabase Storage o su Cloudflare R2? | **DECISO (2026-11-19): R2** (egress gratuito); Supabase solo dati/login. |
+| D2 | **In attesa dell'allegato dell'utente.** Per "Stats Lab": cosa vuoi esattamente da thedeckspace.com? Il sito non mi mostra le sue funzioni. | Lista/screenshot da te; intanto vale l'elenco del §11. |
 | D3 | Priorità Stats Lab: fase 8 come da brief, o le parti base già a fine fase 2? | Anticipare le parti 1, 3, 4. |
 | D4 | Colore d'accento | Due mockup in fase 2, scegli tu. |
 | D5 | Account Supabase e Cloudflare: li crei tu seguendo le mie istruzioni quando arriviamo alla fase 2? | Sì, passo passo, con screenshot testuali. |
