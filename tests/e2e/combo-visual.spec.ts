@@ -6,7 +6,7 @@ import { C, openCombo, openPanel, seedCombo, type SeedCombo } from './helpers/co
 const OUT = process.env.SHOT_DIR ?? 'test-results/visual'
 mkdirSync(OUT, { recursive: true })
 
-const RATIO = 100 / 103.07
+const RATIO = 100 / 95.19
 const RICH: SeedCombo = {
   cards: { u1: C.tengu, u2: C.rooklord, u3: C.spell, u4: C.trap, u5: C.field, u6: C.equip, u7: C.pendulum, u8: C.ash, u9: C.xyz, u10: C.tengu, u11: C.link, u12: C.trap, u13: C.ash, u14: C.spell, u15: C.trap, u16: C.rooklord, o1: C.ash, o2: C.rooklord, o3: C.trap, o4: C.spell, o5: C.equip, o6: C.ash, o7: C.tengu },
   hand: ['u1', 'u2', 'u3', 'u4', 'u7', 'u6', 'u13'],

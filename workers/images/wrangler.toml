@@ -1,0 +1,16 @@
+name = "decklab-images"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "decklab-images"
+
+[vars]
+# Origini autorizzate, separate da virgola. Aggiorna con il tuo dominio Pages.
+# "*" = tutte (sconsigliato in produzione).
+ALLOWED_ORIGINS = "http://localhost:5173,https://decklab.pages.dev"
+
+# Facoltativo: conversione WebP con Cloudflare Images (richiede di attivare il binding).
+# [images]
+# binding = "IMAGES"
