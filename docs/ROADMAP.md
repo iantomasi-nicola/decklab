@@ -61,6 +61,11 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 - Replay: play/pausa, passo avanti/indietro, velocità, salto, timeline, animazioni, carta attiva e catena evidenziate.
 - Export JSON, testo numerato e compatto Discord (copia con un tocco), link compresso + QR, import da link/file/appunti, backup/ripristino completo.
 - Tag, preferiti, ricerca globale, duplicazione di qualsiasi elemento.
+- **Funzioni smart (scelte dall'utente, solo le più usate):**
+  1. **Note con carte inline**: scrivendo `@Ash` nella nota di un passo compare la carta (immagine e testo) al tocco; nella guida e nel testo esportato diventa il nome nella lingua scelta.
+  2. **Controllo coerenza combo**: segnala passi incoerenti (carta usata senza essere in mano o cercata, materiale non sul campo, "una volta per turno" ripetuto) con un pulsante "Controlla" nell'editor, usando la validazione di dominio.
+  3. **Mano di prova**: pesca una mano casuale dal mazzo della variante e mostra quali combo salvate sono giocabili con quelle carte (si appoggia alle "carte necessarie" già nel formato); "Cosa posso fare con A, B, C?" come ricerca inversa.
+  4. **Avviso banlist con passi interessati**: oltre a segnalare le combo rese illegali, evidenzia i passi che usano la carta limitata/proibita.
 
 **Completa quando**
 - Creo da zero una combo di 15 passi con 1 ramo da telefono e da PC, la rivedo in replay, la esporto in tutti i formati e la reimporto identica (test "round-trip").
@@ -77,6 +82,7 @@ Alla fine di ogni fase mi fermo e ti dico: cosa funziona, cosa manca, come prova
 **Contenuto**
 - Scena di rendering condivisa DOM/Canvas; export verticale 1080×1920 e orizzontale 1920×1080: titolo iniziale, passo, azione, nota, board aggiornato, board finale.
 - WebCodecs + Mediabunny in worker, avanzamento e annullamento; fallback `MediaRecorder`.
+- **Immagine del board finale condivisibile** (PNG, verticale e orizzontale) con elenco dei passi, come alternativa leggera al video; stessa scena di rendering dell'MP4.
 - Rifinitura di animazioni (150–250 ms, ease-out, solo transform/opacity, "riduci movimento"), microinterazioni, accessibilità, polish di tutte le schermate delle fasi 2–3.
 
 **Completa quando**
