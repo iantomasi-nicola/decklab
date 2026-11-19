@@ -158,3 +158,27 @@ for (const theme of themes) {
     })
   }
 }
+
+test('editor 375×667: le zone Mostri/Magie-Trappole non scendono sotto i 40 px (campo con avversario visibile)', async ({ page }) => {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('combolab.lang', 'it')
+      localStorage.setItem('combolab.field.mineOnly', '0')
+    } catch { /* */ }
+  })
+  await page.setViewportSize({ width: 1024, height: 768 })
+  const seeded = await seedAll(page)
+  await page.setViewportSize({ width: 375, height: 667 })
+  await page.goto(`/combo/${seeded.comboId}`)
+  await page.waitForSelector('[data-field]')
+  await page.waitForTimeout(500)
+  const size = async (key: string) => {
+    const b = await page.locator(`[data-zone="${key}"]`).boundingBox()
+    return b ? { w: Math.round(b.width), h: Math.round(b.height) } : null
+  }
+  const own = { m: await size('z:0:mzone:2'), t: await size('z:0:szone:2'), opp: await size('z:1:mzone:2') }
+  console.log('zone 375x667', JSON.stringify(own))
+  await page.screenshot({ path: `${OUT}/editor-375x667-both.png` })
+  expect(own.m!.w).toBeGreaterThanOrEqual(40)
+  expect(own.t!.w).toBeGreaterThanOrEqual(40)
+})

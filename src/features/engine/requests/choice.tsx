@@ -25,9 +25,9 @@ export function locLabel(r: CardRef, t: EngT): string {
   return name + who
 }
 
-interface Tile { key: string; ref: CardRef; chosen?: number; disabled?: boolean; badge?: ReactNode; label?: string }
+export interface Tile { key: string; ref: CardRef; chosen?: number; disabled?: boolean; badge?: ReactNode; label?: string }
 
-function Grid({ tiles, onToggle, t, nameOf }: { tiles: Tile[]; onToggle: (key: string) => void; t: EngT; nameOf: (c: number) => string }) {
+export function Grid({ tiles, onToggle, t, nameOf }: { tiles: Tile[]; onToggle: (key: string) => void; t: EngT; nameOf: (c: number) => string }) {
   return (
     <ul className="eng-grid" data-testid="choice-grid">
       {tiles.map((x, i) => (

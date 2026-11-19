@@ -12,7 +12,7 @@ import { descLabel, EngBtn, Sheet, useNames, useRequestKeys, CardBox } from './p
 type Of<K extends PendingRequest['kind']> = Extract<PendingRequest, { kind: K }>
 interface P<K extends PendingRequest['kind']> { req: Of<K>; onAnswer: (a: Answer) => void }
 
-export function YesNoRequest({ req, onAnswer }: P<'effectYn'> | P<'yesNo'>) {
+export function YesNoRequest({ req, onAnswer }: { req: Of<'effectYn'> | Of<'yesNo'>; onAnswer: (a: Answer) => void }) {
   const { nameOf, t } = useNames()
   const card = req.kind === 'effectYn' ? req.card : null
   const yes = (v: boolean) => {
