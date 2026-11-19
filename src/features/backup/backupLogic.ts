@@ -19,7 +19,7 @@ export function summarizeBackup(b: BackupFile): Record<SyncTable, TableCount> {
 }
 
 /** Tipi mostrati all'utente (le impostazioni non sono contenuto "suo": restano nell'elenco ma in coda). */
-export const BACKUP_KINDS: readonly SyncTable[] = ['archetypes', 'variants', 'combos', 'boards', 'tags', 'settings']
+export const BACKUP_KINDS: readonly SyncTable[] = ['archetypes', 'variants', 'combos', 'boards', 'tags', 'sidePlans', 'settings']
 
 export const BACKUP_MAX_BYTES = 50 * 1024 * 1024
 

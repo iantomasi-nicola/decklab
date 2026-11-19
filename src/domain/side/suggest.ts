@@ -93,15 +93,15 @@ export function suggestSwaps(ctx: SuggestContext): Suggestion {
     anyRole = true
     const tags = role.tags
     const norm = tags.map(normTag)
-    let best: Cand | null = null
-    const offer = (score: number, reason: SuggestReason) => {
-      if (!best || score > best.score) best = { cardId, score, reason, max: Math.min(have, Math.max(0, 3 - (mainCount.get(cardId) ?? 0))) }
-    }
+    const offers: Cand[] = []
+    const max = Math.min(have, Math.max(0, 3 - (mainCount.get(cardId) ?? 0)))
+    const offer = (score: number, reason: SuggestReason) => offers.push({ cardId, score, reason, max })
     if (isAnti(tags)) offer(100, 'anti')
     if (norm.some((t) => HT.has(t))) offer(second ? 40 : 45, 'handtrap')
     if (norm.some((t) => BREAKER.has(t))) offer(second ? 60 : 15, 'breaker')
     if (norm.some((t) => NE.has(t))) offer(20, 'nonEngine')
-    if (best && (best as Cand).max > 0) ins.push(best)
+    const best = offers.sort((a, b) => b.score - a.score)[0]
+    if (best && best.max > 0) ins.push(best)
   }
 
   const outs: Cand[] = []

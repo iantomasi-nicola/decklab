@@ -12,6 +12,7 @@
     "combos": "Combo",
     "learn": "Impara",
     "stats": "Statistiche",
+    "side": "Side plan",
     "settings": "Impostazioni",
     "more": "Altro",
     "moreTitle": "Altre sezioni",
@@ -924,6 +925,7 @@
       "combos": "Combo",
       "boards": "Board avversarie",
       "tags": "Tag",
+      "sidePlans": "Piani di side",
       "settings": "Impostazioni"
     },
     "preview": {

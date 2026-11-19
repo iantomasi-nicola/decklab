@@ -23,7 +23,7 @@ describe('backup', () => {
     await r.settings.set('lang', 'it')
     await r.tags.create({ name: 't' })
     const json = await exportBackupJson(db, clock)
-    expect(JSON.parse(json).schemaVersion).toBe(1)
+    expect(JSON.parse(json).schemaVersion).toBe(2)
 
     const db2 = createTestDb('dst')
     const res = await importBackup(json, 'replace', db2, fakeClock('2026-02-01T00:00:00.000Z', 'b'))

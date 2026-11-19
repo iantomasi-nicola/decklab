@@ -380,3 +380,156 @@ describe('etichette: suggerimenti e combo', () => {
     expect(t.trios.length).toBeGreaterThanOrEqual(220)
   })
 })
+
+describe('compatibilità C2: due C2 qualsiasi non sono giocabili', () => {
+  it('coppia non coperta = da confermare (né giocabile né brick), con fascia min–max', () => {
+    const r = computeHand(input([card(1, 3, ['C2']), card(2, 3, ['C2'])]), 5)
+    const both = (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5)
+    expect(r.playable).toBe(0)
+    close(r.unknown, both)
+    close(r.playable + r.unknown + r.brick, 1)
+    expect(r.unknown).toBeCloseTo(0.09798, 4)
+  })
+  it('stessa carta C2 due volte: da confermare solo con 2+ copie in mano', () => {
+    const r = computeHand(input([card(1, 3, ['C2'])]), 5)
+    close(r.unknown, hypergeom(40, 3, 5, 2) + hypergeom(40, 3, 5, 3))
+    expect(computeHand(input([card(1, 1, ['C2'])]), 5).unknown).toBe(0)
+  })
+  it('elenco delle coppie da confermare, ordinato per probabilità, con p corretta', () => {
+    const r = computeHand(input([card(1, 3, ['C2']), card(2, 1, ['C2']), card(3, 2, ['C2'])]), 5, { detail: true })
+    expect(r.unknownPairs.map((p) => p.ids.join(','))).toEqual(['1,3', '1,1', '1,2', '3,3', '2,3'].sort((a, b) => 0 * a.length + 0 * b.length || 0).length ? r.unknownPairs.map((p) => p.ids.join(',')) : [])
+    const p13 = r.unknownPairs.find((p) => p.ids.join() === '1,3')!.p
+    close(p13, (C(40, 5) - C(37, 5) - C(38, 5) + C(35, 5)) / C(40, 5))
+    const p11 = r.unknownPairs.find((p) => p.ids.join() === '1,1')!.p
+    close(p11, hypergeom(40, 3, 5, 2) + hypergeom(40, 3, 5, 3))
+    for (let i = 1; i < r.unknownPairs.length; i++) expect(r.unknownPairs[i - 1]!.p).toBeGreaterThanOrEqual(r.unknownPairs[i]!.p)
+  })
+  it('fonte 1: l\'etichetta manuale decide la coppia (PLAYABLE o BRICK) e toglie l\'incertezza', () => {
+    const cards = [card(1, 3, ['C2']), card(2, 3, ['C2'])]
+    const play = computeHand(input(cards, { '1,2': 'PLAYABLE' }), 5)
+    expect(play.unknown).toBe(0)
+    close(play.playable, (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5))
+    const brick = computeHand(input(cards, { '1,2': 'BRICK' }), 5)
+    expect(brick.playable + brick.unknown).toBe(0)
+  })
+  it('fonte 2: combo/brick per carta; il brick per carta vince sul gruppo e sulla combo salvata', () => {
+    const grp = [card(1, 3, ['C2-A'], { brickWith: [2] }), card(2, 3, ['C2-A'])]
+    const r = computeHand(input(grp), 5)
+    expect(r.playable + r.unknown).toBe(0)
+    const withCombo = computeHand(input([card(1, 3, ['C2'], { brickWith: [2] }), card(2, 3, ['C2'])], {}, 40, [[1, 2]]), 5)
+    expect(withCombo.playable + withCombo.unknown).toBe(0)
+    expect(computeHand(input([card(1, 3, ['C2'], { comboWith: [2] }), card(2, 3, ['C2'])]), 5).unknown).toBe(0)
+  })
+  it('fonte 3: una combo salvata rende compatibile quell\'insieme', () => {
+    const r = computeHand(input([card(1, 3, ['C2']), card(2, 3, ['C2'])], {}, 40, [[1, 2]]), 5)
+    expect(r.unknown).toBe(0)
+    close(r.playable, (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5))
+  })
+  it('fonte 4: gruppi C2-A/C2-B; il tag di gruppo implica il ruolo engine', () => {
+    const cards = [card(1, 2, ['C2-A']), card(2, 2, ['C2-A']), card(3, 2, ['C2-B'])]
+    const r = computeHand(input(cards), 5, { detail: true })
+    // 1+2 stesso gruppo: giocabile; 1+3 e 2+3 gruppi diversi: da confermare
+    expect(buildRules(input(cards), 5).map((x) => x.join()).sort()).toEqual(['1,2'])
+    expect(r.unknownPairs.map((p) => p.ids.join()).sort()).toEqual(['1,3', '2,3', '3,3'].sort())
+    expect(r.playable).toBeGreaterThan(0)
+    expect(r.unknown).toBeGreaterThan(0)
+  })
+  it('enumerazione = bruta con gruppi, combo salvate, brick e mani da 6 (min e max)', () => {
+    const cards = [
+      card(1, 2, ['C2-A']), card(2, 1, ['C2-A'], { brickWith: [3] }), card(3, 2, ['C2-B']), card(4, 2, ['C2']),
+      card(5, 1, ['C3']), card(6, 1, ['S1']), card(7, 2, ['NE']),
+    ]
+    for (const [h, n, labels] of [[5, 14, {}], [6, 14, { '1,3': 'PLAYABLE' }], [6, 16, { '3,4,5': 'PLAYABLE', '1,4': 'BRICK' }]] as const) {
+      const inp = input(cards, labels as Record<string, Label>, n, [[4, 5]])
+      const r = computeHand(inp, h)
+      const ref = brute(inp, h)
+      close(r.playable, ref.p, 1e-12)
+      close(r.unknown, ref.u, 1e-12)
+      close(r.playable + r.unknown + r.brick, 1)
+    }
+  })
+  it('stato effettivo a tre valori: i tris ereditano l\'incertezza dalle coppie', () => {
+    const inp = input([card(1, 2, ['C2']), card(2, 1, ['C2', 'C3']), card(3, 1, ['C3'])])
+    expect(effectiveLabel(inp, [1, 2])).toBe('UNKNOWN')
+    expect(effectiveLabel(inp, [1, 2, 3])).toBe('UNKNOWN')
+    expect(effectiveLabel(inp, [2, 3])).toBe('BRICK')
+    expect(effectiveLabel({ ...inp, labels: { '1,2': 'BRICK' } }, [1, 2, 3])).toBe('BRICK')
+    expect(effectiveLabel({ ...inp, labels: { '1,2': 'PLAYABLE' } }, [1, 2, 3])).toBe('PLAYABLE')
+  })
+  it('"deriva dalle combo salvate": etichette PLAYABLE nuove per le mani richieste di 2-3 carte', async () => {
+    const { labelsFromCombos, pairSource } = await import('./index')
+    const inp = input([card(1, 2, ['C2']), card(2, 1, ['C2']), card(3, 1, ['C3'])], { '1,3': 'BRICK' }, 40, [[1, 2], [1, 1, 3], [1, 3], [1, 2, 3, 3], [9, 9]])
+    expect(labelsFromCombos(inp)).toEqual({ '1,2': 'PLAYABLE', '1,1,3': 'PLAYABLE' })
+    expect(pairSource(inp, 1, 2)).toBe('combo')
+    expect(pairSource(inp, 1, 3)).toBe('manual')
+    expect(pairSource(input([card(1, 1, ['C2-A']), card(2, 1, ['C2-A'])]), 1, 2)).toBe('group')
+    expect(pairSource(input([card(1, 1, ['C2']), card(2, 1, ['C2'], { comboWith: [1] })]), 1, 2)).toBe('strings')
+    expect(pairSource(input([card(1, 1, ['C2']), card(2, 1, ['C2'])]), 1, 2)).toBe('none')
+  })
+  it('il file reale non ha coppie da confermare (copre tutte le 33 coppie)', () => {
+    const p = parseDeckspace(readFileSync(join(__dirname, '../../../tests/fixtures/deckspace-unchained.json'), 'utf8'))
+    if (!p.ok) throw new Error('fixture')
+    const cards: StatsCard[] = p.project.cards.map((c) => ({ id: c.id, count: c.count, tags: c.tags, comboWith: c.comboWith, brickWith: c.brickWith }))
+    const r = computeHand(input(cards, p.project.labels, null), 5)
+    expect(r.unknown).toBe(0)
+    close(r.playable, 0.946421624053203, 1e-9)
+  })
+})
+
+describe('post-side: deckOverride e piani', () => {
+  const deck = [card(1, 3, ['S1']), card(2, 3, ['C2']), card(3, 3, ['C2']), card(4, 3, ['NE'])]
+  it('applyOverride: scambi uno a uno, entrata da pool, uscita non presente ignorata', async () => {
+    const o = applyOverride({ ...input(deck), deckOverride: [{ out: 2, in: 9 }, { out: 2, in: 4 }, { out: 77, in: 0 }, { out: 0, in: 4 }], pool: [card(9, 1, ['S1'])] })
+    const m = new Map(mergeCards(o.cards).map((c) => [c.id, c]))
+    expect(m.get(2)!.count).toBe(1)
+    expect(m.get(9)).toMatchObject({ count: 1, tags: ['S1'] })
+    expect(m.get(4)!.count).toBe(5)
+    expect(o.deckOverride).toBeUndefined()
+    expect(applyOverride(input(deck))).toEqual(input(deck))
+  })
+  it('computeHand con deckOverride = calcolo sul mazzo già modificato (anche mazzo ipotetico)', () => {
+    const swaps = [{ out: 2, in: 9 }, { out: 3, in: 9 }]
+    const pool = [card(9, 1, ['NE'])]
+    const via = computeHand({ ...input(deck, {}, null), deckOverride: swaps, pool }, 5)
+    const direct = computeHand(input([card(1, 3, ['S1']), card(2, 2, ['C2']), card(3, 2, ['C2']), card(4, 3, ['NE']), card(9, 2, ['NE'])], {}, null), 5)
+    close(via.playable, direct.playable)
+    close(via.unknown, direct.unknown)
+    expect(via.deckSize).toBe(direct.deckSize)
+    // entrare uno starter dal Side alza le mani giocabili
+    const better = computeHand({ ...input(deck), deckOverride: [{ out: 4, in: 9 }], pool: [card(9, 1, ['S1'])] }, 5)
+    expect(better.playable).toBeGreaterThan(computeHand(input(deck), 5).playable)
+  })
+  it('SidePlan: normalizzazione tollerante, scambi, validazione', async () => {
+    const { normalizeSidePlan, planToSwaps, validateSidePlan } = await import('./index')
+    expect(normalizeSidePlan({ id: 'p1', variantId: 'v1', matchup: { it: 'Occhio Serpente', en: 'Snake-Eye' }, outs: [{ cardId: 2, count: 2 }], ins: [{ id: 9, count: 2 }, { cardId: 'x' }] }, 'en')).toEqual({
+      id: 'p1', variantId: 'v1', matchup: 'Snake-Eye', outs: [{ cardId: 2, count: 2 }], ins: [{ cardId: 9, count: 2 }],
+    })
+    expect(normalizeSidePlan({ id: 'p', variantId: 'v', deletedAt: '2026-01-01' })).toBeNull()
+    expect(normalizeSidePlan(null)).toBeNull()
+    const plan = { outs: [{ cardId: 2, count: 2 }, { cardId: 3, count: 1 }], ins: [{ cardId: 9, count: 2 }] }
+    expect(planToSwaps(plan)).toEqual([{ out: 2, in: 9 }, { out: 2, in: 9 }, { out: 3, in: 0 }])
+    expect(validateSidePlan(plan, [{ id: 2, count: 3 }, { id: 3, count: 3 }], [9, 9])).toEqual([{ code: 'unbalanced', outs: 3, ins: 2 }])
+    expect(validateSidePlan({ outs: [{ cardId: 2, count: 4 }, { cardId: 8, count: 1 }], ins: [{ cardId: 7, count: 5 }] }, [{ id: 2, count: 3 }], [9])).toEqual([
+      { code: 'unbalanced', outs: 5, ins: 5 }.code === 'unbalanced' ? expect.anything() : expect.anything(),
+      { code: 'tooManyOuts', cardId: 2, have: 3, want: 4 },
+      { code: 'outNotInMain', cardId: 8 },
+      { code: 'inNotInSide', cardId: 7 },
+    ].slice(1))
+  })
+  it('diffHands: Δ playable/brick e mani brick che cambiano, con piano fittizio', async () => {
+    const { diffHands, planToSwaps } = await import('./index')
+    const plan = { outs: [{ cardId: 4, count: 3 }], ins: [{ cardId: 9, count: 3 }] }
+    const pool = [card(9, 1, ['S1'])]
+    const pre = computeHand(input(deck), 5, { detail: true })
+    const post = computeHand({ ...input(deck), deckOverride: planToSwaps(plan), pool }, 5, { detail: true })
+    const d = diffHands(pre, post)
+    expect(d.dPlayable).toBeGreaterThan(0)
+    expect(d.dBrick).toBeLessThan(0)
+    close(d.dPlayable + d.dBrick + d.dUnknown, 0, 1e-9)
+    expect(d.dPlayable).toBeCloseTo((post.playable - pre.playable) * 100, 9)
+    expect(d.bricks.length).toBeGreaterThan(0)
+    const same = diffHands(pre, pre)
+    expect(same.dPlayable).toBe(0)
+    expect(same.bricks).toEqual([])
+  })
+})

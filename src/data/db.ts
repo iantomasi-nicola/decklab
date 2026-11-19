@@ -1,8 +1,9 @@
 import Dexie, { type EntityTable, type Table } from 'dexie'
 import type { Archetype, Localized, Meta, Variant } from '@/domain/types'
+import type { SidePlan } from '@/domain/side/types'
 
 /** Tabelle sincronizzate con Supabase (stesso nome locale e remoto). */
-export const SYNC_TABLES = ['archetypes', 'variants', 'combos', 'boards', 'tags', 'settings'] as const
+export const SYNC_TABLES = ['archetypes', 'variants', 'combos', 'boards', 'tags', 'settings', 'sidePlans'] as const
 export type SyncTable = (typeof SYNC_TABLES)[number]
 
 /** Combo: il payload e' generico finche' il formato combo non e' definito (domain/combo). */
@@ -39,6 +40,7 @@ export type EntityMap = {
   boards: BoardRecord
   tags: TagRecord
   settings: SettingRecord
+  sidePlans: SidePlan
 }
 export type Entity<T extends SyncTable = SyncTable> = EntityMap[T]
 
@@ -59,7 +61,7 @@ export interface SyncCursorRow {
   userId: string | null
 }
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export class DecklabDB extends Dexie {
   archetypes!: EntityTable<Archetype, 'id'>
@@ -68,6 +70,7 @@ export class DecklabDB extends Dexie {
   boards!: EntityTable<BoardRecord, 'id'>
   tags!: EntityTable<TagRecord, 'id'>
   settings!: EntityTable<SettingRecord, 'id'>
+  sidePlans!: EntityTable<SidePlan, 'id'>
   syncOutbox!: EntityTable<OutboxRow, 'key'>
   syncCursor!: EntityTable<SyncCursorRow, 'table'>
 
@@ -85,6 +88,8 @@ export class DecklabDB extends Dexie {
       syncOutbox: 'key, table, queuedAt',
       syncCursor: 'table',
     })
+    // v2: piani di side per matchup (tabella sincronizzata). Solo una tabella nuova: nessun dato da migrare.
+    this.version(2).stores({ sidePlans: 'id, variantId, updatedAt, deletedAt' })
   }
 
   /** Accesso tipizzato per nome tabella (usato da repo, sync e backup). */

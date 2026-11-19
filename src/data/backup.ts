@@ -32,9 +32,11 @@ export class BackupError extends Error {
 
 /**
  * Migrazioni dei backup vecchi: `migrations[n]` porta un backup dalla versione n alla n+1.
- * Per ora esiste solo la v1.
+ * v1 -> v2: aggiunta la tabella `sidePlans` (assente nei backup vecchi: viene letta come vuota).
  */
-const migrations: Record<number, (b: BackupFile) => BackupFile> = {}
+const migrations: Record<number, (b: BackupFile) => BackupFile> = {
+  1: (b) => ({ ...b, schemaVersion: 2 }),
+}
 
 /** Esporta tutto (tombstone inclusi, cosi' l'import in "unisci" propaga le cancellazioni). Outbox e cursori sono esclusi. */
 export async function exportBackup(db: DecklabDB = defaultDb, clock: Clock = systemClock): Promise<BackupFile> {
