@@ -25,7 +25,15 @@
     "clear": "Cancella",
     "dismiss": "Nascondi",
     "notifications": "Notifiche",
-    "comingSoon": "In arrivo nelle prossime fasi"
+    "comingSoon": "In arrivo nelle prossime fasi",
+    "save": "Salva",
+    "edit": "Modifica",
+    "duplicate": "Duplica",
+    "delete": "Elimina",
+    "undo": "Annulla",
+    "open": "Apri",
+    "add": "Aggiungi",
+    "retry": "Riprova"
   },
   "home": {
     "title": "Home",
@@ -45,13 +53,107 @@
     "title": "Archetipi",
     "emptyTitle": "Nessun archetipo",
     "emptyBody": "Un archetipo raccoglie le varianti e le liste di una strategia. Crea il primo per iniziare.",
-    "emptyAction": "Crea archetipo"
+    "emptyAction": "Crea archetipo",
+    "lead": "Ogni archetipo raccoglie le sue varianti di lista, le carte chiave e il piano di gioco.",
+    "new": "Nuovo archetipo",
+    "untitled": "Senza nome",
+    "search": "Cerca archetipi",
+    "searchPlaceholder": "Cerca per nome o tag",
+    "filters": "Filtri",
+    "favorites": "Preferiti",
+    "favorite": "Aggiungi {{name}} ai preferiti",
+    "unfavorite": "Togli {{name}} dai preferiti",
+    "menu": "Azioni per {{name}}",
+    "duplicated": "Archetipo duplicato",
+    "deleted": "Archetipo «{{name}}» eliminato",
+    "noKeyCards": "Nessuna carta chiave",
+    "variantCount_one": "{{count}} variante",
+    "variantCount_other": "{{count}} varianti",
+    "noResultsTitle": "Nessun archetipo trovato",
+    "noResultsBody": "Prova con un altro nome o togli qualche filtro.",
+    "resetFilters": "Azzera i filtri",
+    "results_one": "{{count}} archetipo",
+    "results_other": "{{count}} archetipi",
+    "resultsFiltered": "{{count}} di {{total}} archetipi",
+    "tags": "Tag",
+    "noTags": "Non hai ancora tag: scrivine uno qui sotto.",
+    "newTag": "Nuovo tag",
+    "dialog": {
+      "createTitle": "Nuovo archetipo",
+      "createBody": "Dai un nome alla strategia. Potrai aggiungere carte chiave, note e varianti dopo.",
+      "editTitle": "Modifica archetipo",
+      "create": "Crea archetipo",
+      "nameIt": "Nome in italiano",
+      "nameEn": "Nome in inglese",
+      "nameHint": "Basta una lingua: l'altra è facoltativa.",
+      "namePlaceholder": "Es. Drago Bianco Occhi Blu"
+    },
+    "details": "Dettagli",
+    "notes": "Note e piano di gioco",
+    "notesLang": "Lingua delle note",
+    "notesPlaceholder": "Come si gioca: apertura ideale, handtrap da temere, punti deboli…",
+    "notesHint": "Le note si salvano quando esci dal campo. Ogni lingua ha il suo testo.",
+    "cardsTitle": "Carte dell'archetipo",
+    "roles": {
+      "keyCards": "Carte chiave",
+      "starters": "Starter",
+      "extenders": "Extender",
+      "keyCardsHint": "Le carte che definiscono la strategia.",
+      "startersHint": "Carte che da sole avviano la combo.",
+      "extendersHint": "Carte che allungano la linea di gioco.",
+      "empty": "Nessuna carta in questa lista. Aggiungine una con la ricerca."
+    },
+    "addCards": "Aggiungi carte",
+    "removeCard": "Togli {{name}} dalla lista",
+    "cardRemoved": "{{name}} tolta dalla lista",
+    "pickerTitle": "Aggiungi a: {{role}}",
+    "picker": {
+      "body": "Tocca una carta per aggiungerla o toglierla. Cerca per nome in italiano o inglese.",
+      "done_one": "Fatto ({{count}} carta)",
+      "done_other": "Fatto ({{count}} carte)",
+      "idle": "Scrivi il nome di una carta per cominciare."
+    },
+    "variants": "Varianti",
+    "noVariantsTitle": "Nessuna variante",
+    "noVariantsBody": "Una variante è una lista completa (Main, Extra, Side) con le sue regole e la sua banlist. Creane una o importa un mazzo.",
+    "notFoundTitle": "Archetipo non trovato",
+    "notFoundBody": "Potrebbe essere stato eliminato o non essere ancora sincronizzato su questo dispositivo.",
+    "backToList": "Vai agli archetipi"
   },
   "decks": {
     "title": "Mazzi",
     "emptyTitle": "Nessun mazzo",
     "emptyBody": "Crea una lista da zero oppure importa un file .ydk, un codice ydke o un testo copiato.",
-    "emptyAction": "Importa un mazzo"
+    "emptyAction": "Importa un mazzo",
+    "lead": "Tutte le tue varianti, divise per archetipo. Importa una lista da file, testo o link.",
+    "newVariant": "Nuova variante",
+    "import": "Importa mazzo",
+    "importTitle": "Importa un mazzo",
+    "importBody": "Incolla, trascina un file o scegline uno.",
+    "allVariants": "Tutte le varianti",
+    "search": "Cerca varianti",
+    "searchPlaceholder": "Cerca per nome",
+    "noResults": "Nessuna variante corrisponde alla ricerca.",
+    "defaultVariantName": "Nuova variante",
+    "counts": "Main {{main}} · Extra {{extra}} · Side {{side}}",
+    "variantMenu": "Azioni per {{name}}",
+    "duplicated": "Variante duplicata",
+    "deleted": "Variante «{{name}}» eliminata",
+    "variantDialog": {
+      "createTitle": "Nuova variante",
+      "createBody": "Scegli le regole e la banlist con cui controllare la legalità.",
+      "editTitle": "Impostazioni variante",
+      "create": "Crea variante",
+      "archetype": "Archetipo",
+      "newArchetype": "Nuovo archetipo…",
+      "newArchetypeName": "Nome del nuovo archetipo",
+      "nameIt": "Nome in italiano",
+      "nameEn": "Nome in inglese",
+      "namePlaceholder": "Es. Versione torneo",
+      "rules": "Regole",
+      "banlist": "Banlist",
+      "banlistHint": "La legalità si ricalcola subito quando la cambi."
+    }
   },
   "combos": {
     "title": "Combo",
@@ -124,5 +226,249 @@
   "toast": {
     "languageChanged": "Lingua cambiata",
     "themeChanged": "Tema cambiato"
+  },
+  "deck": {
+    "unknownCard": "Carta sconosciuta",
+    "kind": {
+      "monster": "Mostro",
+      "spell": "Magia",
+      "trap": "Trappola"
+    },
+    "extraKind": {
+      "fusion": "Fusione",
+      "synchro": "Synchro",
+      "xyz": "Xyz",
+      "link": "Link"
+    },
+    "attr": {
+      "earth": "Terra",
+      "water": "Acqua",
+      "fire": "Fuoco",
+      "wind": "Vento",
+      "light": "Luce",
+      "dark": "Oscurità",
+      "divine": "Divino"
+    },
+    "levelN": "Lv {{n}}",
+    "rankN": "Rango {{n}}",
+    "linkN": "Link {{n}}",
+    "pendulum": "Pendulum",
+    "limitHint": "da {{min}} a {{max}}",
+    "section": {
+      "main": "Main",
+      "extra": "Extra",
+      "side": "Side"
+    },
+    "sections": "Sezioni del mazzo",
+    "empty": {
+      "main": {
+        "title": "Main vuoto",
+        "body": "Cerca una carta e toccala per aggiungerla. Servono da 40 a 60 carte."
+      },
+      "extra": {
+        "title": "Extra vuoto",
+        "body": "Le carte Fusione, Synchro, Xyz e Link finiscono qui in automatico (fino a 15)."
+      },
+      "side": {
+        "title": "Side vuoto",
+        "body": "Tocca due volte una carta nei risultati, oppure usa il pulsante Side, per aggiungerla qui (fino a 15)."
+      }
+    },
+    "action": {
+      "add": "Aggiungi una copia",
+      "remove": "Togli una copia",
+      "moveTo": {
+        "main": "Sposta nel Main",
+        "extra": "Sposta nell'Extra",
+        "side": "Sposta nel Side"
+      },
+      "removeAll": "Rimuovi tutte le copie",
+      "addNamed": "Aggiungi una copia di {{name}}",
+      "removeNamed": "Togli una copia di {{name}}"
+    },
+    "cardMenu": "Azioni per {{name}}",
+    "copies_one": "{{count}} copia",
+    "copies_other": "{{count}} copie",
+    "search": {
+      "label": "Cerca carte",
+      "placeholder": "Cerca per nome (IT o EN)",
+      "type": "Tipo di carta",
+      "attribute": "Attributo",
+      "anyAttribute": "Ogni attributo",
+      "types": {
+        "all": "Ogni tipo",
+        "monster": "Mostri",
+        "spell": "Magie",
+        "trap": "Trappole",
+        "extra": "Extra Deck"
+      },
+      "hint": "Un tocco aggiunge al Main o all'Extra. Due tocchi aggiungono al Side.",
+      "idleTitle": "Cerca una carta",
+      "idleBody": "Scrivi un nome, anche con qualche errore: «fioritura di cenere» e «ash blossom» trovano la stessa carta.",
+      "noResultsTitle": "Nessuna carta trovata",
+      "noResultsBody": "Controlla il nome o cambia i filtri di tipo e attributo.",
+      "results_one": "{{count}} risultato",
+      "results_other": "{{count}} risultati",
+      "addNamed": "Aggiungi {{name}} al mazzo",
+      "addSideNamed": "Aggiungi {{name}} al Side",
+      "addSide": "Aggiungi al Side",
+      "inDeck_one": "{{count}} nel mazzo",
+      "inDeck_other": "{{count}} nel mazzo",
+      "panel": "Ricerca carte"
+    },
+    "stats": {
+      "title": "Statistiche",
+      "types": "Tipi di carta",
+      "attributes": "Attributi",
+      "levels": "Livelli",
+      "ranks": "Ranghi Xyz",
+      "links": "Valore Link",
+      "unitLevel": "Livello",
+      "unitRank": "Rango",
+      "unitLink": "Link",
+      "emptyTitle": "Ancora niente da contare",
+      "emptyBody": "Aggiungi qualche carta e qui compaiono tipi, livelli e attributi.",
+      "unknown_one": "{{count}} carta non riconosciuta non è conteggiata.",
+      "unknown_other": "{{count}} carte non riconosciute non sono conteggiate."
+    },
+    "announce": {
+      "added": "{{name}} aggiunta al {{section}}: ora {{count}}."
+    },
+    "replaced": "Mazzo sostituito dall'importazione",
+    "saving": "Salvataggio…",
+    "saved": "Salvato",
+    "settings": "Impostazioni variante",
+    "banlist": "Banlist",
+    "toolbar": "Strumenti del mazzo",
+    "undo": "Annulla",
+    "redo": "Ripeti",
+    "view": {
+      "label": "Vista",
+      "grid": "Vista a griglia",
+      "list": "Vista a elenco"
+    },
+    "import": "Importa",
+    "export": "Esporta",
+    "importTitle": "Importa nel mazzo",
+    "importBody": "La lista importata sostituisce quella attuale. Puoi annullare subito dopo.",
+    "dataError": {
+      "title": "Dati delle carte non disponibili",
+      "body": "Non riesco a caricare l'elenco delle carte ({{message}}). Controlla la connessione e riprova."
+    },
+    "notFound": {
+      "title": "Variante non trovata",
+      "body": "Potrebbe essere stata eliminata o non ancora sincronizzata su questo dispositivo.",
+      "action": "Vai ai mazzi"
+    },
+    "addCards": "Aggiungi carte"
+  },
+  "legality": {
+    "legalTitle": "Mazzo legale",
+    "illegalTitle_one": "Mazzo non legale: {{count}} problema",
+    "illegalTitle_other": "Mazzo non legale: {{count}} problemi",
+    "legalBody": "Rispetta le regole {{rules}} e la banlist {{banlist}}.",
+    "illegalBody": "Controllo con le regole {{rules}} e la banlist {{banlist}}. Le carte con problemi sono evidenziate.",
+    "banlistMissing": "La banlist {{banlist}} non è nei dati: non applico nessun limite di copie.",
+    "showLess": "Mostra meno",
+    "showAll": "Mostra tutti ({{count}})",
+    "banlistUnknown": "{{banlist}} (non nei dati)",
+    "latest": "ultima",
+    "legalShort": "Legale",
+    "illegalShort_one": "{{count}} problema",
+    "illegalShort_other": "{{count}} problemi",
+    "badge": {
+      "forbidden": "Proibita",
+      "limited": "Limitata",
+      "semi-limited": "Semi-Limitata",
+      "too-many-copies": "Troppe copie",
+      "not-in-format": "Non nel formato",
+      "unknown-card": "Sconosciuta",
+      "wrongSection": "Sezione errata",
+      "points": "Punti"
+    },
+    "issue": {
+      "forbidden": "{{name}} è Proibita: non puoi inserirla (ne hai {{count}}).",
+      "limited": "{{name}} è Limitata: massimo 1 copia, ne hai {{count}}.",
+      "semi-limited": "{{name}} è Semi-Limitata: massimo 2 copie, ne hai {{count}}.",
+      "too-many-copies": "{{name}}: massimo 3 copie in tutto il mazzo, ne hai {{count}}.",
+      "main-size": "Il Main ha {{count}} carte: ne servono da {{min}} a {{max}}.",
+      "extraInMain": "{{name}} è una carta Extra Deck: non può stare nel Main.",
+      "extra-size": "L'Extra ha {{count}} carte: il massimo è {{max}}.",
+      "nonExtraInExtra": "{{name}} non è una carta Extra Deck: non può stare nell'Extra.",
+      "side-size": "Il Side ha {{count}} carte: il massimo è {{max}}.",
+      "genesys-points": "Punti Genesys: {{points}} su un massimo di {{cap}}.",
+      "not-in-format": "{{name}} non esiste nel formato {{rules}}.",
+      "unknown-card": "Codice carta {{id}} non riconosciuto: aggiorna i dati o rimuovila."
+    }
+  },
+  "banlistNotice": {
+    "title_one": "Banlist {{banlist}}: {{count}} variante diventa illegale",
+    "title_other": "Banlist {{banlist}}: {{count}} varianti diventano illegali",
+    "body": "Queste varianti usano ancora una banlist precedente. Con la {{banlist}} non sarebbero più legali.",
+    "more_one": "…e {{count}} altro problema",
+    "more_other": "…e altri {{count}} problemi",
+    "switch": "Passa alla {{banlist}}",
+    "updated": "Variante passata alla banlist {{banlist}}"
+  },
+  "import": {
+    "title": "Importa un mazzo",
+    "lead": "Incolla qui: riconosco da solo il formato.",
+    "fieldLabel": "Lista da importare",
+    "placeholder": "Incolla una lista (IT o EN), un link ydke://, il contenuto di un file .ydk o un JSON di Combo Lab",
+    "run": "Importa",
+    "chooseFile": "Scegli un file",
+    "formats": "Puoi anche trascinare un file .ydk in questo riquadro. Formati: .ydk, ydke://, testo con nomi italiani o inglesi, JSON di Combo Lab.",
+    "done_one": "Importata {{count}} carta da {{format}}",
+    "done_other": "Importate {{count}} carte da {{format}}",
+    "fuzzyDone_one": "{{count}} riga corretta per un piccolo errore di scrittura",
+    "fuzzyDone_other": "{{count}} righe corrette per piccoli errori di scrittura",
+    "format": {
+      "ydk": "file .ydk",
+      "ydke": "link ydke",
+      "text": "testo",
+      "json": "JSON",
+      "unknown": "testo"
+    },
+    "shareEmpty": "Non ho trovato nulla da importare nella condivisione.",
+    "error": {
+      "empty": "Non c'è niente da importare: incolla una lista o scegli un file.",
+      "invalid": "Il contenuto sembra un formato di mazzo ma non è valido. Controlla di averlo copiato per intero.",
+      "needsIndex": "Sto caricando i dati delle carte: riprovo da solo appena sono pronti.",
+      "noCards": "Non ho riconosciuto nessuna carta. Controlla i nomi o il formato.",
+      "tooBig": "Il file è troppo grande (massimo 2 MB).",
+      "read": "Non riesco a leggere il file."
+    },
+    "review": {
+      "title": "Controlla l'importazione",
+      "body": "Riconosciute {{matched}} righe, da chiarire {{ambiguous}}, non trovate {{unmatched}}.",
+      "confirm_one": "Importa {{count}} carta",
+      "confirm_other": "Importa {{count}} carte",
+      "ambiguousLine": "«{{line}}» (×{{count}})",
+      "ambiguousHint": "Più carte hanno questo nome: scegli quella giusta.",
+      "skip": "Salta questa riga",
+      "unmatchedTitle_one": "{{count}} riga non trovata",
+      "unmatchedTitle_other": "{{count}} righe non trovate",
+      "unmatchedHint": "Queste righe vengono saltate. Correggile e importa di nuovo se servono.",
+      "fuzzyTitle_one": "{{count}} riga corretta da me",
+      "fuzzyTitle_other": "{{count}} righe corrette da me",
+      "resolved": "Scelte fatte: {{done}} di {{total}}. Le righe senza scelta vengono saltate."
+    }
+  },
+  "export": {
+    "title": "Esporta il mazzo",
+    "lead": "Copia con un tocco o scarica il file.",
+    "text": "Testo",
+    "textHint": "Lista leggibile con i nomi nella lingua dell'app.",
+    "ydke": "Link ydke://",
+    "ydkeHint": "Si incolla in EDOPro, Master Duel Meta e simili.",
+    "ydk": "File .ydk",
+    "ydkHint": "Formato classico per simulatori.",
+    "json": "JSON di Combo Lab",
+    "jsonHint": "Si reimporta qui senza perdere nulla.",
+    "copy": "Copia",
+    "download": "Scarica .ydk",
+    "copied": "{{what}} copiato",
+    "copyFailed": "Copia non riuscita: seleziona il testo e copialo a mano.",
+    "preview": "Anteprima: {{what}}"
   }
 }

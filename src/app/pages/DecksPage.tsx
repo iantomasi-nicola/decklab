@@ -1,4 +1,3 @@
-import Library from 'lucide-react/icons/library'
-import { PlaceholderPage } from './PlaceholderPage'
+import { DecksOverview } from '@/features/decks/DecksOverview'
 
-export const DecksPage = () => <PlaceholderPage ns="decks" icon={<Library size={28} />} />
+export const DecksPage = () => <DecksOverview />

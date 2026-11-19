@@ -1,4 +1,3 @@
-import Layers from 'lucide-react/icons/layers'
-import { PlaceholderPage } from './PlaceholderPage'
+import { ArchetypeList } from '@/features/archetypes/ArchetypeList'
 
-export const ArchetypesPage = () => <PlaceholderPage ns="archetypes" icon={<Layers size={28} />} />
+export const ArchetypesPage = () => <ArchetypeList />

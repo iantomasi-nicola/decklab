@@ -15,7 +15,9 @@ const page = <P extends string>(path: P, load: () => Promise<Record<string, unkn
 const routeTree = root.addChildren([
   page('/', () => import('./pages/HomePage'), 'HomePage'),
   page('/archetipi', () => import('./pages/ArchetypesPage'), 'ArchetypesPage'),
+  page('/archetipi/$archetypeId', () => import('./pages/ArchetypePage'), 'ArchetypePage'),
   page('/mazzi', () => import('./pages/DecksPage'), 'DecksPage'),
+  page('/mazzi/$variantId', () => import('./pages/DeckEditorPage'), 'DeckEditorPage'),
   page('/combo', () => import('./pages/CombosPage'), 'CombosPage'),
   page('/impara', () => import('./pages/LearnPage'), 'LearnPage'),
   page('/statistiche', () => import('./pages/StatsPage'), 'StatsPage'),

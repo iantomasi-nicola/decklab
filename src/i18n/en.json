@@ -25,7 +25,15 @@
     "clear": "Clear",
     "dismiss": "Dismiss",
     "notifications": "Notifications",
-    "comingSoon": "Coming in a later phase"
+    "comingSoon": "Coming in a later phase",
+    "save": "Save",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "undo": "Undo",
+    "open": "Open",
+    "add": "Add",
+    "retry": "Try again"
   },
   "home": {
     "title": "Home",
@@ -45,13 +53,107 @@
     "title": "Archetypes",
     "emptyTitle": "No archetypes",
     "emptyBody": "An archetype gathers the variants and lists of one strategy. Create the first one to get going.",
-    "emptyAction": "Create archetype"
+    "emptyAction": "Create archetype",
+    "lead": "Each archetype keeps its list variants, key cards and game plan together.",
+    "new": "New archetype",
+    "untitled": "Untitled",
+    "search": "Search archetypes",
+    "searchPlaceholder": "Search by name or tag",
+    "filters": "Filters",
+    "favorites": "Favorites",
+    "favorite": "Add {{name}} to favorites",
+    "unfavorite": "Remove {{name}} from favorites",
+    "menu": "Actions for {{name}}",
+    "duplicated": "Archetype duplicated",
+    "deleted": "Archetype “{{name}}” deleted",
+    "noKeyCards": "No key cards",
+    "variantCount_one": "{{count}} variant",
+    "variantCount_other": "{{count}} variants",
+    "noResultsTitle": "No archetypes found",
+    "noResultsBody": "Try another name or remove some filters.",
+    "resetFilters": "Clear filters",
+    "results_one": "{{count}} archetype",
+    "results_other": "{{count}} archetypes",
+    "resultsFiltered": "{{count}} of {{total}} archetypes",
+    "tags": "Tags",
+    "noTags": "No tags yet: type one below.",
+    "newTag": "New tag",
+    "dialog": {
+      "createTitle": "New archetype",
+      "createBody": "Name the strategy. You can add key cards, notes and variants afterwards.",
+      "editTitle": "Edit archetype",
+      "create": "Create archetype",
+      "nameIt": "Name in Italian",
+      "nameEn": "Name in English",
+      "nameHint": "One language is enough: the other is optional.",
+      "namePlaceholder": "e.g. Blue-Eyes White Dragon"
+    },
+    "details": "Details",
+    "notes": "Notes and game plan",
+    "notesLang": "Notes language",
+    "notesPlaceholder": "How it plays: ideal opening, hand traps to fear, weak spots…",
+    "notesHint": "Notes save when you leave the field. Each language has its own text.",
+    "cardsTitle": "Archetype cards",
+    "roles": {
+      "keyCards": "Key cards",
+      "starters": "Starters",
+      "extenders": "Extenders",
+      "keyCardsHint": "The cards that define the strategy.",
+      "startersHint": "Cards that start the combo on their own.",
+      "extendersHint": "Cards that extend the play.",
+      "empty": "No cards in this list yet. Add one with search."
+    },
+    "addCards": "Add cards",
+    "removeCard": "Remove {{name}} from the list",
+    "cardRemoved": "{{name}} removed from the list",
+    "pickerTitle": "Add to: {{role}}",
+    "picker": {
+      "body": "Tap a card to add or remove it. Search by name in Italian or English.",
+      "done_one": "Done ({{count}} card)",
+      "done_other": "Done ({{count}} cards)",
+      "idle": "Type a card name to start."
+    },
+    "variants": "Variants",
+    "noVariantsTitle": "No variants yet",
+    "noVariantsBody": "A variant is a full list (Main, Extra, Side) with its own rules and banlist. Create one or import a deck.",
+    "notFoundTitle": "Archetype not found",
+    "notFoundBody": "It may have been deleted or not synced to this device yet.",
+    "backToList": "Go to archetypes"
   },
   "decks": {
     "title": "Decks",
     "emptyTitle": "No decks",
     "emptyBody": "Build a list from scratch, or import a .ydk file, a ydke code or copied text.",
-    "emptyAction": "Import a deck"
+    "emptyAction": "Import a deck",
+    "lead": "All your variants, grouped by archetype. Import a list from a file, text or link.",
+    "newVariant": "New variant",
+    "import": "Import deck",
+    "importTitle": "Import a deck",
+    "importBody": "Paste, drop a file or pick one.",
+    "allVariants": "All variants",
+    "search": "Search variants",
+    "searchPlaceholder": "Search by name",
+    "noResults": "No variant matches your search.",
+    "defaultVariantName": "New variant",
+    "counts": "Main {{main}} · Extra {{extra}} · Side {{side}}",
+    "variantMenu": "Actions for {{name}}",
+    "duplicated": "Variant duplicated",
+    "deleted": "Variant “{{name}}” deleted",
+    "variantDialog": {
+      "createTitle": "New variant",
+      "createBody": "Pick the rules and banlist used to check legality.",
+      "editTitle": "Variant settings",
+      "create": "Create variant",
+      "archetype": "Archetype",
+      "newArchetype": "New archetype…",
+      "newArchetypeName": "New archetype name",
+      "nameIt": "Name in Italian",
+      "nameEn": "Name in English",
+      "namePlaceholder": "e.g. Tournament build",
+      "rules": "Rules",
+      "banlist": "Banlist",
+      "banlistHint": "Legality updates right away when you change it."
+    }
   },
   "combos": {
     "title": "Combos",
@@ -124,5 +226,249 @@
   "toast": {
     "languageChanged": "Language changed",
     "themeChanged": "Theme changed"
+  },
+  "deck": {
+    "unknownCard": "Unknown card",
+    "kind": {
+      "monster": "Monster",
+      "spell": "Spell",
+      "trap": "Trap"
+    },
+    "extraKind": {
+      "fusion": "Fusion",
+      "synchro": "Synchro",
+      "xyz": "Xyz",
+      "link": "Link"
+    },
+    "attr": {
+      "earth": "Earth",
+      "water": "Water",
+      "fire": "Fire",
+      "wind": "Wind",
+      "light": "Light",
+      "dark": "Dark",
+      "divine": "Divine"
+    },
+    "levelN": "Lv {{n}}",
+    "rankN": "Rank {{n}}",
+    "linkN": "Link {{n}}",
+    "pendulum": "Pendulum",
+    "limitHint": "{{min}} to {{max}}",
+    "section": {
+      "main": "Main",
+      "extra": "Extra",
+      "side": "Side"
+    },
+    "sections": "Deck sections",
+    "empty": {
+      "main": {
+        "title": "Main is empty",
+        "body": "Search for a card and tap it to add it. You need 40 to 60 cards."
+      },
+      "extra": {
+        "title": "Extra is empty",
+        "body": "Fusion, Synchro, Xyz and Link cards go here automatically (up to 15)."
+      },
+      "side": {
+        "title": "Side is empty",
+        "body": "Double-tap a card in the results, or use the Side button, to add it here (up to 15)."
+      }
+    },
+    "action": {
+      "add": "Add one copy",
+      "remove": "Remove one copy",
+      "moveTo": {
+        "main": "Move to Main",
+        "extra": "Move to Extra",
+        "side": "Move to Side"
+      },
+      "removeAll": "Remove all copies",
+      "addNamed": "Add one copy of {{name}}",
+      "removeNamed": "Remove one copy of {{name}}"
+    },
+    "cardMenu": "Actions for {{name}}",
+    "copies_one": "{{count}} copy",
+    "copies_other": "{{count}} copies",
+    "search": {
+      "label": "Search cards",
+      "placeholder": "Search by name (IT or EN)",
+      "type": "Card type",
+      "attribute": "Attribute",
+      "anyAttribute": "Any attribute",
+      "types": {
+        "all": "Any type",
+        "monster": "Monsters",
+        "spell": "Spells",
+        "trap": "Traps",
+        "extra": "Extra Deck"
+      },
+      "hint": "One tap adds to Main or Extra. Two taps add to Side.",
+      "idleTitle": "Search for a card",
+      "idleBody": "Type a name, typos are fine: “ash blossom” and “fioritura di cenere” find the same card.",
+      "noResultsTitle": "No cards found",
+      "noResultsBody": "Check the name or change the type and attribute filters.",
+      "results_one": "{{count}} result",
+      "results_other": "{{count}} results",
+      "addNamed": "Add {{name}} to the deck",
+      "addSideNamed": "Add {{name}} to the Side",
+      "addSide": "Add to Side",
+      "inDeck_one": "{{count}} in deck",
+      "inDeck_other": "{{count}} in deck",
+      "panel": "Card search"
+    },
+    "stats": {
+      "title": "Statistics",
+      "types": "Card types",
+      "attributes": "Attributes",
+      "levels": "Levels",
+      "ranks": "Xyz ranks",
+      "links": "Link rating",
+      "unitLevel": "Level",
+      "unitRank": "Rank",
+      "unitLink": "Link",
+      "emptyTitle": "Nothing to count yet",
+      "emptyBody": "Add a few cards and types, levels and attributes show up here.",
+      "unknown_one": "{{count}} unrecognized card is not counted.",
+      "unknown_other": "{{count}} unrecognized cards are not counted."
+    },
+    "announce": {
+      "added": "{{name}} added to {{section}}: now {{count}}."
+    },
+    "replaced": "Deck replaced by the import",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "settings": "Variant settings",
+    "banlist": "Banlist",
+    "toolbar": "Deck tools",
+    "undo": "Undo",
+    "redo": "Redo",
+    "view": {
+      "label": "View",
+      "grid": "Grid view",
+      "list": "List view"
+    },
+    "import": "Import",
+    "export": "Export",
+    "importTitle": "Import into this deck",
+    "importBody": "The imported list replaces the current one. You can undo right after.",
+    "dataError": {
+      "title": "Card data unavailable",
+      "body": "I can't load the card list ({{message}}). Check your connection and try again."
+    },
+    "notFound": {
+      "title": "Variant not found",
+      "body": "It may have been deleted or not synced to this device yet.",
+      "action": "Go to decks"
+    },
+    "addCards": "Add cards"
+  },
+  "legality": {
+    "legalTitle": "Legal deck",
+    "illegalTitle_one": "Illegal deck: {{count}} problem",
+    "illegalTitle_other": "Illegal deck: {{count}} problems",
+    "legalBody": "It follows {{rules}} rules and the {{banlist}} banlist.",
+    "illegalBody": "Checked against {{rules}} rules and the {{banlist}} banlist. Cards with problems are highlighted.",
+    "banlistMissing": "The {{banlist}} banlist isn't in the data: no copy limits are applied.",
+    "showLess": "Show less",
+    "showAll": "Show all ({{count}})",
+    "banlistUnknown": "{{banlist}} (not in data)",
+    "latest": "latest",
+    "legalShort": "Legal",
+    "illegalShort_one": "{{count}} problem",
+    "illegalShort_other": "{{count}} problems",
+    "badge": {
+      "forbidden": "Forbidden",
+      "limited": "Limited",
+      "semi-limited": "Semi-Limited",
+      "too-many-copies": "Too many copies",
+      "not-in-format": "Not in format",
+      "unknown-card": "Unknown",
+      "wrongSection": "Wrong section",
+      "points": "Points"
+    },
+    "issue": {
+      "forbidden": "{{name}} is Forbidden: you can't include it (you have {{count}}).",
+      "limited": "{{name}} is Limited: 1 copy at most, you have {{count}}.",
+      "semi-limited": "{{name}} is Semi-Limited: 2 copies at most, you have {{count}}.",
+      "too-many-copies": "{{name}}: 3 copies at most across the whole deck, you have {{count}}.",
+      "main-size": "Main has {{count}} cards: it needs {{min}} to {{max}}.",
+      "extraInMain": "{{name}} is an Extra Deck card: it can't go in the Main.",
+      "extra-size": "Extra has {{count}} cards: the maximum is {{max}}.",
+      "nonExtraInExtra": "{{name}} isn't an Extra Deck card: it can't go in the Extra.",
+      "side-size": "Side has {{count}} cards: the maximum is {{max}}.",
+      "genesys-points": "Genesys points: {{points}} out of a maximum of {{cap}}.",
+      "not-in-format": "{{name}} doesn't exist in the {{rules}} format.",
+      "unknown-card": "Card code {{id}} not recognized: update the data or remove it."
+    }
+  },
+  "banlistNotice": {
+    "title_one": "{{banlist}} banlist: {{count}} variant becomes illegal",
+    "title_other": "{{banlist}} banlist: {{count}} variants become illegal",
+    "body": "These variants still use an older banlist. Under {{banlist}} they would no longer be legal.",
+    "more_one": "…and {{count}} more problem",
+    "more_other": "…and {{count}} more problems",
+    "switch": "Switch to {{banlist}}",
+    "updated": "Variant moved to the {{banlist}} banlist"
+  },
+  "import": {
+    "title": "Import a deck",
+    "lead": "Paste here: I detect the format on my own.",
+    "fieldLabel": "List to import",
+    "placeholder": "Paste a list (IT or EN), a ydke:// link, the contents of a .ydk file or a Combo Lab JSON",
+    "run": "Import",
+    "chooseFile": "Choose a file",
+    "formats": "You can also drop a .ydk file onto this box. Formats: .ydk, ydke://, text with Italian or English names, Combo Lab JSON.",
+    "done_one": "Imported {{count}} card from {{format}}",
+    "done_other": "Imported {{count}} cards from {{format}}",
+    "fuzzyDone_one": "{{count}} line fixed for a small typo",
+    "fuzzyDone_other": "{{count}} lines fixed for small typos",
+    "format": {
+      "ydk": ".ydk file",
+      "ydke": "ydke link",
+      "text": "text",
+      "json": "JSON",
+      "unknown": "text"
+    },
+    "shareEmpty": "I found nothing to import in the shared content.",
+    "error": {
+      "empty": "There's nothing to import: paste a list or choose a file.",
+      "invalid": "The content looks like a deck format but isn't valid. Check that you copied all of it.",
+      "needsIndex": "Loading card data: I'll retry on my own as soon as it's ready.",
+      "noCards": "I didn't recognize any card. Check the names or the format.",
+      "tooBig": "The file is too large (2 MB maximum).",
+      "read": "I can't read the file."
+    },
+    "review": {
+      "title": "Review the import",
+      "body": "{{matched}} lines recognized, {{ambiguous}} to clarify, {{unmatched}} not found.",
+      "confirm_one": "Import {{count}} card",
+      "confirm_other": "Import {{count}} cards",
+      "ambiguousLine": "“{{line}}” (×{{count}})",
+      "ambiguousHint": "Several cards share this name: pick the right one.",
+      "skip": "Skip this line",
+      "unmatchedTitle_one": "{{count}} line not found",
+      "unmatchedTitle_other": "{{count}} lines not found",
+      "unmatchedHint": "These lines are skipped. Fix them and import again if you need them.",
+      "fuzzyTitle_one": "{{count}} line corrected by me",
+      "fuzzyTitle_other": "{{count}} lines corrected by me",
+      "resolved": "Choices made: {{done}} of {{total}}. Lines without a choice are skipped."
+    }
+  },
+  "export": {
+    "title": "Export the deck",
+    "lead": "Copy with one tap or download the file.",
+    "text": "Text",
+    "textHint": "Readable list with names in the app language.",
+    "ydke": "ydke:// link",
+    "ydkeHint": "Paste it into EDOPro, Master Duel Meta and similar.",
+    "ydk": ".ydk file",
+    "ydkHint": "Classic format for simulators.",
+    "json": "Combo Lab JSON",
+    "jsonHint": "Re-import it here without losing anything.",
+    "copy": "Copy",
+    "download": "Download .ydk",
+    "copied": "{{what}} copied",
+    "copyFailed": "Copy failed: select the text and copy it by hand.",
+    "preview": "Preview: {{what}}"
   }
 }

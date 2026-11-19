@@ -14,7 +14,8 @@ export function issuesByCard(issues: readonly LegalityIssue[]): Map<number, Lega
 
 /** Chiave i18n del messaggio esteso (sotto `legality.issue.`). */
 export function issueKey(i: LegalityIssue): string {
-  if (i.code === 'main-size' || i.code === 'extra-size') return i.params.reason ? `${i.code}.${String(i.params.reason)}` : i.code
+  if (i.params.reason === 'extra-card-in-main') return 'extraInMain'
+  if (i.params.reason === 'non-extra-card-in-extra') return 'nonExtraInExtra'
   return i.code
 }
 
