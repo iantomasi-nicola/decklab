@@ -159,7 +159,7 @@ for (const theme of themes) {
   }
 }
 
-test('editor 375×667: le zone Mostri/Magie-Trappole non scendono sotto i 40 px (campo con avversario visibile)', async ({ page }) => {
+test('editor 375×667: le zone Mostri/Magie-Trappole hanno carta ≥ 42 px di larghezza (campo con avversario visibile; la cella è alta quanto la carta)', async ({ page }) => {
   await page.addInitScript(() => {
     try {
       localStorage.setItem('combolab.lang', 'it')
@@ -173,12 +173,13 @@ test('editor 375×667: le zone Mostri/Magie-Trappole non scendono sotto i 40 px 
   await page.waitForSelector('[data-field]')
   await page.waitForTimeout(500)
   const size = async (key: string) => {
-    const b = await page.locator(`[data-zone="${key}"]`).boundingBox()
+    const b = await page.locator(`[data-zone="${key}"] .cl-zone, [data-zone="${key}"]`).first().boundingBox()
     return b ? { w: Math.round(b.width), h: Math.round(b.height) } : null
   }
   const own = { m: await size('z:0:mzone:2'), t: await size('z:0:szone:2'), opp: await size('z:1:mzone:2') }
   console.log('zone 375x667', JSON.stringify(own))
   await page.screenshot({ path: `${OUT}/editor-375x667-both.png` })
-  expect(own.m!.w).toBeGreaterThanOrEqual(40)
-  expect(own.t!.w).toBeGreaterThanOrEqual(40)
+  // altezza cella = altezza carta; larghezza carta = altezza × 59/86
+  expect((own.m!.h * 59) / 86).toBeGreaterThanOrEqual(41.5)
+  expect((own.t!.h * 59) / 86).toBeGreaterThanOrEqual(41.5)
 })
