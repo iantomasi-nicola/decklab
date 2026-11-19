@@ -2,13 +2,12 @@
  * Campo interattivo: drag & drop (@dnd-kit/core, mouse + touch), due tocchi, menu contestuale, "Sposta in…"
  * da tastiera. Ogni azione diventa una bozza di passo (`Draft`) applicata dallo store.
  */
-import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react'
+import { Profiler, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent, type Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, rectIntersection, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useTranslation } from 'react-i18next'
 import { type ComboDoc, type Move, type Place, type PlayerIdx, type Uid } from '@/domain/combo/types'
 import { ownerOfUid, type GameState, type NPlace } from '@/domain/combo/state'
-import { Button } from '@/ui/Button'
 import { toast } from '@/ui/Toast'
 import {
   activateOption, destinations, optionsFor, pickByModifier, positionOptions,
@@ -20,6 +19,10 @@ import { AddCardDialog, CounterDialog, LpDialog, MoveToDialog, type AddDest } fr
 import { useEditor } from './editorStore'
 import { Field, type FieldView } from './Field'
 import { nextUid, remainingPool, poolTotal, type Draft } from './model'
+import { CardOptMarks, TargetPickerOverlay } from '@/features/turn'
+import { usesOfCard, type TurnState } from '@/domain/combo/turn'
+import { GameIcon, iconForAction } from '@/ui/gameIcons'
+import { playSound, soundForAction } from '@/features/sound'
 import { PileSheet } from './PileSheet'
 import { PilesPanel } from './PilesPanel'
 import { PopMenu, type PopItem } from './PopMenu'
@@ -68,6 +71,23 @@ type Pending =
   | { kind: 'tribute'; sel: Sel; opt: Option; need: number; chosen: Uid[] }
   | { kind: 'materials'; stepId: string; host: Uid; xyz: boolean; fromHand: boolean; chosen: Uid[] }
 
+/** Suono del passo (fire-and-forget: non blocca mai il trascinamento né il rendering). */
+function sfx(step: { action: import('@/domain/combo/types').ActionKind; method?: import('@/domain/combo/types').SummonMethod; moves?: import('@/domain/combo/types').Move[] }) {
+  try {
+    const n = soundForAction(step)
+    if (n) playSound(n)
+  } catch {
+    /* audio non disponibile */
+  }
+}
+
+/** Solo sviluppo/test: tempi di rendering del campo (ms) in `window.__fieldRenders`. */
+const onProfile = (_id: string, _phase: string, actual: number) => {
+  if (!import.meta.env.DEV) return
+  const w = window as unknown as { __fieldRenders?: number[] }
+  ;(w.__fieldRenders ??= []).push(actual)
+}
+
 interface MenuState { x: number; y: number; title: string; items: PopItem[] }
 
 export interface BoardHandle {
@@ -84,6 +104,7 @@ export function Board({
   handle,
   pilesEl,
   mineOnly,
+  turn,
 }: {
   doc: ComboDoc
   state: GameState
@@ -95,6 +116,8 @@ export function Board({
   pilesEl?: HTMLElement | null
   /** telefono verticale: solo il campo del giocatore in grande */
   mineOnly?: boolean
+  /** stato del turno dopo il passo corrente: promemoria OPT sulle carte */
+  turn?: TurnState | undefined
 }) {
   const { t } = useTranslation()
   const cards = useCards()
@@ -188,6 +211,7 @@ export function Board({
         return
       }
       const id = store.apply(draft)
+      sfx(step)
       announce(t('combos.announce.done', { action: t(`combos.act.${opt.id}`), card: name }))
       if (opt.follow?.kind === 'materials' && id && mode === 'steps') {
         const f: Follow = opt.follow
@@ -205,6 +229,7 @@ export function Board({
       const code = codeOf(selection)
       const opts = sortByChoice(optionsFor(src, dest, ctx), code, dest)
       if (!opts.length) {
+        playSound('error')
         toast(t('combos.noOption'))
         return
       }
@@ -219,7 +244,7 @@ export function Board({
         x: at.x,
         y: at.y,
         title: cards.nameOf(code),
-        items: opts.map((o) => ({ id: o.id, label: t(`combos.act.${o.id}`), onSelect: () => run(o) })),
+        items: opts.map((o) => ({ id: o.id, label: t(`combos.act.${o.id}`), icon: <GameIcon name={iconForAction(o.draft.action, o.draft.method) ?? 'check'} size={20} label={false} />, onSelect: () => run(o) })),
       })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -329,32 +354,34 @@ export function Board({
     return out
   }, [pending, state, srcOf])
 
-  const confirmPending = () => {
+  const confirmPending = (chosen: Uid[]) => {
     if (!pending) return
     const store = useEditor.getState()
     if (pending.kind === 'tribute') {
-      if (pending.chosen.length === 0) return
-      const moves: Move[] = pending.chosen.map((uid, i) => {
+      if (chosen.length === 0) return
+      const moves: Move[] = chosen.map((uid, i) => {
         const pl = state.places[uid]!
         return { uid, from: clean(pl), to: { p: pl.p, loc: 'gy', seq: pileSeq(state, pl.p, 'gy', i) }, why: 'tribute' }
       })
       const sel = pending.sel
       const src = srcOf(sel)
-      const step: StepDraft = { ...pending.opt.draft, moves: [...moves, ...pending.opt.draft.moves], costs: [{ kind: 'tribute', cards: pending.chosen }] }
+      const step: StepDraft = { ...pending.opt.draft, moves: [...moves, ...pending.opt.draft.moves], costs: [{ kind: 'tribute', cards: chosen }] }
       const draft: Draft = { step }
       if (sel.kind === 'fresh' && src) draft.register = { [src.uid]: sel.code }
       store.apply(draft)
+      sfx(step)
       announce(t('combos.announce.done', { action: t('combos.act.tributeSummon'), card: cards.nameOf(codeOf(sel)) }))
     } else {
       const host = state.places[pending.host]
       const cur = store.doc?.steps.find((s) => s.id === pending.stepId)
-      if (cur && host && pending.chosen.length) {
-        const moves: Move[] = pending.chosen.map((uid, i) => {
+      if (cur && host && chosen.length) {
+        const moves: Move[] = chosen.map((uid, i) => {
           const pl = state.places[uid]!
           const to: Place = pending.xyz ? { p: host.p, loc: 'overlay', seq: i, host: pending.host } : { p: pl.p, loc: 'gy', seq: pileSeq(state, pl.p, 'gy', i) }
           return { uid, from: clean(pl), to, why: 'material' }
         })
-        store.patchStep(pending.stepId, { moves: [...moves, ...cur.moves], costs: [...(cur.costs ?? []), { kind: 'material', cards: pending.chosen }] })
+        store.patchStep(pending.stepId, { moves: [...moves, ...cur.moves], costs: [...(cur.costs ?? []), { kind: 'material', cards: chosen }] })
+        playSound('targetConfirm')
       }
     }
     setPending(null)
@@ -540,23 +567,27 @@ export function Board({
     setAddFor(null)
   }
 
-  const pickLabel =
+  const pickTitle =
     pending?.kind === 'tribute'
-      ? t('combos.pick.tribute', { count: pending.need, n: pending.chosen.length })
+      ? t('combos.pick.tributeTitle', { name: cards.nameOf(codeOf(pending.sel)) })
       : pending?.kind === 'materials'
-        ? t(pending.xyz ? 'combos.pick.xyz' : 'combos.pick.materials', { n: pending.chosen.length })
-        : null
+        ? t(pending.xyz ? 'combos.pick.xyzTitle' : 'combos.pick.materialsTitle')
+        : undefined
+  const candList = useMemo(() => [...candidates], [candidates])
 
   return (
     <div className="relative h-full min-h-0">
-      {pending && pickLabel ? (
-        <div role="status" data-pick-bar className="absolute inset-x-2 top-2 z-30 mx-auto flex max-w-xl flex-wrap items-center gap-2 rounded-md border border-ok/60 bg-surface-1 px-3 py-2 shadow-2">
-          <span className="min-w-0 flex-1 text-[15px] text-fg">{pickLabel}</span>
-          <Button variant="primary" onClick={confirmPending} disabled={pending.kind === 'tribute' && pending.chosen.length === 0} data-testid="pick-confirm">
-            {t(pending.kind === 'tribute' ? 'combos.pick.confirm' : 'combos.pick.done')}
-          </Button>
-          <Button onClick={() => setPending(null)}>{t(pending.kind === 'tribute' ? 'common.cancel' : 'combos.pick.skip')}</Button>
-        </div>
+      {pending ? (
+        <TargetPickerOverlay
+          candidates={candList}
+          min={pending.kind === 'tribute' ? Math.min(1, candList.length) : 0}
+          max={pending.kind === 'tribute' ? Math.max(1, Math.min(pending.need, candList.length)) : Math.max(1, candList.length)}
+          title={pickTitle ?? ''}
+          cardName={nameOfUid}
+          onChange={() => playSound('targetSelect')}
+          onConfirm={(chosen) => confirmPending(chosen)}
+          onCancel={() => setPending(null)}
+        />
       ) : sel && !readOnly ? (
         <div role="status" className="pointer-events-none absolute inset-x-2 top-2 z-30 mx-auto max-w-xl rounded-md border border-accent-text/60 bg-surface-1 px-3 py-2 text-[15px] text-fg shadow-2">
           {t('combos.selected', { name: cards.nameOf(codeOf(sel)) })}
@@ -572,13 +603,23 @@ export function Board({
         onDragCancel={onDragCancel}
         autoScroll={false}
       >
+        <Profiler id="field" onRender={onProfile}>
         <Field
           view={view}
           ring={mode === 'setup'}
           mineOnly={!!mineOnly}
           selected={sel?.kind === 'uid' ? sel.uid : null}
           highlight={highlight}
-          picking={pending ? { candidates, chosen: new Set(pending.chosen) } : null}
+          picking={null}
+          renderMarks={(uid, code) => {
+            if (!turn) return null
+            const uses = usesOfCard(turn, uid, code)
+            return uses.length ? (
+              <span className="pointer-events-none absolute -bottom-1 -right-1 z-10">
+                <CardOptMarks turn={turn} uid={uid} code={code} size="sm" />
+              </span>
+            ) : null
+          }}
           onCardClick={onCardClick}
           onCardDouble={(uid) => {
             if (readOnly || pending) return
@@ -591,6 +632,7 @@ export function Board({
           onPile={(p, loc) => setSheet({ p, loc, forDrop: null })}
           onLp={(p) => !readOnly && setLpFor(p)}
         />
+        </Profiler>
         <DragOverlay dropAnimation={null}>
           {dragSel && !suppress.current ? (
             <div style={{ width: dragSize }} className="pointer-events-none opacity-90 drop-shadow-lg">

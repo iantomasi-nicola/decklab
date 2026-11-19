@@ -154,6 +154,8 @@ function BranchBlock({ branch, ctx }: { branch: Branch; ctx: GuideCtx }) {
 
 
 /* ------------------------------------------------------------------ elenco con navigazione */
+/** Sotto questa soglia la barra (sommario, ricerca, salto) non serve. */
+const NAV_MIN_STEPS = 12
 const SCROLL_MT = 'scroll-mt-[8.25rem]' // altezza barra alta (57 px) + barra di navigazione (60 px) + respiro
 
 const StepItem = memo(function StepItem({ gs, ctx, variants, last, flash, inChain }: { gs: GuideStep; ctx: GuideCtx; variants: VariantRow[]; last: boolean; flash: boolean; inChain: boolean }) {
@@ -369,6 +371,7 @@ export function StepsSection({ ctx, variants }: { ctx: GuideCtx; variants: Varia
   const lastIdx = items.length - 1
   return (
     <>
+      {total >= NAV_MIN_STEPS ? (
       <div ref={toolbar} data-testid="guide-toolbar" className="sticky top-[57px] z-20 md:top-[61px] -mx-1 bg-bg px-1 py-2">
         <div className="flex items-center gap-2">
           <Button
@@ -405,7 +408,8 @@ export function StepsSection({ ctx, variants }: { ctx: GuideCtx; variants: Varia
           </div>
         ) : null}
       </div>
-      {!wide ? (
+      ) : null}
+      {!wide && total >= NAV_MIN_STEPS ? (
         <BottomSheet open={tocOpen} onOpenChange={setTocOpen} title={t('guide.nav.tocTitle')}>
           {toc}
         </BottomSheet>

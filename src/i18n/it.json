@@ -296,6 +296,9 @@
       "lp": "LP: {{lp}}"
     },
     "pick": {
+      "tributeTitle": "Tributo per {{name}}",
+      "xyzTitle": "Materiali Xyz",
+      "materialsTitle": "Materiali",
       "tributeHint": "Tocca {{count}} mostri da tributare.",
       "tribute": "Scegli i tributi ({{n}} scelti, servono {{count}})",
       "confirm": "Conferma",
@@ -425,7 +428,12 @@
       "note": "Nota",
       "phase": "Fase",
       "phaseNone": "Non indicata",
-      "optional": "Passo facoltativo"
+      "optional": "Passo facoltativo",
+      "opt": "Una volta per turno (OPT)",
+      "optAuto": "Automatico",
+      "optCard": "Sì, per copia",
+      "optName": "Sì, per nome della carta",
+      "optNo": "No"
     },
     "incoherent": {
       "title_one": "{{count}} passo non torna più con lo stato",
@@ -486,7 +494,46 @@
       "step": "Passo {{n}} di {{total}}"
     },
     "mineOnlyOn": "Il mio campo: tocca per mostrare anche quello avversario",
-    "mineOnlyOff": "Mostra solo il mio campo"
+    "mineOnlyOff": "Mostra solo il mio campo",
+    "menu": {
+      "share": "Condividi…",
+      "check": "Controlla la combo",
+      "checkOff": "Nascondi i controlli",
+      "practice": "Mano di prova…",
+      "more": "Altre azioni"
+    },
+    "modeSetupOff": "Esci dalla configurazione iniziale",
+    "check": {
+      "found_one": "{{count}} problema trovato",
+      "found_other": "{{count}} problemi trovati",
+      "ok": "Nessun problema: i passi sono coerenti"
+    },
+    "coh": {
+      "unknownUid": "Carta {{uid}} non registrata",
+      "cardNotAvailable": "{{name}} non è ancora disponibile: va in mano o cercata prima",
+      "materialNotOnField": "{{name}} non è sul campo (è in: {{loc}})",
+      "targetMissing": "Il bersaglio {{name}} non è disponibile",
+      "wrongSource": "{{name}} non è in {{declared}} ma in {{actual}}",
+      "oncePerTurn": "L'effetto {{index}} di {{name}} è già stato usato in questo turno",
+      "afterEndTurn": "Azione dopo la fine del turno",
+      "branchMissingStep": "Il ramo {{branch}} punta a un passo che non esiste ({{afterStep}})"
+    },
+    "banlist": {
+      "hit": "{{name}}: {{status}} con la banlist della combo",
+      "forbidden": "proibita",
+      "limited": "limitata",
+      "semi-limited": "semi-limitata"
+    },
+    "practice": {
+      "title": "Mano di prova",
+      "hint": "Mano di {{size}} carte pescata a caso dal mazzo; sotto, quali combo salvate sono giocabili.",
+      "new": "Nuova mano",
+      "noDeck": "Questa combo non ha un mazzo: aggiungi carte o collegala a una variante.",
+      "results": "Combo salvate",
+      "playable": "Giocabile",
+      "missing_one": "Manca 1 carta",
+      "missing_other": "Mancano {{count}} carte"
+    }
   },
   "learn": {
     "title": "Impara",

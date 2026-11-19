@@ -25,6 +25,14 @@ import { toast } from '@/ui/Toast'
 import { Tooltip } from '@/ui/Tooltip'
 import { BottomSheet } from '@/ui/BottomSheet'
 import { Menu } from '@/ui/Menu'
+import { ShareDialog } from '@/features/share/ShareDialog'
+import { useCardData } from '@/features/cards/api'
+import { optTotalInDoc, turnTimeline, type Phase } from '@/domain/combo/turn'
+import { banlistImpact, checkCoherence } from '@/domain/smart'
+import { playSound } from '@/features/sound'
+import Ellipsis from 'lucide-react/icons/ellipsis'
+import { PracticeHandDialog } from './PracticeHandDialog'
+import type { StepMark } from './StepsPanel'
 import { Board, type BoardHandle } from './Board'
 import { FIELD_ASPECT_RATIO } from './Field'
 import { useEditor } from './editorStore'
@@ -75,6 +83,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const pilesPref = useFieldPrefs((s) => s.pilesPanel)
   const isMd = useMediaQuery('(min-width: 768px)')
   const isLg = useMediaQuery('(min-width: 1024px)')
+  const phone = useMediaQuery('(max-width: 639px)')
   const phonePortrait = useMediaQuery('(max-width: 616px) and (orientation: portrait)')
   const minePref = useFieldPrefs((s) => s.mineOnly)
   const mineOnly = phonePortrait && (minePref ?? true)
@@ -153,9 +162,11 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       if (key === 'z' && !e.shiftKey) {
         e.preventDefault()
         useEditor.getState().undo()
+        playSound('undo')
       } else if ((key === 'z' && e.shiftKey) || key === 'y') {
         e.preventDefault()
         useEditor.getState().redo()
+        playSound('redo')
       }
     }
     window.addEventListener('keydown', k)
@@ -190,6 +201,35 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     [navigate, saveNow, i18n.language, t],
   )
 
+  const deriveRef = useRef(derive)
+  deriveRef.current = derive
+  const onDerive = useCallback((i: number, incl: boolean) => void deriveRef.current(i, incl), [])
+
+  // ---- turno, controlli e banlist (calcolati una volta per documento)
+  const timeline = useMemo(() => (doc ? turnTimeline(doc) : null), [doc])
+  const optTotal = useMemo(() => (doc ? optTotalInDoc(doc) : 0), [doc])
+  const cardsData = useCardData()
+  const [checkOn, setCheckOn] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [practiceOpen, setPracticeOpen] = useState(false)
+  const issues = useMemo(() => (checkOn && doc ? checkCoherence(doc, cards.nameOf) : []), [checkOn, doc, cards.nameOf])
+  const hits = useMemo(() => {
+    if (!doc || cardsData.status !== 'ready') return []
+    const bl = cardsData.banlists.find((b) => b.format === doc.meta.banlist.format && b.id === doc.meta.banlist.id)
+    return bl ? banlistImpact(doc, bl, cardsData.index).filter((h) => h.stepId && (h.status === 'forbidden' || h.excess)) : []
+  }, [doc, cardsData])
+  const marks = useMemo(() => {
+    const m = new Map<string, StepMark[]>()
+    const add = (id: string, mk: StepMark) => m.set(id, [...(m.get(id) ?? []), mk])
+    for (const i of issues) add(i.stepId, { kind: 'coherence', severity: i.severity, text: t(`combos.coh.${i.code.split('.').pop()}`, i.params) })
+    for (const h of hits) add(h.stepId!, { kind: 'banlist', severity: h.status === 'forbidden' ? 'error' : 'warning', text: t('combos.banlist.hit', { name: cards.nameOf(h.cardId), status: t(`combos.banlist.${h.status}`) }) })
+    return m
+  }, [issues, hits, t, cards.nameOf])
+  const onPhaseChange = useCallback((to: Phase) => {
+    useEditor.getState().apply({ step: { action: 'enterPhase', phase: to, moves: [] } })
+    playSound('phaseChange')
+  }, [])
+
   if (record === undefined) return <Skeleton className="h-96 w-full" />
   if (record === null || readError) {
     return (
@@ -213,7 +253,10 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const inlinePanel = isLg && panel.open
   const showPiles = pilesPanelEnabled(pilesPref)
   const activeTab: PanelTab = panel.tab === 'piles' && !showPiles ? 'steps' : panel.tab
-  const togglePanel = () => setPanelState({ ...panel, open: !panel.open })
+  const togglePanel = () => {
+    playSound(panel.open ? 'uiClose' : 'uiOpen')
+    setPanelState({ ...panel, open: !panel.open })
+  }
 
   const panelBody = (
     <Tabs value={activeTab} onValueChange={(v) => setPanelState({ ...panel, tab: v as PanelTab })} className="min-w-0">
@@ -229,7 +272,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
         </TabsContent>
       ) : null}
       <TabsContent value="steps">
-        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={(i, incl) => void derive(i, incl)} />
+        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={onDerive} marks={marks} turn={timeline?.[cursor]} optTotal={optTotal} onPhaseChange={onPhaseChange} checkBanner={checkOn ? { count: issues.length, onClose: () => setCheckOn(false) } : null} />
       </TabsContent>
       <TabsContent value="setup">
         <SetupPanel doc={doc} nameOf={nameOfUid} />
@@ -241,65 +284,90 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   )
 
   const tool = 'inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-150'
+  const run = (fn: () => void) => () => {
+    playSound('uiTap')
+    fn()
+  }
+  const moreItems = [
+    ...(phone
+      ? [
+          { id: 'own', label: t('combos.add.own'), onSelect: () => boardRef.current?.addCard(0) },
+          { id: 'opp', label: t('combos.add.opp'), onSelect: () => boardRef.current?.addCard(1) },
+          ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
+          { id: 'setup', label: mode === 'setup' ? t('combos.modeSetupOff') : t('combos.modeSetup'), onSelect: () => store.setMode(mode === 'setup' ? 'steps' : 'setup') },
+        ]
+      : []),
+    { id: 'share', label: t('combos.menu.share'), onSelect: run(() => setShareOpen(true)) },
+    {
+      id: 'check',
+      label: checkOn ? t('combos.menu.checkOff') : t('combos.menu.check'),
+      onSelect: run(() => {
+        setCheckOn((v) => !v)
+        if (!checkOn) setPanelState({ open: true, tab: 'steps' })
+      }),
+    },
+    { id: 'practice', label: t('combos.menu.practice'), onSelect: run(() => setPracticeOpen(true)) },
+  ]
   const actions = (
-    <div className="flex items-center justify-between gap-1 sm:justify-end">
-      <div className="flex items-center gap-1">
-        <Tooltip label={`${t('combos.undo')} (Ctrl+Z)`}>
-          <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={() => store.undo()} data-testid="undo" />
-        </Tooltip>
-        <Tooltip label={`${t('combos.redo')} (Ctrl+Shift+Z)`}>
-          <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={() => store.redo()} data-testid="redo" />
-        </Tooltip>
-      </div>
-      <div className="flex items-center gap-1">
-        <Menu
-          trigger={<IconButton label={t('combos.add.menu')} icon={<Plus size={20} />} disabled={readOnly} data-testid="add-menu" />}
-          items={[
-            { id: 'own', label: t('combos.add.own'), onSelect: () => boardRef.current?.addCard(0) },
-            { id: 'opp', label: t('combos.add.opp'), onSelect: () => boardRef.current?.addCard(1) },
-            ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
-          ]}
-        />
-        {phonePortrait ? (
-          <Tooltip label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}>
+    <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+      <Tooltip label={`${t('combos.undo')} (Ctrl+Z)`}>
+        <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={() => { store.undo(); playSound('undo') }} data-testid="undo" />
+      </Tooltip>
+      <Tooltip label={`${t('combos.redo')} (Ctrl+Shift+Z)`}>
+        <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={() => { store.redo(); playSound('redo') }} data-testid="redo" />
+      </Tooltip>
+      {!phone ? (
+        <>
+          <Menu
+            trigger={<IconButton label={t('combos.add.menu')} icon={<Plus size={20} />} disabled={readOnly} data-testid="add-menu" />}
+            items={[
+              { id: 'own', label: t('combos.add.own'), onSelect: () => boardRef.current?.addCard(0) },
+              { id: 'opp', label: t('combos.add.opp'), onSelect: () => boardRef.current?.addCard(1) },
+              ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
+            ]}
+          />
+          <Tooltip label={t('combos.modeSetup')}>
             <button
               type="button"
-              aria-label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}
-              aria-pressed={mineOnly}
-              data-testid="mine-only"
-              onClick={() => useFieldPrefs.getState().setMineOnly(!mineOnly)}
-              className={cn(tool, 'cursor-pointer', mineOnly ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+              aria-label={t('combos.modeSetup')}
+              aria-pressed={mode === 'setup'}
+              data-testid="mode-setup"
+              onClick={() => store.setMode(mode === 'setup' ? 'steps' : 'setup')}
+              className={cn(tool, 'cursor-pointer', mode === 'setup' ? 'bg-accent text-accent-fg' : 'text-muted hover:bg-surface-2 hover:text-fg')}
             >
-              {mineOnly ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
+              <SlidersHorizontal size={20} aria-hidden />
             </button>
           </Tooltip>
-        ) : null}
-        <Tooltip label={t('combos.modeSetup')}>
+        </>
+      ) : null}
+      {phonePortrait ? (
+        <Tooltip label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}>
           <button
             type="button"
-            aria-label={t('combos.modeSetup')}
-            aria-pressed={mode === 'setup'}
-            data-testid="mode-setup"
-            onClick={() => store.setMode(mode === 'setup' ? 'steps' : 'setup')}
-            className={cn(tool, 'cursor-pointer', mode === 'setup' ? 'bg-accent text-accent-fg' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+            aria-label={t(mineOnly ? 'combos.mineOnlyOn' : 'combos.mineOnlyOff')}
+            aria-pressed={mineOnly}
+            data-testid="mine-only"
+            onClick={() => useFieldPrefs.getState().setMineOnly(!mineOnly)}
+            className={cn(tool, 'cursor-pointer', mineOnly ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
           >
-            <SlidersHorizontal size={20} aria-hidden />
+            {mineOnly ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
           </button>
         </Tooltip>
-        <Tooltip label={t('combos.panelToggle')}>
-          <button
-            type="button"
-            aria-label={t('combos.panelToggle')}
-            aria-pressed={panel.open}
-            aria-expanded={panel.open}
-            data-testid="panel-toggle"
-            onClick={togglePanel}
-            className={cn(tool, 'cursor-pointer', panel.open ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
-          >
-            <PanelRight size={20} aria-hidden />
-          </button>
-        </Tooltip>
-      </div>
+      ) : null}
+      <Tooltip label={t('combos.panelToggle')}>
+        <button
+          type="button"
+          aria-label={t('combos.panelToggle')}
+          aria-pressed={panel.open}
+          aria-expanded={panel.open}
+          data-testid="panel-toggle"
+          onClick={togglePanel}
+          className={cn(tool, 'cursor-pointer', panel.open ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+        >
+          <PanelRight size={20} aria-hidden />
+        </button>
+      </Tooltip>
+      <Menu trigger={<IconButton label={t('combos.menu.more')} icon={<Ellipsis size={20} />} data-testid="more-menu" />} items={moreItems} />
     </div>
   )
 
@@ -308,20 +376,20 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       data-combo-stage
       className="flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]"
     >
-      <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <Tooltip label={t('combos.backToList')}>
-            <Link to="/combo" aria-label={t('combos.backToList')} className={cn(tool, 'text-muted hover:bg-surface-2 hover:text-fg')}>
-              <ArrowLeft size={20} aria-hidden />
-            </Link>
-          </Tooltip>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-semibold leading-6">{title}</h1>
-            <p className="truncate text-sm leading-5 text-muted" data-testid="save-state" role="status">
-              {readOnly ? t('combos.readOnly') : t(`combos.save.${save}`)}
-            </p>
-          </div>
+      <header className="flex shrink-0 items-center gap-1">
+        <Tooltip label={t('combos.backToList')}>
+          <Link to="/combo" aria-label={t('combos.backToList')} className={cn(tool, 'text-muted hover:bg-surface-2 hover:text-fg')}>
+            <ArrowLeft size={20} aria-hidden />
+          </Link>
+        </Tooltip>
+        {/* su telefono il titolo sta nella barra del passo (sotto il campo): qui serve spazio per i pulsanti */}
+        <div className={cn('min-w-0 flex-1', phone && 'sr-only')}>
+          <h1 className="truncate text-lg font-semibold leading-6">{title}</h1>
+          <p className="truncate text-sm leading-5 text-muted" data-testid="save-state" role="status">
+            {readOnly ? t('combos.readOnly') : t(`combos.save.${save}`)}
+          </p>
         </div>
+        {phone ? <div className="flex-1" /> : null}
         {actions}
       </header>
 
@@ -334,7 +402,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             data-mode={mode}
             style={{ width: inlinePanel ? `min(calc(100cqw - 328px), calc(100cqh * ${FIELD_ASPECT_RATIO}))` : '100%', flex: inlinePanel ? 'none' : '1 1 0%' }}
           >
-            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} mineOnly={mineOnly} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
+            <Board doc={doc} state={state} mode={mode} cursor={cursor} readOnly={readOnly} handle={boardRef} turn={timeline?.[cursor]} mineOnly={mineOnly} pilesEl={panel.open && showPiles && panel.tab === 'piles' ? pilesEl : null} />
             {mode === 'setup' ? (
               <p className="pointer-events-none absolute bottom-2 left-1/2 z-30 -translate-x-1/2 rounded-full border border-accent-text/60 bg-surface-1 px-3 py-1 text-sm font-medium text-accent-text shadow-1">
                 {t('combos.modeSetupBadge')}
@@ -362,7 +430,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
 
       {!isMd ? (
         <div className="flex shrink-0 items-center gap-1 rounded-lg border border-line bg-surface-1 px-1" data-step-strip>
-          <IconButton label={t('combos.strip.prev')} icon={<ChevronLeft size={20} />} disabled={cursor === 0} onClick={() => store.setCursor(cursor - 1)} />
+          <IconButton label={t('combos.strip.prev')} icon={<ChevronLeft size={20} />} disabled={cursor === 0} onClick={() => { store.setCursor(cursor - 1); playSound('stepPrev') }} />
           <button
             type="button"
             onClick={() => setPanelState({ open: true, tab: 'steps' })}
@@ -371,11 +439,14 @@ export function ComboEditor({ comboId }: { comboId: string }) {
             <span className="truncate text-sm font-medium text-fg">
               {cursor === 0 ? t('combos.strip.start') : describeStep(doc.steps[cursor - 1]!, nameOfUid, t)}
             </span>
-            <span className="truncate text-xs text-muted">{t('combos.strip.step', { n: cursor, total: doc.steps.length })}</span>
+            <span className="truncate text-xs text-muted">{title} · {t('combos.strip.step', { n: cursor, total: doc.steps.length })}</span>
           </button>
-          <IconButton label={t('combos.strip.next')} icon={<ChevronRight size={20} />} disabled={cursor >= doc.steps.length} onClick={() => store.setCursor(cursor + 1)} />
+          <IconButton label={t('combos.strip.next')} icon={<ChevronRight size={20} />} disabled={cursor >= doc.steps.length} onClick={() => { store.setCursor(cursor + 1); playSound(cursor + 1 >= doc.steps.length ? 'comboComplete' : 'stepNext') }} />
         </div>
       ) : null}
+
+      {shareOpen ? <ShareDialog open onOpenChange={(o) => !o && setShareOpen(false)} doc={finalizeDoc(doc, new Date().toISOString())} /> : null}
+      {practiceOpen ? <PracticeHandDialog doc={doc} records={all} onClose={() => setPracticeOpen(false)} /> : null}
 
       {!isMd ? (
         <BottomSheet open={panel.open} onOpenChange={(o) => setPanelState({ ...panel, open: o })} title={t('combos.panels')}>

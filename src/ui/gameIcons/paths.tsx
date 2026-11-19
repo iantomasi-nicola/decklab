@@ -36,10 +36,11 @@ export const ICON_PATHS: Record<GameIconName, ReactNode> = {
     </>
   ),
   continuous: <path d="M12 12c-2-3-3.5-4-5.5-4a4 4 0 0 0 0 8c2 0 3.5-1 5.5-4Zm0 0c2 3 3.5 4 5.5 4a4 4 0 0 0 0-8c-2 0-3.5 1-5.5 4Z" />,
+  // activation: sole di raggi (nessuna carta: si distingue a colpo d'occhio da evocazioni e posizioni)
   activation: (
     <>
-      <path d={CARD} />
-      <path d="m12 8.2 1.1 2.7 2.7 1.1-2.7 1.1L12 15.8l-1.1-2.7L8.2 12l2.7-1.1L12 8.2Z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.4 2.4M16 16l2.4 2.4M18.4 5.6 16 8M8 16l-2.4 2.4" />
     </>
   ),
   chain: (
@@ -109,10 +110,11 @@ export const ICON_PATHS: Record<GameIconName, ReactNode> = {
     </>
   ),
 
+  // normalSummon: freccia che sale su una zona
   normalSummon: (
     <>
-      <path d={CARD} />
-      <circle cx="12" cy="12" r="2.6" />
+      <path d="M12 15.5V4M7.5 8.5 12 4l4.5 4.5" />
+      <path d="M4.5 19.5h15" />
     </>
   ),
   tributeSummon: (
@@ -121,10 +123,11 @@ export const ICON_PATHS: Record<GameIconName, ReactNode> = {
       <path d="m9.5 9.5 5 5M14.5 9.5l-5 5" />
     </>
   ),
+  // setMonster: carta in orizzontale (calata in DEF) con il dorso
   setMonster: (
     <>
-      <path d={CARD} />
-      <path d="m12 8 4 4-4 4-4-4 4-4Z" />
+      <path d="M5 7.5h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2Z" />
+      <path d="M8 12h8" />
     </>
   ),
   flipSummon: (
@@ -191,10 +194,11 @@ export const ICON_PATHS: Record<GameIconName, ReactNode> = {
     </>
   ),
   posDef: <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z" />,
+  // posFacedown: occhio chiuso
   posFacedown: (
     <>
-      <path d={CARD} />
-      <path d="M9.5 9.5h5v5h-5Z" />
+      <path d="M3 10.5c2.6 4.5 15.4 4.5 18 0" />
+      <path d="m6.2 14.6-1.7 2.4M12 16v3M17.8 14.6l1.7 2.4" />
     </>
   ),
   counter: (

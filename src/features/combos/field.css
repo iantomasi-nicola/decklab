@@ -179,13 +179,16 @@
     color: var(--fg-muted);
     overflow: hidden;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: manual;
     text-wrap: balance;
     max-height: 3.5em;
     pointer-events: none;
   }
   .cl-fit:has([role='img']) .cl-name {
     display: block;
+  }
+  .cl-def .cl-name {
+    display: none !important; /* il testo ruotato si spezzerebbe male: resta il tooltip */
   }
   @container (max-width: 52px) {
     .cl-name {
@@ -261,17 +264,17 @@
     .cl-grid {
       --g: 1.2cqw;
       --pad: 3.4cqw; /* margine per la DEF ruotata (sconfina sulle zone vicine) anche nelle colonne esterne */
-      --u: 7.69;
+      --u: 6.9;
       --cw: calc((100cqw - 2 * var(--pad) - 4 * var(--g)) / 5);
       --tw: min(var(--cw) * 0.9, calc((100cqh - 2 * var(--pad) - 8 * var(--g)) / (var(--u) * 86 / 59)));
       --th: calc(var(--tw) * 86 / 59);
       --hw: calc(5 * var(--cw) + 4 * var(--g));
       grid-template-columns: repeat(5, var(--cw));
-      grid-template-rows: calc(var(--th) * 0.45) calc(var(--th) * 0.62) var(--th) var(--th) var(--th) var(--th) var(--th) calc(var(--th) * 0.62) var(--th);
+      grid-template-rows: calc(var(--th) * 0.4) calc(var(--th) * 0.5) calc(var(--th) * 0.75) calc(var(--th) * 0.75) var(--th) var(--th) var(--th) calc(var(--th) * 0.5) var(--th);
     }
     .cl-mine .cl-grid {
-      --u: 5.07;
-      grid-template-rows: calc(var(--th) * 0.45) 0 0 0 var(--th) var(--th) var(--th) calc(var(--th) * 0.62) var(--th);
+      --u: 4.9;
+      grid-template-rows: calc(var(--th) * 0.4) 0 0 0 var(--th) var(--th) var(--th) calc(var(--th) * 0.5) var(--th);
     }
     .cl-mine .cl-opp-main {
       display: none;
@@ -281,7 +284,7 @@
       grid-column: var(--pc);
     }
     .cl-hand-opp {
-      --hs: 0.45;
+      --hs: 0.4;
     }
     /* Cimitero/Bandite: solo la carta più recente (niente ventaglio) al centro della cella */
     .cl-fan-card {

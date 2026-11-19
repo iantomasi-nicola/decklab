@@ -85,7 +85,7 @@ export function Timeline({ frames, index, branchStart, onSeek }: { frames: Frame
     c.scrollTo({ left, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })
   }, [index])
   return (
-    <div ref={box} role="group" aria-label={t('replay.timeline')} data-testid="replay-timeline" className="-mx-1 flex gap-1 overflow-x-auto px-1 py-0.5 [scrollbar-width:thin]">
+    <div ref={box} role="group" aria-label={t('replay.timeline')} data-testid="replay-timeline" className="-mx-2 flex gap-1 overflow-x-auto px-2 py-0.5 [mask-image:linear-gradient(to_right,transparent,#000_8px,#000_calc(100%-8px),transparent)] [scrollbar-width:thin]">
       {frames.map((f, i) => {
         const cur = i === index
         const branch = i >= branchStart

@@ -52,10 +52,11 @@ function pairs(name: string, drag: Drag, kbd = false) {
     test('Mano (livello 7) → Zona Mostro: Tributo con scelta toccando i mostri', async ({ page }) => {
       await drag(page, card(page, 'u2'), zone(page, 'z:0:mzone:2'))
       await chooseMenu(page, 'tributeSummon')
-      await expect(page.locator('[data-pick-bar]')).toBeVisible()
-      await card(page, 'u10').click()
-      await card(page, 'u9').click()
-      await page.getByTestId('pick-confirm').click()
+      const picker = page.getByTestId('target-picker')
+      await expect(picker).toBeVisible()
+      await picker.getByRole('button', { name: /Reborn Tengu, candidate|Reborn Tengu, candidata/ }).click()
+      await picker.getByRole('button', { name: /Magi Magi.*(candidate|candidata)/ }).click()
+      await picker.getByRole('button', { name: /^(Confirm|Conferma)$/ }).click()
       const s = await last(page)
       expect(s).toMatchObject({ action: 'tributeSummon', card: 'u2' })
       const moves = s.moves as Array<{ uid: string; why: string; to: { loc: string } }>
@@ -92,9 +93,10 @@ function pairs(name: string, drag: Drag, kbd = false) {
       await page.locator('[data-pile-card]').filter({ has: page.locator('img, [role=img]') }).first().waitFor()
       // il Deck Extra contiene Link e Xyz: scegli lo Xyz tramite il nome nel pannello
       await page.getByRole('button', { name: /Magi Magi/ }).click()
-      await expect(page.locator('[data-pick-bar]')).toBeVisible()
-      await card(page, 'u10').click()
-      await page.getByTestId('pick-confirm').click()
+      const picker = page.getByTestId('target-picker')
+      await expect(picker).toBeVisible()
+      await picker.getByRole('button', { name: /Reborn Tengu, candidate|Reborn Tengu, candidata/ }).click()
+      await picker.getByRole('button', { name: /^(Confirm|Conferma)$/ }).click()
       const s = await last(page)
       expect(s).toMatchObject({ action: 'specialSummon', method: 'xyz', to: { loc: 'mzone', seq: 2 } })
       const moves = s.moves as Array<{ uid: string; why: string; to: { loc: string; host?: string } }>
@@ -104,7 +106,7 @@ function pairs(name: string, drag: Drag, kbd = false) {
     test('Extra Deck → EMZ (Link)', async ({ page }) => {
       await drag(page, page.locator('[data-pile-drag="extra"]'), zone(page, 'z:0:emz:0'))
       await page.getByRole('button', { name: /Bucephalus/ }).click()
-      await page.getByRole('button', { name: /Skip|Salta/ }).click()
+      await page.getByTestId('target-picker').getByRole('button', { name: /^(Cancel|Annulla)$/ }).click()
       expect(await last(page)).toMatchObject({ action: 'specialSummon', method: 'link', to: { loc: 'emz', seq: 0 } })
     })
 

@@ -3,7 +3,7 @@
  * (verticale 7×7 / orizzontale 9×5) sono pura CSS (field.css, container query). Per l'avversario le colonne
  * sono specchiate (vista dal giocatore).
  */
-import { createContext, useContext, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
+import { createContext, memo, useContext, useMemo, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { useTranslation } from 'react-i18next'
 import Ban from 'lucide-react/icons/ban'
@@ -11,7 +11,7 @@ import Check from 'lucide-react/icons/check'
 import Layers from 'lucide-react/icons/layers'
 import Skull from 'lucide-react/icons/skull'
 import Sparkles from 'lucide-react/icons/sparkles'
-import { overlaysOf, zoneCards, type GameState } from '@/domain/combo/state'
+import { overlaysOf, zoneCards, type GameState, type NPlace } from '@/domain/combo/state'
 import { useFieldPrefs } from './fieldPrefs'
 import type { PlayerIdx, Uid } from '@/domain/combo/types'
 import { cn } from '@/ui/cn'
@@ -51,7 +51,7 @@ export interface FieldHandlers {
   onLp: (p: PlayerIdx) => void
 }
 
-interface Ctx extends FieldHandlers { view: FieldView; readOnly: boolean; emphasis: FieldEmphasis; pilesOpen: boolean }
+interface Ctx extends FieldHandlers { view: FieldView; readOnly: boolean; emphasis: FieldEmphasis; pilesOpen: boolean; renderMarks?: ((uid: Uid, code: number) => React.ReactNode) | undefined }
 const FieldCtx = createContext<Ctx | null>(null)
 const useField = () => {
   const c = useContext(FieldCtx)
@@ -176,34 +176,46 @@ function Cell({
 }
 
 /* ---------------------------------------------------------------- carta */
-function CardBadges({ uid }: { uid: Uid }) {
-  const { view } = useField()
-  const c = view.state.counters[uid]
-  const total = c ? Object.values(c).reduce((a, b) => a + b, 0) : 0
-  const ov = overlaysOf(view.state, uid).length
-  return (
-    <>
-      {total ? <span className="cl-badge -left-1 -top-1" data-counters={total}>●{total}</span> : null}
-      {ov ? <span className="cl-badge -bottom-1 -left-1" data-overlays={ov}>×{ov}</span> : null}
-    </>
-  )
+/** Gestori stabili (identità costante): leggono sempre i valori più recenti. Così le carte memorizzate non si ridisegnano per colpa loro. */
+interface Handlers {
+  click: (uid: Uid) => void
+  double: (uid: Uid) => void
+  menu: (uid: Uid, x: number, y: number) => void
+  key: (uid: Uid, e: React.KeyboardEvent) => void
+}
+const HandlersCtx = createContext<Handlers | null>(null)
+
+interface CardViewProps {
+  uid: Uid
+  place: NPlace
+  code: number
+  name: string
+  selected: boolean
+  candidate: boolean
+  chosen: boolean
+  dimmed: boolean
+  active: boolean
+  inChain: boolean
+  counters: number
+  overlays: number
+  inPile: boolean
+  /** clic delegato alla pila (destinazione) mentre c'è una selezione/un trascinamento */
+  pileTarget: boolean
+  readOnly: boolean
+  fanLeft?: string | undefined
+  fanDy?: string | undefined
+  fanZ?: number | undefined
+  fanNewest?: boolean | undefined
+  marks?: React.ReactNode
 }
 
-/** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
-function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { left: string; dy: string; z: number; newest: boolean } }) {
-  const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey, readOnly, emphasis } = useField()
-  const place = view.state.places[uid]
-  const code = view.registry[uid] ?? 0
-  const name = view.nameOf(code)
+/** Vista memorizzata di una carta: si ridisegna solo se cambia una delle sue proprietà (non per ogni passo). */
+const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
+  const h = useContext(HandlersCtx)!
+  const { uid, place, code, name, selected, candidate, chosen, active, inChain, inPile, readOnly, fanLeft } = p
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: cardDragId(uid), data: { uid }, disabled: readOnly })
   const lastTap = useRef(0)
-  if (!place) return null
-  const isSel = selected === uid
-  const cand = picking?.candidates.has(uid)
-  const chosen = picking?.chosen.has(uid)
   const def = isDefPos(place.pos)
-  const active = emphasis.active === uid
-  const inChain = emphasis.chain?.has(uid)
   const interactive = readOnly
     ? {}
     : {
@@ -212,25 +224,25 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
         role: 'button',
         tabIndex: 0,
         'aria-roledescription': '',
-        'aria-pressed': isSel,
+        'aria-pressed': selected,
         onClick: () => {
-          if (inPile && highlight) return // il clic spetta alla pila (destinazione)
+          if (inPile && p.pileTarget) return // il clic spetta alla pila (destinazione)
           const now = Date.now()
           if (now - lastTap.current < 350) {
             lastTap.current = 0
-            onCardDouble(uid)
+            h.double(uid)
           } else {
             lastTap.current = now
-            onCardClick(uid)
+            h.click(uid)
           }
         },
         onContextMenu: (e: React.MouseEvent) => {
           e.preventDefault()
-          onCardMenu(uid, e.clientX, e.clientY)
+          h.menu(uid, e.clientX, e.clientY)
         },
         onKeyDown: (e: React.KeyboardEvent) => {
           listeners?.onKeyDown?.(e)
-          onCardKey(uid, e)
+          h.key(uid, e)
         },
       }
   return (
@@ -241,16 +253,16 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
       data-loc={place.loc}
       data-active={active || undefined}
       data-chain={inChain || undefined}
-      data-newest={fan?.newest || undefined}
+      data-newest={p.fanNewest || undefined}
       aria-label={name}
       title={name}
-      style={fan ? { top: 0, bottom: 0, right: 'auto', left: fan.left, width: 'var(--tw)', transform: fan.dy, zIndex: fan.z } : undefined}
+      style={fanLeft !== undefined ? { top: 0, bottom: 0, right: 'auto', left: fanLeft, width: 'var(--tw)', transform: p.fanDy, zIndex: p.fanZ } : undefined}
       className={cn(
         'absolute inset-0 flex select-none items-center justify-center outline-none',
-        fan && 'cl-fan-card',
+        fanLeft !== undefined && 'cl-fan-card',
         readOnly ? 'pointer-events-none' : 'touch-none',
         isDragging && 'opacity-30',
-        picking && !cand && 'opacity-45',
+        p.dimmed && 'opacity-45',
       )}
     >
       <div className={cn('cl-fit', def && 'cl-def')}>
@@ -261,14 +273,16 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
           pos={place.pos}
           className={cn(
             'rounded-[6px] transition-shadow duration-150',
-            isSel && 'shadow-[0_0_0_3px_var(--accent-text)]',
-            cand && !chosen && 'shadow-[0_0_0_3px_var(--ok)]',
+            selected && 'shadow-[0_0_0_3px_var(--accent-text)]',
+            candidate && !chosen && 'shadow-[0_0_0_3px_var(--ok)]',
             chosen && 'shadow-[0_0_0_4px_var(--ok)]',
             inChain && 'shadow-[0_0_0_3px_var(--warn)]',
             active && 'shadow-[0_0_0_4px_var(--accent-text),0_0_16px_2px_var(--accent-text)]',
           )}
         />
-        {!inPile && <CardBadges uid={uid} />}
+        {!inPile && p.counters ? <span className="cl-badge -left-1 -top-1" data-counters={p.counters}>●{p.counters}</span> : null}
+        {!inPile && p.overlays ? <span className="cl-badge -bottom-1 -left-1" data-overlays={p.overlays}>×{p.overlays}</span> : null}
+        {p.marks}
         {chosen ? (
           <span className="cl-badge -right-1 -top-1 grid place-items-center !bg-ok !text-bg">
             <Check className="size-3.5" aria-hidden />
@@ -276,6 +290,40 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
         ) : null}
       </div>
     </div>
+  )
+})
+
+/** Carta in campo/mano/pila: calcola le proprietà primitive dal contesto e delega alla vista memorizzata. */
+function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { left: string; dy: string; z: number; newest: boolean } }) {
+  const { view, selected, picking, highlight, readOnly, emphasis, renderMarks } = useField()
+  const place = view.state.places[uid]
+  if (!place) return null
+  const code = view.registry[uid] ?? 0
+  const cand = !!picking?.candidates.has(uid)
+  const c = view.state.counters[uid]
+  return (
+    <FieldCardView
+      uid={uid}
+      place={place}
+      code={code}
+      name={view.nameOf(code)}
+      selected={selected === uid}
+      candidate={cand}
+      chosen={!!picking?.chosen.has(uid)}
+      dimmed={!!picking && !cand}
+      active={emphasis.active === uid}
+      inChain={!!emphasis.chain?.has(uid)}
+      counters={c ? Object.values(c).reduce((a, b) => a + b, 0) : 0}
+      overlays={inPile ? 0 : overlaysOf(view.state, uid).length}
+      inPile={!!inPile}
+      pileTarget={!!highlight}
+      readOnly={readOnly}
+      fanLeft={fan?.left}
+      fanDy={fan?.dy}
+      fanZ={fan?.z}
+      fanNewest={fan?.newest}
+      marks={renderMarks?.(uid, code)}
+    />
   )
 }
 
@@ -555,10 +603,23 @@ export function Field({
   onZone = NOOP,
   onPile,
   onLp = NOOP,
-}: { view: FieldView; ring?: boolean; mineOnly?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
+  renderMarks,
+}: { view: FieldView; renderMarks?: (uid: Uid, code: number) => React.ReactNode; ring?: boolean; mineOnly?: boolean; readOnly?: boolean; emphasis?: FieldEmphasis } & Partial<FieldHandlers>) {
   const { t } = useTranslation()
+  const hRef = useRef({ onCardClick, onCardDouble, onCardMenu, onCardKey })
+  hRef.current = { onCardClick, onCardDouble, onCardMenu, onCardKey }
+  const handlers = useMemo<Handlers>(
+    () => ({
+      click: (u) => hRef.current.onCardClick(u),
+      double: (u) => hRef.current.onCardDouble(u),
+      menu: (u, x, y) => hRef.current.onCardMenu(u, x, y),
+      key: (u, e) => hRef.current.onCardKey(u, e),
+    }),
+    [],
+  )
   return (
-    <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile: onPile ?? NOOP, pilesOpen: !!onPile, onLp }}>
+    <HandlersCtx.Provider value={handlers}>
+    <FieldCtx.Provider value={{ view, readOnly, emphasis, selected, highlight, picking, onCardClick, onCardDouble, onCardMenu, onCardKey, onZone, onPile: onPile ?? NOOP, pilesOpen: !!onPile, onLp, renderMarks }}>
       <FieldFrame ring={ring} className={mineOnly ? 'cl-mine' : undefined}>
         <div className="cl-grid">
           <Side p={1} />
@@ -581,5 +642,6 @@ export function Field({
         </div>
       </FieldFrame>
     </FieldCtx.Provider>
+    </HandlersCtx.Provider>
   )
 }

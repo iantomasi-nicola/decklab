@@ -128,3 +128,17 @@ test('replay lungo: pannello laterale (1440), ricerca e scroll automatico sul pa
   await page.waitForTimeout(200)
   await page.screenshot({ path: `${OUT}/replay120-panel-search-1440-light-it.png` })
 })
+
+test('replay lungo: ramo corto selezionato (chip della timeline)', async ({ page }) => {
+  await prepare(page, 'dark', 'it')
+  await page.setViewportSize({ width: 375, height: 800 })
+  const id = await seedLong(page, 60)
+  await page.goto(`/combo/${id}/replay`)
+  await page.waitForSelector('[data-field]')
+  await page.getByTestId('rp-line').click()
+  await page.getByRole('menuitem', { name: /Maxx/ }).click()
+  await page.keyboard.press('End')
+  await page.waitForTimeout(400)
+  await page.screenshot({ path: `${OUT}/replay60-branch-375-dark-it.png` })
+  await expect(page.getByTestId('replay-timeline')).toBeVisible() // ramo corto: chip, non barra a segmenti
+})

@@ -22,6 +22,10 @@ import { Switch } from '@/ui/Switch'
 import { useEditor } from './editorStore'
 import { incoherentSteps } from './incoherence'
 import { pickText, withNoteLang, withText } from './model'
+import { TurnBar, TurnStatus } from '@/features/turn'
+import type { Phase, TurnState } from '@/domain/combo/turn'
+import { EffectBadge, GameIcon, iconForAction } from '@/ui/gameIcons'
+import Ban from 'lucide-react/icons/ban'
 
 const PHASES = ['draw', 'standby', 'main1', 'battle', 'main2', 'end'] as const
 const textareaCls =
@@ -63,7 +67,16 @@ function segmentsOf(steps: Step[]): Segment[] {
 
 const noteOf = (s: Step, lang: string, order: readonly string[]) => pickText(s.note, lang, order)
 
+export interface StepMark {
+  kind: 'coherence' | 'banlist'
+  severity: 'error' | 'warning'
+  text: string
+}
+
+const EFFECT_BADGES = new Set(['ignition', 'quick', 'trigger', 'continuous', 'activation'])
+
 interface RowProps {
+  marks: StepMark[] | undefined
   s: Step
   i: number
   total: number
@@ -77,7 +90,7 @@ interface RowProps {
 }
 
 /** Riga di un passo. Memorizzata: con 100 passi cambia solo ciò che cambia davvero. `content-visibility` salta il rendering fuori schermo. */
-const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlock, label, note, onDerive }: RowProps) {
+const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlock, label, note, onDerive, marks }: RowProps) {
   const { t } = useTranslation()
   const store = useEditor.getState()
   const items: MenuItem[] = [
@@ -105,7 +118,7 @@ const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlo
     <li
       data-step-id={s.id}
       data-step-index={i}
-      data-incoherent={why ? '' : undefined}
+      data-incoherent={why || marks?.some((m) => m.kind === 'coherence') ? '' : undefined}
       data-match={match || undefined}
       style={selected ? { scrollMarginTop: 112, scrollMarginBottom: 16 } : { contentVisibility: 'auto', containIntrinsicSize: 'auto 56px', scrollMarginTop: 112, scrollMarginBottom: 16 }}
       className={cn(
@@ -124,15 +137,26 @@ const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlo
           className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left"
         >
           <span className="grid h-7 min-w-8 shrink-0 place-items-center rounded-full bg-surface-3 px-1.5 text-sm font-semibold tabular-nums text-fg">{i + 1}</span>
+          <span aria-hidden className="shrink-0 text-muted">
+            <GameIcon name={iconForAction(s.action, s.method) ?? 'check'} size={20} label={false} />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-medium text-fg">{label}</span>
             {note ? <span className="block truncate text-sm text-muted">{note}</span> : null}
           </span>
+          {s.effect && EFFECT_BADGES.has(s.effect.kind) ? (
+            <EffectBadge kind={s.effect.kind as 'ignition'} {...(s.effect.index ? { index: s.effect.index } : {})} size="sm" />
+          ) : null}
           {why ? (
             <span className="shrink-0 text-warn" title={t('combos.incoherent.step')}>
               <CircleAlert size={18} aria-label={t('combos.incoherent.step')} />
             </span>
           ) : null}
+          {marks?.map((m, k) => (
+            <span key={k} className={cn('shrink-0', m.severity === 'error' ? 'text-danger' : 'text-warn')} title={m.text} data-mark={m.kind}>
+              {m.kind === 'banlist' ? <Ban size={18} aria-label={m.text} /> : <CircleAlert size={18} aria-label={m.text} />}
+            </span>
+          ))}
         </button>
         <Menu trigger={<IconButton label={t('combos.step.menu', { n: i + 1 })} icon={<Ellipsis size={20} />} data-testid={`step-menu-${i}`} />} items={items} />
       </div>
@@ -146,11 +170,22 @@ export function StepsPanel({
   cursor,
   nameOf,
   onDerive,
+  marks,
+  turn,
+  optTotal,
+  onPhaseChange,
+  checkBanner,
 }: {
   doc: ComboDoc
   cursor: number
   nameOf: (uid: string) => string
   onDerive: (index: number, inclusive: boolean) => void
+  marks?: ReadonlyMap<string, StepMark[]>
+  turn?: TurnState | undefined
+  optTotal?: number
+  onPhaseChange?: (to: Phase) => void
+  /** risultato di "Controlla": numero di problemi (null = controllo spento) */
+  checkBanner?: { count: number; onClose: () => void } | null
 }) {
   const { t, i18n } = useTranslation()
   const lang = i18n.language === 'it' ? 'it' : 'en'
@@ -214,11 +249,21 @@ export function StepsPanel({
       label={labels[i]!}
       note={notes[i]!}
       onDerive={onDerive}
+      marks={marks?.get(doc.steps[i]!.id)}
     />
   )
 
   return (
     <div className="flex flex-col gap-3">
+      {turn ? (
+        <div className="flex flex-col gap-2" data-turn-ui>
+          <TurnBar phase={turn.phase} transitions={turn.phaseTransitions} turn={turn.turn} {...(onPhaseChange ? { onPhaseChange: (to: Phase) => onPhaseChange(to) } : {})} />
+          <TurnStatus turn={turn} optTotal={optTotal ?? 0} cardName={nameOf} onJumpToStep={(i) => jump(i)} />
+        </div>
+      ) : null}
+      {checkBanner ? (
+        <Banner tone={checkBanner.count ? 'warn' : 'ok'} title={t(checkBanner.count ? 'combos.check.found' : 'combos.check.ok', { count: checkBanner.count })} onDismiss={checkBanner.onClose} />
+      ) : null}
       {bad.size > 0 ? (
         <Banner tone="warn" title={t('combos.incoherent.title', { count: bad.size })}>
           {t('combos.incoherent.body')}
@@ -369,6 +414,28 @@ function StepEditor({ step }: { step: Step }) {
           ))}
         </select>
       </label>
+      {step.effect || step.action === 'activate' || step.action === 'chainActivate' ? (
+        <label className="flex flex-col gap-1 text-sm font-medium">
+          {t('combos.step.opt')}
+          <select
+            className="min-h-11 w-full rounded-md border border-line-strong bg-surface-1 px-3 text-[15px] font-normal text-fg"
+            value={step.x?.opt === undefined ? 'auto' : String(step.x.opt)}
+            data-testid="step-opt"
+            onChange={(e) => {
+              const v = e.target.value
+              const x: Record<string, unknown> = { ...step.x }
+              if (v === 'auto') delete x.opt
+              else x.opt = v === 'true' ? true : v === 'false' ? false : v
+              store.patchStep(step.id, { x: Object.keys(x).length ? x : (undefined as never) })
+            }}
+          >
+            <option value="auto">{t('combos.step.optAuto')}</option>
+            <option value="true">{t('combos.step.optCard')}</option>
+            <option value="name">{t('combos.step.optName')}</option>
+            <option value="false">{t('combos.step.optNo')}</option>
+          </select>
+        </label>
+      ) : null}
       <Switch label={t('combos.step.optional')} checked={!!step.optional} onCheckedChange={(v) => store.patchStep(step.id, { optional: v })} />
     </div>
   )

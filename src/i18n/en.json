@@ -296,6 +296,9 @@
       "lp": "LP: {{lp}}"
     },
     "pick": {
+      "tributeTitle": "Tribute for {{name}}",
+      "xyzTitle": "Xyz materials",
+      "materialsTitle": "Materials",
       "tributeHint": "Tap {{count}} monsters to Tribute.",
       "tribute": "Choose Tributes ({{n}} chosen, {{count}} needed)",
       "confirm": "Confirm",
@@ -425,7 +428,12 @@
       "note": "Note",
       "phase": "Phase",
       "phaseNone": "Not specified",
-      "optional": "Optional step"
+      "optional": "Optional step",
+      "opt": "Once per turn (OPT)",
+      "optAuto": "Automatic",
+      "optCard": "Yes, per copy",
+      "optName": "Yes, per card name",
+      "optNo": "No"
     },
     "incoherent": {
       "title_one": "{{count}} step no longer matches the state",
@@ -486,7 +494,46 @@
       "step": "Step {{n}} of {{total}}"
     },
     "mineOnlyOn": "My field: tap to show the opponent's too",
-    "mineOnlyOff": "Show only my field"
+    "mineOnlyOff": "Show only my field",
+    "menu": {
+      "share": "Share…",
+      "check": "Check the combo",
+      "checkOff": "Hide checks",
+      "practice": "Practice hand…",
+      "more": "More actions"
+    },
+    "modeSetupOff": "Leave the starting setup",
+    "check": {
+      "found_one": "{{count}} problem found",
+      "found_other": "{{count}} problems found",
+      "ok": "No problems: the steps are consistent"
+    },
+    "coh": {
+      "unknownUid": "Card {{uid}} is not registered",
+      "cardNotAvailable": "{{name}} is not available yet: add or search it first",
+      "materialNotOnField": "{{name}} is not on the field (it is in: {{loc}})",
+      "targetMissing": "Target {{name}} is not available",
+      "wrongSource": "{{name}} is not in {{declared}} but in {{actual}}",
+      "oncePerTurn": "Effect {{index}} of {{name}} was already used this turn",
+      "afterEndTurn": "Action after the end of the turn",
+      "branchMissingStep": "Branch {{branch}} points to a step that does not exist ({{afterStep}})"
+    },
+    "banlist": {
+      "hit": "{{name}}: {{status}} on the combo's banlist",
+      "forbidden": "forbidden",
+      "limited": "limited",
+      "semi-limited": "semi-limited"
+    },
+    "practice": {
+      "title": "Practice hand",
+      "hint": "A {{size}}-card hand drawn at random from the deck; below, which saved combos are playable.",
+      "new": "New hand",
+      "noDeck": "This combo has no deck: add cards or link it to a variant.",
+      "results": "Saved combos",
+      "playable": "Playable",
+      "missing_one": "1 card missing",
+      "missing_other": "{{count}} cards missing"
+    }
   },
   "learn": {
     "title": "Learn",

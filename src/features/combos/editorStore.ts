@@ -117,3 +117,6 @@ export const useEditor = create<EditorStore>((set, get) => {
     },
   }
 })
+
+// solo sviluppo/test: permette ai test di misurare i tempi di rendering senza passare dall'interfaccia
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __comboStore?: typeof useEditor }).__comboStore = useEditor

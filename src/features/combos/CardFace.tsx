@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { memo, type CSSProperties } from 'react'
 import EyeOff from 'lucide-react/icons/eye-off'
 import { CardImage } from '@/features/cards/CardImage'
 import type { Position } from '@/domain/combo/types'
@@ -11,7 +11,7 @@ export const isDownPos = (pos: Position | undefined) => pos === 'FACEDOWN' || po
  * Carta con rapporto fisso. Se coperta mostra un velo con l'icona (resta riconoscibile: è un editor).
  * Con `fit` (dentro `.cl-fit`) la carta in DEF ruota di 90° e si centra nel contenitore già ruotato.
  */
-export function CardFace({ code, name, pos, className, fit }: { code: number; name: string; pos?: Position | undefined; className?: string; fit?: boolean }) {
+export const CardFace = memo(function CardFace({ code, name, pos, className, fit }: { code: number; name: string; pos?: Position | undefined; className?: string; fit?: boolean }) {
   const down = isDownPos(pos)
   const style: CSSProperties | undefined =
     fit && isDefPos(pos)
@@ -37,4 +37,4 @@ export function CardFace({ code, name, pos, className, fit }: { code: number; na
       ) : null}
     </div>
   )
-}
+})
