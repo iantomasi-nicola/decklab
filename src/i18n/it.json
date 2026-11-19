@@ -1,0 +1,120 @@
+{
+  "app": {
+    "name": "Combo Lab",
+    "tagline": "Mazzi, combo e allenamento per Yu-Gi-Oh!",
+    "skipToContent": "Vai al contenuto"
+  },
+  "nav": {
+    "label": "Navigazione principale",
+    "home": "Home",
+    "archetypes": "Archetipi",
+    "decks": "Mazzi",
+    "combos": "Combo",
+    "learn": "Impara",
+    "stats": "Statistiche",
+    "settings": "Impostazioni",
+    "more": "Altro",
+    "moreTitle": "Altre sezioni"
+  },
+  "common": {
+    "close": "Chiudi",
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "loading": "Caricamento in corso",
+    "search": "Cerca",
+    "clear": "Cancella",
+    "dismiss": "Nascondi"
+  },
+  "home": {
+    "title": "Home",
+    "greeting": "Cosa costruiamo oggi?",
+    "lead": "Parti da un archetipo, scrivi la lista e poi trasforma le tue linee di gioco in combo da ripassare.",
+    "quickTitle": "Da dove iniziare",
+    "quick": {
+      "archetypes": "Scegli un archetipo",
+      "decks": "Apri o importa un mazzo",
+      "combos": "Scrivi una combo",
+      "learn": "Ripassa una linea di gioco"
+    },
+    "emptyTitle": "Nessun mazzo ancora",
+    "emptyBody": "Quando crei il primo mazzo o importi un file .ydk, lo trovi qui insieme alle ultime modifiche."
+  },
+  "archetypes": {
+    "title": "Archetipi",
+    "emptyTitle": "Nessun archetipo",
+    "emptyBody": "Un archetipo raccoglie le varianti e le liste di una strategia. Crea il primo per iniziare.",
+    "emptyAction": "Crea archetipo"
+  },
+  "decks": {
+    "title": "Mazzi",
+    "emptyTitle": "Nessun mazzo",
+    "emptyBody": "Crea una lista da zero oppure importa un file .ydk, un codice ydke o un testo copiato.",
+    "emptyAction": "Importa un mazzo"
+  },
+  "combos": {
+    "title": "Combo",
+    "emptyTitle": "Nessuna combo salvata",
+    "emptyBody": "Registra i passi di una linea di gioco: le carte necessarie, le mosse e il board finale.",
+    "emptyAction": "Nuova combo"
+  },
+  "learn": {
+    "title": "Impara",
+    "emptyTitle": "Niente da ripassare",
+    "emptyBody": "Dopo aver salvato una combo puoi allenarti a rifarla passo dopo passo, anche offline."
+  },
+  "stats": {
+    "title": "Statistiche",
+    "emptyTitle": "Nessun dato da mostrare",
+    "emptyBody": "Con un mazzo salvato potrai calcolare la probabilità di aprire con le carte giuste e vedere la composizione della lista."
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "language": {
+      "title": "Lingua",
+      "description": "Cambia la lingua dell'interfaccia. Il nome delle carte segue la lingua scelta quando disponibile.",
+      "system": "Sistema",
+      "it": "Italiano",
+      "en": "English"
+    },
+    "theme": {
+      "title": "Tema",
+      "description": "Scegli l'aspetto dell'app. Con Sistema segue le impostazioni del dispositivo.",
+      "system": "Sistema",
+      "dark": "Scuro",
+      "light": "Chiaro"
+    },
+    "about": {
+      "title": "Informazioni",
+      "body": "Combo Lab funziona anche senza connessione. I tuoi dati restano sul dispositivo finché non attivi la sincronizzazione."
+    }
+  },
+  "sync": {
+    "label": "Stato della sincronizzazione",
+    "idle": "Sincronizzato",
+    "syncing": "Sincronizzazione in corso",
+    "offline": "Offline",
+    "error": "Sincronizzazione non riuscita",
+    "disabled": "Sincronizzazione disattivata",
+    "pending_one": "{{count}} modifica in attesa",
+    "pending_other": "{{count}} modifiche in attesa"
+  },
+  "palette": {
+    "title": "Comandi",
+    "description": "Cerca una sezione o un comando.",
+    "placeholder": "Cerca o vai a…",
+    "hint": "Il cercatore globale di carte e comandi arriva presto.",
+    "empty": "Nessun risultato",
+    "goTo": "Vai a",
+    "open": "Apri i comandi",
+    "shortcut": "Ctrl K"
+  },
+  "pwa": {
+    "offlineReady": "Pronta per l'uso offline",
+    "updateAvailable": "Nuova versione disponibile",
+    "reload": "Aggiorna"
+  },
+  "toast": {
+    "languageChanged": "Lingua cambiata",
+    "themeChanged": "Tema cambiato"
+  }
+}

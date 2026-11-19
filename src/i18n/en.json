@@ -1,0 +1,120 @@
+{
+  "app": {
+    "name": "Combo Lab",
+    "tagline": "Decks, combos and practice for Yu-Gi-Oh!",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "archetypes": "Archetypes",
+    "decks": "Decks",
+    "combos": "Combos",
+    "learn": "Learn",
+    "stats": "Stats",
+    "settings": "Settings",
+    "more": "More",
+    "moreTitle": "More sections"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading",
+    "search": "Search",
+    "clear": "Clear",
+    "dismiss": "Dismiss"
+  },
+  "home": {
+    "title": "Home",
+    "greeting": "What are we building today?",
+    "lead": "Start from an archetype, write the list, then turn your lines of play into combos you can rehearse.",
+    "quickTitle": "Where to start",
+    "quick": {
+      "archetypes": "Pick an archetype",
+      "decks": "Open or import a deck",
+      "combos": "Write a combo",
+      "learn": "Rehearse a line of play"
+    },
+    "emptyTitle": "No decks yet",
+    "emptyBody": "When you create your first deck or import a .ydk file, it shows up here with your latest changes."
+  },
+  "archetypes": {
+    "title": "Archetypes",
+    "emptyTitle": "No archetypes",
+    "emptyBody": "An archetype gathers the variants and lists of one strategy. Create the first one to get going.",
+    "emptyAction": "Create archetype"
+  },
+  "decks": {
+    "title": "Decks",
+    "emptyTitle": "No decks",
+    "emptyBody": "Build a list from scratch, or import a .ydk file, a ydke code or copied text.",
+    "emptyAction": "Import a deck"
+  },
+  "combos": {
+    "title": "Combos",
+    "emptyTitle": "No saved combos",
+    "emptyBody": "Record the steps of a line of play: the cards you need, the moves and the final board.",
+    "emptyAction": "New combo"
+  },
+  "learn": {
+    "title": "Learn",
+    "emptyTitle": "Nothing to rehearse",
+    "emptyBody": "Once you save a combo you can practise it step by step, even offline."
+  },
+  "stats": {
+    "title": "Stats",
+    "emptyTitle": "No data to show",
+    "emptyBody": "With a saved deck you can work out the odds of opening the right cards and see how the list is built."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "description": "Change the interface language. Card names follow the chosen language when available.",
+      "system": "System",
+      "it": "Italiano",
+      "en": "English"
+    },
+    "theme": {
+      "title": "Theme",
+      "description": "Choose how the app looks. System follows your device settings.",
+      "system": "System",
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "about": {
+      "title": "About",
+      "body": "Combo Lab works without a connection. Your data stays on this device until you turn on sync."
+    }
+  },
+  "sync": {
+    "label": "Sync status",
+    "idle": "Synced",
+    "syncing": "Syncing",
+    "offline": "Offline",
+    "error": "Sync failed",
+    "disabled": "Sync is off",
+    "pending_one": "{{count}} change waiting",
+    "pending_other": "{{count}} changes waiting"
+  },
+  "palette": {
+    "title": "Commands",
+    "description": "Search for a section or a command.",
+    "placeholder": "Search or jump to…",
+    "hint": "Global card and command search is coming soon.",
+    "empty": "No results",
+    "goTo": "Go to",
+    "open": "Open commands",
+    "shortcut": "Ctrl K"
+  },
+  "pwa": {
+    "offlineReady": "Ready to use offline",
+    "updateAvailable": "New version available",
+    "reload": "Update"
+  },
+  "toast": {
+    "languageChanged": "Language changed",
+    "themeChanged": "Theme changed"
+  }
+}
