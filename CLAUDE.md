@@ -34,3 +34,10 @@
 - Barra delle fasi coerente (Draw, Standby, Main 1, Battle, Main 2, End) con pulsanti per passare da una fase all'altra, e promemoria di ciò che hai già fatto: Evocazione Normale già usata, effetti "una volta per turno" già attivati (per carta/effetto), carte che hanno già attaccato, ecc.
 - Video MP4: l'immagine di copertina (poster/prima miniatura) è la board finale.
 - Sezione "Side plan" contro i matchup: per ogni matchup scegli OUT e IN, evidenziati in verde, controllo coerenza (in = out, 40-60 carte, legalità), esporta immagine; funzioni smart realmente usate (suggerimenti dagli handtrap/tag, copia da altri piani, effetto sulle probabilità).
+
+## Interazione con il campo (regola permanente, da Nicola)
+- Non coprire MAI la board; se proprio non si può, coprirla il meno possibile. Le selezioni (materiali, bersagli, tributi, costi) si fanno DIRETTAMENTE sul campo: candidati evidenziati sul posto, resto attenuato, barra di conferma compatta ancorata ai bordi.
+- Evocazioni dall'Extra Deck (Link/Synchro/Xyz/Fusione): aprire l'Extra, scegliere la carta, l'Extra si CHIUDE, poi si selezionano i materiali sul campo.
+- Fare una combo deve costare meno tocchi possibile ed essere velocissimo: default intelligenti, scelte uniche automatiche, ricorda l'ultima azione, annulla sempre disponibile, scorciatoie e gesture.
+- Modalità Automatica: l'esperienza deve ricordare Yu-Gi-Oh! Master Duel (menu azione vicino alla carta, zone evidenziate, richieste di catena compatte, informazioni carta a pressione lunga, nessun passaggio superfluo).
+- Il funzionamento (non grafica né contenuti) del simulatore di playmat TrainMyMat è il riferimento per l'editor manuale: replicare i flussi di interazione, non copiare asset.
