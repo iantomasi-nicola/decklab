@@ -104,11 +104,17 @@
     "title": "Commands",
     "description": "Search for a section or a command.",
     "placeholder": "Search or jump to…",
-    "hint": "Global card and command search is coming soon.",
+    "hint": "Search a card by name (IT or EN) or jump to a section.",
     "empty": "No results",
     "goTo": "Go to",
     "open": "Open commands",
-    "shortcut": "Ctrl K"
+    "shortcut": "Ctrl K",
+    "cards": "Cards",
+    "results": "Results",
+    "searching": "Searching…",
+    "cardsError": "Couldn't search cards. Try again.",
+    "back": "Back",
+    "noText": "Text not available."
   },
   "pwa": {
     "offlineReady": "Ready to use offline",

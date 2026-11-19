@@ -104,11 +104,17 @@
     "title": "Comandi",
     "description": "Cerca una sezione o un comando.",
     "placeholder": "Cerca o vai a…",
-    "hint": "Il cercatore globale di carte e comandi arriva presto.",
+    "hint": "Cerca una carta per nome (IT o EN) o vai a una sezione.",
     "empty": "Nessun risultato",
     "goTo": "Vai a",
     "open": "Apri i comandi",
-    "shortcut": "Ctrl K"
+    "shortcut": "Ctrl K",
+    "cards": "Carte",
+    "results": "Risultati",
+    "searching": "Ricerca in corso…",
+    "cardsError": "Impossibile cercare le carte. Riprova.",
+    "back": "Indietro",
+    "noText": "Testo non disponibile."
   },
   "pwa": {
     "offlineReady": "Pronta per l'uso offline",
