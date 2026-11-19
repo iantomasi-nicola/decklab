@@ -32,7 +32,7 @@ import { banlistImpact, checkCoherence } from '@/domain/smart'
 import { playSound } from '@/features/sound'
 import Ellipsis from 'lucide-react/icons/ellipsis'
 import { PracticeHandDialog } from './PracticeHandDialog'
-import { AutoDock, AutoNotices } from '@/features/engine/AutoDock'
+import { AutoDock, AutoNotices, transitionsOf, usePhaseGo } from '@/features/engine/AutoDock'
 import { AutoStage } from '@/features/engine/AutoStage'
 import { useDuel } from '@/features/engine/duelStore'
 import { ModeSwitch } from '@/features/engine/ModeSwitch'
@@ -110,6 +110,8 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const canUndo = engineLive ? duelCanUndo : canUndoManual
   const canRedo = engineLive ? duelCanRedo : canRedoManual
   const { t: te } = useEngT()
+  const duelPending = useDuel((s) => s.state?.pending ?? null)
+  const phaseGo = usePhaseGo()
   const recordRef = useRef<ComboRecord | null>(null)
 
   // ---- caricamento
@@ -281,6 +283,8 @@ export function ComboEditor({ comboId }: { comboId: string }) {
     setPanelState({ ...panel, open: !panel.open })
   }
 
+  const tl0 = timeline?.[cursor]
+  const panelTurn = auto && duelLive && tl0 ? { ...tl0, phaseTransitions: transitionsOf(duelPending, duelPending?.kind === 'battle' ? 'battle' : tl0.phase) } : tl0
   const panelBody = (
     <Tabs value={activeTab} onValueChange={(v) => setPanelState({ ...panel, tab: v as PanelTab })} className="min-w-0">
       <TabsList aria-label={t('combos.panels')} className="sticky top-0 z-10 bg-surface-1">
@@ -295,7 +299,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
         </TabsContent>
       ) : null}
       <TabsContent value="steps">
-        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={onDerive} marks={marks} turn={timeline?.[cursor]} optTotal={optTotal} {...(auto ? {} : { onPhaseChange })} checkBanner={checkOn ? { count: issues.length, onClose: () => setCheckOn(false) } : null} />
+        <StepsPanel doc={doc} cursor={cursor} nameOf={nameOfUid} onDerive={onDerive} marks={marks} turn={panelTurn} optTotal={optTotal} onPhaseChange={auto && duelLive ? phaseGo : onPhaseChange} checkBanner={checkOn ? { count: issues.length, onClose: () => setCheckOn(false) } : null} />
       </TabsContent>
       <TabsContent value="setup">
         <SetupPanel doc={doc} nameOf={nameOfUid} />
@@ -445,7 +449,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
 
       {readOnly ? <Banner tone="warn" title={t('combos.readOnly')}>{t('combos.readOnlyBody')}</Banner> : null}
       {auto ? <AutoNotices onManual={() => setAuto(false)} nameOf={cards.nameOf} /> : null}
-      {auto && duelLive ? <AutoDock turn={timeline?.[cursor]} /> : null}
+      {auto && duelLive && !(inlinePanel && activeTab === 'steps') ? <AutoDock turn={timeline?.[cursor]} /> : null}
 
       <div className="relative min-h-0 flex-1" style={{ containerType: 'size' }}>
         <div className="flex h-full justify-center gap-2">

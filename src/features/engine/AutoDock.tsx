@@ -4,7 +4,6 @@ import Settings2 from 'lucide-react/icons/settings-2'
 import { answerBattle, answerIdle } from '@/engine/answers'
 import type { PendingRequest } from '@/engine/requests'
 import { PHASES, type Phase, type PhaseTransition, type TurnState } from '@/domain/combo/turn'
-import { useCards } from '@/features/combos/useCards'
 import { playSound } from '@/features/sound'
 import { TurnBar } from '@/features/turn'
 import { Banner } from '@/ui/Banner'
@@ -42,26 +41,30 @@ export function transitionsOf(req: PendingRequest | null, phase: Phase): PhaseTr
   return []
 }
 
+/** Risposta del core a un cambio di fase dalla barra delle fasi (dock o pannello Passi). */
+export function usePhaseGo() {
+  const respond = useDuel((s) => s.respond)
+  return (to: Phase) => {
+    const pending = useDuel.getState().state?.pending
+    if (!pending) return
+    playSound('phaseChange')
+    if (pending.kind === 'idle') void respond(to === 'battle' ? answerIdle('toBattle') : answerIdle('toEnd'))
+    else if (pending.kind === 'battle') void respond(to === 'main2' ? answerBattle('toMain2') : answerBattle('toEnd'))
+  }
+}
+
 export function AutoDock({ turn }: { turn?: TurnState | undefined }) {
   const { t } = useEngT()
-  const cards = useCards()
   const pending = useDuel((s) => s.state?.pending ?? null)
   const state = useDuel((s) => s.state)
   const status = useDuel((s) => s.status)
   const busy = useDuel((s) => s.busy)
   const load = useDuel((s) => s.load)
   const replaying = useDuel((s) => s.replaying)
-  const respond = useDuel((s) => s.respond)
+  const go = usePhaseGo()
   const [open, setOpen] = useState(false)
   const phase: Phase = pending?.kind === 'battle' ? 'battle' : (turn?.phase ?? 'main1')
   const transitions = useMemo(() => transitionsOf(pending, phase), [pending, phase])
-  const go = (to: Phase) => {
-    if (!pending) return
-    playSound('phaseChange')
-    if (pending.kind === 'idle') void respond(to === 'battle' ? answerIdle('toBattle') : answerIdle('toEnd'))
-    else if (pending.kind === 'battle') void respond(to === 'main2' ? answerBattle('toMain2') : answerBattle('toEnd'))
-  }
-  void cards
   return (
     <div className="flex shrink-0 flex-col gap-2" data-testid="auto-dock">
       <div className="flex items-stretch gap-1">
