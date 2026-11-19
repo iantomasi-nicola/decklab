@@ -109,6 +109,7 @@ test.describe('shell', () => {
   test('Ctrl+K apre e Esc chiude il command palette', async ({ page }) => {
     await page.setViewportSize({ width: 1024, height: 800 })
     await page.goto('/')
+    await expect(page.locator('h1')).toBeVisible()
     await page.keyboard.press('Control+k')
     await expect(page.getByRole('dialog')).toBeVisible()
     await page.keyboard.press('Escape')
