@@ -24,7 +24,7 @@ Alternativa dalla dashboard: **Storage & databases > R2 > Create bucket** (nome 
 ## 3. Supabase (login e sincronizzazione)
 1. https://supabase.com > **Start your project** > accedi con GitHub.
 2. **New project**: nome `decklab`, scegli una password per il database (salvala), regione vicina (es. Frankfurt), piano **Free**. Attendi la creazione.
-3. Menu **SQL Editor > New query**: apri `supabase/migrations/0001_init.sql`, copia tutto, incolla, clicca **Run**. Deve dire "Success".
+3. Menu **SQL Editor > New query**: apri `supabase/migrations/0001_init.sql`, copia tutto, incolla, clicca **Run**. Deve dire "Success". Poi ripeti lo stesso con `supabase/migrations/0002_side_plans.sql` (piani di side): nuova query, incolla, **Run**.
 4. **Authentication > Providers**: **Email** attivo (magic link). Per **Google**: attivalo e segui il link "Callback URL" mostrato, creando le credenziali OAuth su Google Cloud Console (incolla Client ID e Secret). Google è facoltativo.
 5. **Project Settings > API**: copia **Project URL** (`VITE_SUPABASE_URL`) e la chiave **anon / public** (`VITE_SUPABASE_ANON_KEY`). **Non copiare mai la chiave `service_role`** da nessuna parte.
 6. **Authentication > URL Configuration**: dopo il passo 4, imposta **Site URL** = indirizzo Pages e aggiungi in **Redirect URLs** lo stesso indirizzo (più `http://localhost:5173` se sviluppi in locale).
