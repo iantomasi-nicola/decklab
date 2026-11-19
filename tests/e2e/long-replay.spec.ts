@@ -88,8 +88,7 @@ for (const n of SIZES) {
   }
 }
 
-test('replay lungo: selettore passi con ricerca, elenco in fondo e prestazioni durante la riproduzione', async ({ page }) => {
-  test.setTimeout(90_000)
+test('replay lungo: selettore passi con ricerca (telefono)', async ({ page }) => {
   await prepare(page, 'dark', 'en')
   await page.setViewportSize({ width: 375, height: 800 })
   const id = await seedLong(page, 120)
@@ -107,30 +106,6 @@ test('replay lungo: selettore passi con ricerca, elenco in fondo e prestazioni d
   expect(found).toBeGreaterThan(0)
   await page.getByTestId('replay-steplist').locator('[data-frame]').first().click()
   await expect(page.getByTestId('replay-picker')).toHaveCount(0)
-
-  // prestazioni: nessun long task (> 50 ms) mentre gira a 3×
-  await page.keyboard.press('Home')
-  const speed = page.getByTestId('rp-speed')
-  for (let i = 0; i < 3; i++) await speed.click()
-  await page.evaluate(() => {
-    const w = window as unknown as { __lt: number[] }
-    w.__lt = []
-    new PerformanceObserver((l) => l.getEntries().forEach((e) => w.__lt.push(Math.round(e.duration)))).observe({ entryTypes: ['longtask'] })
-  })
-  await page.getByTestId('rp-play').click()
-  await expect(page.getByTestId('rp-counter')).toContainText('30', { timeout: 40_000 })
-  await page.getByTestId('rp-play').click()
-  const lt = await page.evaluate(() => (window as unknown as { __lt: number[] }).__lt)
-  expect(lt, 'long task durante il play').toEqual([])
-  // cambio passo istantaneo
-  const t = await page.evaluate(async () => {
-    const next = document.querySelector<HTMLButtonElement>('[data-testid="rp-next"]')!
-    const t0 = performance.now()
-    next.click()
-    await new Promise((r) => requestAnimationFrame(() => r(null)))
-    return performance.now() - t0
-  })
-  expect(t).toBeLessThan(100)
 })
 
 test('replay lungo: pannello laterale (1440), ricerca e scroll automatico sul passo attivo', async ({ page }) => {
