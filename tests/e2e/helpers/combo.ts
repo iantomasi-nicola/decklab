@@ -22,6 +22,7 @@ export interface SeedCombo {
   own?: { uid: string; place: Pl }[]
   opp?: { uid: string; place: Pl }[]
   deck?: { main: number[]; extra: number[] }
+  counters?: Record<string, Record<string, number>>
 }
 
 /** Scrive direttamente in IndexedDB (schema Dexie) un archetipo e una combo pronta; ritorna l'id della combo. */
@@ -55,7 +56,7 @@ export async function seedCombo(page: Page, s: SeedCombo): Promise<string> {
       setup: {
         first: true,
         hand: { required: s.hand ?? [], size: Math.max(5, (s.hand ?? []).length), fill: 'none' },
-        own: { lp: 8000, places: s.own ?? [] },
+        own: { lp: 8000, places: s.own ?? [], ...(s.counters ? { counters: s.counters } : {}) },
         opponent: { board: { lp: 8000, places: (s.opp ?? []).map((o) => ({ ...o, place: { p: 1, ...o.place } })) }, interrupts: [] },
       },
       steps: [],
