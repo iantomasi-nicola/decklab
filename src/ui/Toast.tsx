@@ -12,6 +12,8 @@ export interface ToastItem {
   title: string
   description?: string
   tone: ToastTone
+  /** Azione opzionale (es. "Annulla"): chiude il toast dopo il clic. */
+  action?: { label: string; onClick: () => void }
 }
 
 interface ToastState {
@@ -33,7 +35,10 @@ export const useToasts = create<ToastState>((set, get) => ({
   dismiss: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
 }))
 
-export const toast = (title: string, opts?: { description?: string; tone?: ToastTone; durationMs?: number }) =>
+export const toast = (
+  title: string,
+  opts?: { description?: string; tone?: ToastTone; durationMs?: number; action?: { label: string; onClick: () => void } },
+) =>
   useToasts.getState().push({ title, ...opts })
 
 const icons = { info: Info, ok: CircleCheck, danger: CircleX }
@@ -63,6 +68,18 @@ export function ToastViewport() {
               <p className="text-[15px] font-medium text-fg">{it.title}</p>
               {it.description ? <p className="text-sm text-muted">{it.description}</p> : null}
             </div>
+            {it.action ? (
+              <button
+                type="button"
+                onClick={() => {
+                  it.action?.onClick()
+                  dismiss(it.id)
+                }}
+                className="-my-1 inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold text-accent-text hover:bg-surface-2"
+              >
+                {it.action.label}
+              </button>
+            ) : null}
             <button
               type="button"
               aria-label={t('common.dismiss')}

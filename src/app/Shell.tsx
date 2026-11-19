@@ -113,6 +113,8 @@ export function Shell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const secondary = NAV.filter((n) => !n.primary)
   const moreActive = secondary.some((n) => n.to === pathname)
+  // l'editor di mazzo ha bisogno di più larghezza (pannelli affiancati)
+  const wide = /^\/mazzi\/[^/]+/.test(pathname)
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]">
@@ -162,7 +164,10 @@ export function Shell() {
         <main
           id="main"
           tabIndex={-1}
-          className="mx-auto w-full max-w-5xl px-4 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom,0px))] pt-6 outline-none md:px-8 md:pb-12 md:pt-8"
+          className={cn(
+            'mx-auto w-full px-4 pb-[calc(var(--bottomnav-h)+32px+env(safe-area-inset-bottom,0px))] pt-6 outline-none md:px-8 md:pb-12 md:pt-8',
+            wide ? 'max-w-[1600px]' : 'max-w-5xl',
+          )}
         >
           <Outlet />
         </main>
