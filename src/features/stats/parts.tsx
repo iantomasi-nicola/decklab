@@ -97,16 +97,22 @@ export function Section({ title, hint, children, actions }: { title: string; hin
 }
 
 /**
- * Barra di schede su un'unica riga che scorre in orizzontale. Ai bordi con altro contenuto compare una sfumatura con una freccia
- * (solo indicativa: si scorre col dito, il trackpad o la tastiera); la scheda attiva viene portata in vista.
+ * Barra di schede su un'unica riga che scorre in orizzontale. Se le schede non stanno tutte, ai lati compaiono due frecce
+ * (pulsanti da 44px in colonne proprie: non coprono mai le etichette); si scorre anche col dito, il trackpad o la tastiera.
+ * La scheda attiva viene portata in vista.
  */
 export function ScrollTabsList({ label, activeKey, children }: { label: string; activeKey: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [edge, setEdge] = useState({ left: false, right: false })
+  const [edge, setEdge] = useState({ left: false, right: false, scrollable: false })
   const update = useCallback(() => {
     const el = ref.current
     if (!el) return
-    setEdge({ left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 })
+    // la larghezza utile non dipende dalle frecce (colonne fisse): niente oscillazioni al confine
+    setEdge((old) => {
+      const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2, scrollable: old.scrollable }
+      next.scrollable = old.scrollable ? el.scrollWidth > el.clientWidth + 2 || next.left : next.right
+      return old.left === next.left && old.right === next.right && old.scrollable === next.scrollable ? old : next
+    })
   }, [])
   useEffect(() => {
     update()
@@ -120,27 +126,31 @@ export function ScrollTabsList({ label, activeKey, children }: { label: string; 
     const el = ref.current?.querySelector<HTMLElement>('[data-state=active]')
     el?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' })
   }, [activeKey])
-  const fade = (side: 'left' | 'right') => (
-    <span
-      aria-hidden
-      className={cn(
-        'pointer-events-none absolute bottom-px top-0 flex w-12 items-center text-muted transition-opacity duration-150',
-        side === 'left' ? 'left-0 justify-start' : 'right-0 justify-end',
-        (side === 'left' ? edge.left : edge.right) ? 'opacity-100' : 'opacity-0',
-      )}
-      style={{ background: `linear-gradient(to ${side === 'left' ? 'right' : 'left'}, var(--bg) 35%, transparent)` }}
-      data-testid={`tabs-more-${side}`}
-    >
-      {side === 'left' ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-    </span>
-  )
+  const arrow = (side: 'left' | 'right') => {
+    const can = side === 'left' ? edge.left : edge.right
+    return (
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-hidden
+        disabled={!can}
+        data-testid={`tabs-more-${side}`}
+        onClick={() => ref.current?.scrollBy({ left: (side === 'left' ? -1 : 1) * Math.max(120, (ref.current?.clientWidth ?? 240) * 0.6), behavior: 'smooth' })}
+        className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-fg transition-colors duration-150 hover:bg-surface-2 disabled:cursor-default disabled:text-subtle disabled:opacity-40 disabled:hover:bg-transparent"
+      >
+        {side === 'left' ? <ChevronLeft size={22} strokeWidth={2} /> : <ChevronRight size={22} strokeWidth={2} />}
+      </button>
+    )
+  }
   return (
-    <div className="relative">
-      <TabsList ref={ref} aria-label={label} onScroll={update} className="flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {children}
-      </TabsList>
-      {fade('left')}
-      {fade('right')}
+    <div className="flex items-center gap-1">
+      {edge.scrollable ? arrow('left') : null}
+      <div className="relative min-w-0 flex-1">
+        <TabsList ref={ref} aria-label={label} onScroll={update} className="flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {children}
+        </TabsList>
+      </div>
+      {edge.scrollable ? arrow('right') : null}
     </div>
   )
 }

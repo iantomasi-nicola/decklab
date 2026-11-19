@@ -217,7 +217,7 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
           </Link>
         </Tooltip>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold leading-6">{title}</h1>
+          <h1 className="line-clamp-2 text-base font-semibold leading-5 [overflow-wrap:anywhere] sm:text-lg sm:leading-6">{title}</h1>
           <p className="truncate text-sm leading-5 text-muted">{activeBranch ? `${t('replay.title')} · ${branchName(activeBranch, branches.indexOf(activeBranch) + 1)}` : t('replay.title')}</p>
         </div>
         {branches.length ? (

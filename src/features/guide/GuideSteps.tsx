@@ -8,6 +8,7 @@ import Shuffle from 'lucide-react/icons/shuffle'
 import TriangleAlert from 'lucide-react/icons/triangle-alert'
 import GitBranch from 'lucide-react/icons/git-branch'
 import ChevronDown from 'lucide-react/icons/chevron-down'
+import ChevronUp from 'lucide-react/icons/chevron-up'
 import Flag from 'lucide-react/icons/flag'
 import ListTree from 'lucide-react/icons/list-tree'
 import { CardImage } from '@/features/cards/CardImage'
@@ -221,10 +222,12 @@ function ChainHeader({ item, last, onToggle }: { item: Extract<ListItem, { kind:
           aria-expanded={!item.collapsed}
           aria-label={`${t('guide.nav.chainBlock', { count: item.links, from: item.from, to: item.to })} — ${item.collapsed ? t('guide.nav.chainExpand') : t('guide.nav.chainCollapse')}`}
           onClick={onToggle}
-          className="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md border border-line border-l-2 border-l-warn bg-surface-1 px-3 text-left text-[15px] font-medium text-fg transition-colors duration-150 hover:bg-surface-2"
+          className="flex min-h-11 w-full cursor-pointer items-stretch rounded-md border border-line border-l-2 border-l-warn bg-surface-1 pl-3 text-left text-[15px] font-medium text-fg transition-colors duration-150 hover:bg-surface-2"
         >
-          <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{t('guide.nav.chainBlock', { count: item.links, from: item.from, to: item.to })}</span>
-          <ChevronDown aria-hidden size={18} className={cn('shrink-0 text-muted transition-transform duration-150', item.collapsed && '-rotate-90')} />
+          <span className="flex min-w-0 flex-1 items-center py-2 [overflow-wrap:anywhere]">{t('guide.nav.chainBlock', { count: item.links, from: item.from, to: item.to })}</span>
+          <span aria-hidden className="flex w-11 shrink-0 items-center justify-center border-l border-line">
+            {item.collapsed ? <ChevronDown size={22} strokeWidth={2.25} /> : <ChevronUp size={22} strokeWidth={2.25} />}
+          </span>
         </button>
       </div>
     </li>
