@@ -594,11 +594,10 @@ export function Board({
             </div>
           ) : null}
         </DragOverlay>
+        {pilesEl && !readOnly ? createPortal(<PilesPanel view={view} onMenu={openMenu} />, pilesEl) : null}
       </DndContext>
 
       <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
-
-      {pilesEl && !readOnly ? createPortal(<PilesPanel view={view} onMenu={openMenu} />, pilesEl) : null}
 
       {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} onClose={() => setMenu(null)} /> : null}
 

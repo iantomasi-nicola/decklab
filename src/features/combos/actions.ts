@@ -264,14 +264,14 @@ export function activateOption(src: Src, ctx: Ctx): Option | null {
       const to: Place = { ...clean(place), pos: 'FACEUP_ATK' }
       return { id: 'flipSummon', draft: { action: 'flipSummon', card: src.uid, from: clean(place), to, moves: [move(src, to, 'flip')] } }
     }
-    return mk({ action: 'activate', effect: { kind: 'ignition' }, moves: [] })
+    return mk({ action: 'activate', effect: { kind: 'ignition' }, from: clean(place), moves: [] })
   }
   if (isField(place.loc)) {
     if (place.pos === 'FACEDOWN') {
       const to: Place = { ...clean(place), pos: 'FACEUP' }
       return mk({ action: 'activate', effect: { kind: 'activation' }, from: clean(place), to, moves: [move(src, to, 'flip')] })
     }
-    return mk({ action: 'activate', effect: { kind: info.kind === 'trap' ? 'activation' : 'ignition' }, moves: [] })
+    return mk({ action: 'activate', effect: { kind: info.kind === 'trap' ? 'activation' : 'ignition' }, from: clean(place), moves: [] })
   }
   if (place.loc === 'hand') {
     const loc: ZoneLoc = info.field ? 'fzone' : 'szone'

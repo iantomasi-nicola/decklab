@@ -58,7 +58,7 @@ const isSubMultiset = (small: Map<number, number>, big: Map<number, number>) => 
  * poi le etichette esplicite vincono: PLAYABLE aggiunge, BRICK toglie quell'esatto insieme.
  * I tris non hanno derivazione: restano BRICK finché l'utente (o la combo) non li dichiara PLAYABLE.
  */
-export function buildRules(input: HandInput, handSize: number): number[][] {
+export function collectRules(input: HandInput, handSize: number, applyLabels = true): Map<string, number[]> {
   const cards = mergeCards(input.cards)
   const count = new Map(cards.map((c) => [c.id, c.count]))
   const rules = new Map<string, number[]>()
@@ -83,18 +83,24 @@ export function buildRules(input: HandInput, handSize: number): number[][] {
     }
   }
   for (const r of input.extraRules ?? []) add(r)
-  for (const [key, label] of Object.entries(input.labels)) {
-    const ids = parseLabelKey(key)
-    if (!ids.length) continue
-    if (label === 'PLAYABLE') add(ids)
-    else rules.delete(labelKey(ids))
+  if (applyLabels) {
+    for (const [key, label] of Object.entries(input.labels)) {
+      const ids = parseLabelKey(key)
+      if (!ids.length) continue
+      if (label === 'PLAYABLE') add(ids)
+      else rules.delete(labelKey(ids))
+    }
   }
+  return rules
+}
+
+export function buildRules(input: HandInput, handSize: number): number[][] {
   // riduzione: toglie i superinsiemi di una regola già presente (non cambiano nulla)
-  const all = [...rules.values()].sort((a, b) => a.length - b.length)
+  const all = [...collectRules(input, handSize).values()].sort((a, b) => a.length - b.length)
   const kept: { ids: number[]; ms: Map<number, number> }[] = []
   for (const ids of all) {
     const ms = multiset(ids)
-    if (!kept.some((k) => k.ids.length < ids.length && isSubMultiset(k.ms, ms)) && !kept.some((k) => k.ids.join() === ids.join())) kept.push({ ids, ms })
+    if (!kept.some((k) => k.ids.length < ids.length && isSubMultiset(k.ms, ms))) kept.push({ ids, ms })
   }
   return kept.map((k) => k.ids)
 }

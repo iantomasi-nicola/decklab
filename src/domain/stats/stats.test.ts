@@ -313,3 +313,41 @@ describe('formato Deckspace', () => {
     expect(h5.topBricks.length).toBeGreaterThan(0)
   })
 })
+
+describe('etichette: suggerimenti e combo', () => {
+  it('coppie C2 e tris (coppia BRICK + carta C3)', async () => {
+    const { labelTargets, derivedLabel, effectiveLabel, comboToRule } = await import('./index')
+    const cards = [
+      card(1, 2, ['C2'], { comboWith: [2] }),
+      card(2, 1, ['C2', 'C3']),
+      card(3, 1, ['C3']),
+    ]
+    const inp = input(cards)
+    const t = labelTargets(inp)
+    expect(t.pairs).toEqual([[1, 1], [1, 2]])
+    expect(derivedLabel(inp, [1, 2])).toBe('PLAYABLE')
+    expect(derivedLabel(inp, [1, 1])).toBe('BRICK')
+    // unico tris: la coppia BRICK (1,1) + ciascuna carta C3 (2 e 3)
+    expect(t.trios).toEqual([[1, 1, 2], [1, 1, 3]])
+    expect(effectiveLabel({ ...inp, labels: { '1,2': 'BRICK' } }, [1, 2])).toBe('BRICK')
+    expect(effectiveLabel({ ...inp, labels: { '1,1,3': 'PLAYABLE' } }, [1, 1, 3])).toBe('PLAYABLE')
+    expect(comboToRule({ setup: { hand: { required: ['a', 'b'] } }, cards: { a: 10, b: 11 } })).toEqual([10, 11])
+    expect(comboToRule({ setup: { hand: { required: [] } }, cards: {} })).toBeNull()
+    expect(comboToRule(null)).toBeNull()
+  })
+  it('sul file reale i tris suggeriti coprono le etichette esplicite del file', async () => {
+    const { labelTargets } = await import('./index')
+    const p = parseDeckspace(readFileSync(join(__dirname, '../../../tests/fixtures/deckspace-unchained.json'), 'utf8'))
+    if (!p.ok) throw new Error('fixture')
+    const cards: StatsCard[] = p.project.cards.map((c) => ({ id: c.id, count: c.count, tags: c.tags, comboWith: c.comboWith, brickWith: c.brickWith }))
+    const inp = input(cards, {}, null)
+    const t = labelTargets(inp)
+    const pairKeys = new Set(t.pairs.map((x) => labelKey(x)))
+    const trioKeys = new Set(t.trios.map((x) => labelKey(x)))
+    const filePairs = Object.keys(p.project.labelSets.C2PAIR_NE_FILL!)
+    const fileTrios = Object.keys(p.project.labelSets.C2_BRICKPAIR_PLUS_C3_NE_FILL!)
+    expect(filePairs.filter((k) => !pairKeys.has(k))).toEqual([])
+    const missing = fileTrios.filter((k) => !trioKeys.has(k))
+    console.log('pairs', t.pairs.length, 'file', filePairs.length, '| trios', t.trios.length, 'file', fileTrios.length, 'missing', missing.length)
+  })
+})

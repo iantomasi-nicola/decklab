@@ -472,6 +472,12 @@
       "newest": "Most recent",
       "actions": "Actions for {{name}}",
       "hint": "In order of arrival. Tap a card to activate, summon or move it; on desktop you can also drag the thumbnail onto a field zone."
+    },
+    "strip": {
+      "prev": "Previous step",
+      "next": "Next step",
+      "start": "Starting situation",
+      "step": "Step {{n}} of {{total}}"
     }
   },
   "learn": {

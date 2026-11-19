@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import ArrowLeft from 'lucide-react/icons/arrow-left'
+import ChevronLeft from 'lucide-react/icons/chevron-left'
+import ChevronRight from 'lucide-react/icons/chevron-right'
 import PanelRight from 'lucide-react/icons/panel-right'
 import Plus from 'lucide-react/icons/plus'
 import SlidersHorizontal from 'lucide-react/icons/sliders-horizontal'
@@ -27,7 +29,7 @@ import { useEditor } from './editorStore'
 import { InfoPanel } from './InfoPanel'
 import { deriveDoc, finalizeDoc } from './model'
 import { SetupPanel } from './SetupPanel'
-import { StepsPanel } from './StepsPanel'
+import { describeStep, StepsPanel } from './StepsPanel'
 import { pilesPanelEnabled, useFieldPrefs } from './fieldPrefs'
 import { useCards, useMediaQuery } from './useCards'
 
@@ -338,6 +340,23 @@ export function ComboEditor({ comboId }: { comboId: string }) {
           ) : null}
         </div>
       </div>
+
+      {!isMd ? (
+        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-line bg-surface-1 px-1" data-step-strip>
+          <IconButton label={t('combos.strip.prev')} icon={<ChevronLeft size={20} />} disabled={cursor === 0} onClick={() => store.setCursor(cursor - 1)} />
+          <button
+            type="button"
+            onClick={() => setPanelState({ open: true, tab: 'steps' })}
+            className="flex min-h-11 min-w-0 flex-1 cursor-pointer flex-col justify-center text-left"
+          >
+            <span className="truncate text-sm font-medium text-fg">
+              {cursor === 0 ? t('combos.strip.start') : describeStep(doc.steps[cursor - 1]!, nameOfUid, t)}
+            </span>
+            <span className="truncate text-xs text-muted">{t('combos.strip.step', { n: cursor, total: doc.steps.length })}</span>
+          </button>
+          <IconButton label={t('combos.strip.next')} icon={<ChevronRight size={20} />} disabled={cursor >= doc.steps.length} onClick={() => store.setCursor(cursor + 1)} />
+        </div>
+      ) : null}
 
       {!isMd ? (
         <BottomSheet open={panel.open} onOpenChange={(o) => setPanelState({ ...panel, open: o })} title={t('combos.panels')}>

@@ -472,6 +472,12 @@
       "newest": "Più recente",
       "actions": "Azioni per {{name}}",
       "hint": "In ordine di arrivo. Tocca una carta per attivarla, evocarla o spostarla; su PC puoi anche trascinare la miniatura su una zona del campo."
+    },
+    "strip": {
+      "prev": "Passo precedente",
+      "next": "Passo successivo",
+      "start": "Situazione iniziale",
+      "step": "Passo {{n}} di {{total}}"
     }
   },
   "learn": {
