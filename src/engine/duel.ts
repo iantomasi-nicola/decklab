@@ -203,6 +203,11 @@ export interface RunInput {
   answers: readonly OcgResponse[]
   /** risposte automatiche dell'avversario (funzione pura del messaggio): null = lasciare la richiesta alla UI */
   opponentPolicy?: (req: OcgMessage) => OcgResponse | null
+  /**
+   * risposte automatiche per il GIOCATORE, consultate solo quando le `answers` registrate sono finite.
+   * Quelle prodotte vengono registrate (`RunResult.entries`, flag auto): la politica non serve più nei replay.
+   */
+  autoPolicy?: (req: OcgMessage) => OcgResponse | null
 }
 
 export interface RunResult {
@@ -213,8 +218,10 @@ export interface RunResult {
   ended: boolean
   /** una risposta registrata non è più valida (RETRY) */
   diverged: boolean
-  /** quante risposte utente sono state consumate */
+  /** quante risposte (registrate + automatiche) sono state consumate */
   consumed: number
+  /** `answers` registrate seguite dalle risposte automatiche prodotte in questo passaggio */
+  entries: OcgResponse[]
   errors: string[]
 }
 
@@ -244,6 +251,7 @@ export function runDuel(inp: RunInput): RunResult {
 
     const log: OcgMessage[][] = [[]]
     let consumed = 0
+    const entries: OcgResponse[] = [...inp.answers]
     let pending: OcgMessage | null = null
     let ended = false
     let diverged = false
@@ -268,12 +276,19 @@ export function runDuel(inp: RunInput): RunResult {
         consumed++
         log.push([])
       } else {
-        pending = req
-        break
+        const own = inp.autoPolicy?.(req) ?? null
+        if (!own) {
+          pending = req
+          break
+        }
+        resp = own
+        entries.push(own)
+        consumed++
+        log.push([])
       }
       lib.duelSetResponse(handle, resp)
     }
-    return { log, pending, ended, diverged, consumed, errors }
+    return { log, pending, ended, diverged, consumed, entries, errors }
   } finally {
     lib.destroyDuel(handle)
   }
