@@ -87,9 +87,19 @@ export interface RequestContext {
   matchCodes(opcodes: unknown[]): { codes: number[]; truncated: boolean }
 }
 
-export function descRef(d: bigint): DescRef | null {
+/**
+ * Il core codifica le stringhe di carta come `(codice << 4 | indice)`, a 64 bit con uno scorrimento di 16 (`<< 20` in totale);
+ * le stringhe di sistema sono numeri piccoli (strings.conf).
+ */
+export function descParts(d: bigint): { code: number; index: number } | { system: number } | null {
   if (d === 0n) return null
-  return d >= 10000n ? { kind: 'card', code: Number(d >> 4n), index: Number(d & 15n) } : { kind: 'system', id: Number(d) }
+  const base = d > 0xffffffffn ? d >> 16n : d
+  return base >= 10000n ? { code: Number(base >> 4n), index: Number(base & 15n) } : { system: Number(d) }
+}
+export function descRef(d: bigint): DescRef | null {
+  const p = descParts(d)
+  if (!p) return null
+  return 'system' in p ? { kind: 'system', id: p.system } : { kind: 'card', code: p.code, index: p.index }
 }
 
 const POSITIONS: [number, Position][] = [[1, 'FACEUP_ATK'], [4, 'FACEUP_DEF'], [8, 'FACEDOWN_DEF'], [2, 'FACEDOWN_DEF']]

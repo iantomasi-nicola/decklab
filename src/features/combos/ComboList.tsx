@@ -141,7 +141,7 @@ function ComboRow({
         <Link to="/combo/$comboId" params={{ comboId: r.id }} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-md px-4 py-2 hover:bg-surface-2">
           {doc?.meta?.derivedFrom ? <GitFork aria-hidden size={18} className="shrink-0 text-accent-text" /> : null}
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[16px] font-medium">{nm(r.name)}</span>
+            <span className="line-clamp-2 text-[16px] font-medium leading-5 [overflow-wrap:anywhere]">{nm(r.name)}</span>
             <span className="flex flex-wrap gap-x-3 text-sm text-muted">
               <span>{v ? nm(v.name) : t('combos.general')}</span>
               <span>{t('combos.stepsCount', { count: steps })}</span>

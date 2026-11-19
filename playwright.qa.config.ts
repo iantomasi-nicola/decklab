@@ -5,7 +5,7 @@ const executablePath = process.env.PW_CHROMIUM_PATH ?? process.env.CHROME_BIN
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  testMatch: /qa-.*\.spec\.ts/,
+  testMatch: /qa-tour\.spec\.ts/,
   outputDir: 'test-results/qa-out',
   fullyParallel: true,
   workers: 2,

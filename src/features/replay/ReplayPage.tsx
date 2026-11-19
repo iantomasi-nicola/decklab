@@ -39,7 +39,7 @@ export function ReplayPage() {
 }
 
 const stageCls =
-  'flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-61px-16px)]'
+  'flex h-[calc(100dvh-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-61px-16px)]'
 
 function ReplayView({ comboId }: { comboId: string }) {
   const { t } = useTranslation()
@@ -82,7 +82,9 @@ function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
 
   // barra: aperta di default (il campo ha rapporto fisso: in verticale lo spazio in più è per la descrizione); la scelta si ricorda
   const [stored, setStored] = useState<boolean | null>(readExpanded)
-  const expanded = stored ?? true
+  // telefono con schermo basso (es. 375×667): di default chiusa, così il campo resta leggibile (la scelta dell'utente prevale)
+  const shortPhone = useMediaQuery('(max-width: 639px) and (max-height: 739px)')
+  const expanded = stored ?? !shortPhone
   const setExpanded = (v: boolean) => {
     setStored(v)
     try {

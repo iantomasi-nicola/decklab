@@ -49,6 +49,9 @@
       "combos": "Scrivi una combo",
       "learn": "Ripassa una linea di gioco"
     },
+    "recentTitle": "Ultime modifiche",
+    "recentDeck": "Mazzo",
+    "recentCombo": "Combo",
     "emptyTitle": "Nessun mazzo ancora",
     "emptyBody": "Quando crei il primo mazzo o importi un file .ydk, lo trovi qui insieme alle ultime modifiche."
   },
@@ -538,8 +541,9 @@
   },
   "learn": {
     "title": "Impara",
-    "emptyTitle": "Niente da ripassare",
-    "emptyBody": "Dopo aver salvato una combo puoi allenarti a rifarla passo dopo passo, anche offline."
+    "emptyTitle": "L'allenamento arriva presto",
+    "emptyBody": "Presto potrai rifare una combo passo dopo passo, con correzioni e ripasso. Intanto ripassa le tue linee con la Guida e il Replay.",
+    "emptyAction": "Vai alle combo"
   },
   "stats": {
     "title": "Statistiche",
@@ -965,7 +969,7 @@
     "description": "Accedi per ritrovare i tuoi dati su tutti i dispositivi. Senza account tutto resta su questo dispositivo.",
     "disabled": {
       "title": "Sincronizzazione non attiva",
-      "body": "Mancano le chiavi del servizio (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY): l'accesso è disabilitato. L'app funziona comunque, con i dati su questo dispositivo."
+      "body": "Il servizio di accesso non è configurato in questa installazione, quindi l'accesso è disabilitato. L'app funziona comunque, con i dati su questo dispositivo."
     },
     "email": {
       "label": "Email",

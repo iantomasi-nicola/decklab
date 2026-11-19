@@ -49,6 +49,9 @@
       "combos": "Write a combo",
       "learn": "Rehearse a line of play"
     },
+    "recentTitle": "Latest changes",
+    "recentDeck": "Deck",
+    "recentCombo": "Combo",
     "emptyTitle": "No decks yet",
     "emptyBody": "When you create your first deck or import a .ydk file, it shows up here with your latest changes."
   },
@@ -538,8 +541,9 @@
   },
   "learn": {
     "title": "Learn",
-    "emptyTitle": "Nothing to rehearse",
-    "emptyBody": "Once you save a combo you can practise it step by step, even offline."
+    "emptyTitle": "Practice mode is coming soon",
+    "emptyBody": "Soon you will redo a combo step by step, with corrections and spaced review. Meanwhile, review your lines with the Guide and Replay.",
+    "emptyAction": "Go to combos"
   },
   "stats": {
     "title": "Stats",
@@ -965,7 +969,7 @@
     "description": "Sign in to find your data on all your devices. Without an account everything stays on this device.",
     "disabled": {
       "title": "Sync is off",
-      "body": "The service keys are missing (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY), so sign-in is disabled. The app still works, with data on this device."
+      "body": "The sign-in service is not configured in this installation, so sign-in is disabled. The app still works, with data on this device."
     },
     "email": {
       "label": "Email",

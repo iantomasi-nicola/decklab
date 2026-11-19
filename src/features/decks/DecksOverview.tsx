@@ -111,7 +111,7 @@ export function DecksOverview() {
                       {g.name}
                     </Link>
                   </h3>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))]">
                     {g.items.map((v) => (
                       <VariantCard key={v.id} variant={v} cards={cards} lang={lang} />
                     ))}

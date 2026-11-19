@@ -13,6 +13,9 @@ const variants: Record<ButtonVariant, string> = {
 export const buttonBase =
   'inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-md px-4 text-[15px] font-medium leading-none whitespace-nowrap transition-colors duration-150 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50'
 
+/** Classi di un Button per un link (<a>) con lo stesso aspetto. */
+export const buttonClasses = (variant: ButtonVariant = 'secondary') => cn(buttonBase, variants[variant])
+
 export interface ButtonProps extends ComponentProps<'button'> {
   variant?: ButtonVariant
   icon?: ReactNode

@@ -36,7 +36,7 @@ export function deleteArchetypeWithUndo(a: Archetype, labels: { undo: string; do
 
 function ListSkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" data-testid="archetypes-skeleton">
+    <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]" aria-busy="true" data-testid="archetypes-skeleton">
       {Array.from({ length: 6 }, (_, i) => (
         <Skeleton key={i} className="h-40 w-full rounded-lg" />
       ))}
@@ -70,7 +70,7 @@ function ArchetypeCard({
           params={{ archetypeId: archetype.id }}
           className="min-w-0 flex-1 rounded-md px-3 py-2 after:absolute after:inset-0 after:rounded-lg after:content-['']"
         >
-          <h2 className="truncate text-lg font-semibold text-fg">{name}</h2>
+          <h2 className="line-clamp-2 text-lg font-semibold leading-6 text-fg [overflow-wrap:anywhere]">{name}</h2>
           {other && other !== name ? <p className="truncate text-sm text-muted">{other}</p> : null}
         </Link>
         <IconButton
@@ -202,7 +202,7 @@ export function ArchetypeList() {
               <p className="text-sm text-muted" role="status">
                 {filtering ? t('archetypes.resultsFiltered', { count: shown.length, total: all.length }) : t('archetypes.results', { count: all.length })}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="archetype-grid">
+              <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))]" data-testid="archetype-grid">
                 {shown.map((a) => (
                   <ArchetypeCard
                     key={a.id}

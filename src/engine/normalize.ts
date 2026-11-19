@@ -21,7 +21,7 @@ import type {
   ActionKind, Board, BoardPlacement, EffectKind, Endboard, Loc, Move, MoveWhy, Place, PlayerIdx, Position, Step, SummonMethod, Uid,
 } from '@/domain/combo/types'
 import type { DuelPlan } from './duel'
-import type { CardRef, PlayerPiles } from './requests'
+import { descParts, type CardRef, type PlayerPiles } from './requests'
 import { FILLER_CODE } from './cards'
 import { isRequest } from './duel'
 
@@ -140,12 +140,12 @@ class Tracker {
   /** Chi sta in (p, loc, seq)? Se il passcode non coincide (mano/mazzo mescolati) si cerca per passcode nella stessa zona. */
   find(p: PlayerIdx, loc: number, seq: number, code?: number, ovSeq?: number): Key | undefined {
     const match = (k: Key | null | undefined): k is Key => k != null && (code === undefined || code === 0 || this.codes.get(k) === code)
-    if ((loc & OcgLocation.OVERLAY) !== 0) {
-      // host = carta sul campo a (p, loc >> 8, seq)
-      const hostLoc = loc >> 8 || OcgLocation.MZONE
-      const hs = slotOf(hostLoc, seq)
-      const host = hs ? (this.list(p, hs.z) as (Key | null)[])[hs.i] : null
-      if (host == null) return undefined
+    if ((loc & OcgLocation.OVERLAY) !== 0 || ovSeq !== undefined) {
+      // il core indica il materiale con `overlay_sequence`; `location` è quella dell'ospite (anche l'Extra Deck: durante
+      // l'evocazione Xyz i materiali si agganciano al mostro ancora nell'Extra)
+      const hostLoc = (loc & OcgLocation.OVERLAY) !== 0 ? (loc >> 8) || OcgLocation.MZONE : loc
+      const host = this.find(p, hostLoc, seq)
+      if (host === undefined) return undefined
       const l = this.ov.get(host) ?? []
       const direct = ovSeq !== undefined ? l[ovSeq] : undefined
       if (match(direct)) return direct
@@ -397,8 +397,8 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
   }
 
   const effectIndex = (code: number, description: bigint): number | undefined => {
-    if (description === 0n) return undefined
-    return description >> 4n === BigInt(code) ? Number(description & 15n) + 1 : undefined
+    const p = descParts(description)
+    return p && 'code' in p && p.code === code ? p.index + 1 : undefined
   }
   const effectKindFor = (code: number, fromChainWindow: boolean, chainOpen: boolean): EffectKind => {
     const t = cardType(code)
@@ -496,8 +496,8 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
       case T.MOVE: {
         const from = asLp(m.from)
         const to = asLp(m.to)
-        const zFrom = coreToZone(from.location)
-        const zTo = coreToZone(to.location)
+        const zFrom = from.overlay_sequence !== undefined ? 'ov' : coreToZone(from.location)
+        const zTo = to.overlay_sequence !== undefined ? 'ov' : coreToZone(to.location)
         let k = zFrom ? keyAt(from, m.card) : undefined
         if (k === undefined) k = tr.create(m.card) // carta creata (token/evocata da fuori partita)
         if (!zTo) {
@@ -507,8 +507,8 @@ export function normalizeDuel(inp: NormalizeInput): NormalizeResult {
         }
         let host: Key | undefined
         if (zTo === 'ov') {
-          const hs = slotOf((to.location >> 8) || OcgLocation.MZONE, to.sequence)
-          host = hs ? (tr.mz[to.controller] as (Key | null)[])[hs.i] ?? undefined : undefined
+          const hostLoc = (to.location & OcgLocation.OVERLAY) !== 0 ? (to.location >> 8) || OcgLocation.MZONE : to.location
+          host = tr.find(to.controller, hostLoc, to.sequence)
           if (host === undefined) return
         }
         const slot = slotOf(to.location, to.sequence)

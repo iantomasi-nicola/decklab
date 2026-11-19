@@ -21,6 +21,8 @@ export interface TargetPickerOverlayProps {
   onChange?: (selected: Uid[]) => void
   onConfirm: (selected: Uid[]) => void
   onCancel: () => void
+  /** false = non si può annullare (richiesta obbligatoria del motore): niente pulsante Annulla, Esc non fa nulla. Default true. */
+  cancelable?: boolean
   /** Con max = 1 conferma subito alla scelta (flusso veloce, senza il tocco su Conferma). */
   confirmOnPick?: boolean
   /** Elemento DOM di una carta; default `document.querySelector('[data-card="uid"]')`. */
@@ -53,7 +55,7 @@ const PAD = 3
  * Non modifica il campo: legge la posizione degli elementi `data-card` e ci disegna sopra.
  */
 export function TargetPickerOverlay({
-  candidates, min, max, title, cardName, defaultSelected, onChange, onConfirm, onCancel, confirmOnPick, findElement = defaultFind, placement = 'auto',
+  candidates, min, max, title, cardName, defaultSelected, onChange, onConfirm, onCancel, cancelable = true, confirmOnPick, findElement = defaultFind, placement = 'auto',
 }: TargetPickerOverlayProps) {
   const { t } = useTurnT()
   const name = useCallback((u: Uid) => cardName?.(u) ?? u, [cardName])
@@ -157,7 +159,7 @@ export function TargetPickerOverlay({
     if (e.key === 'Escape') {
       e.preventDefault()
       e.stopPropagation()
-      onCancel()
+      if (cancelable) onCancel()
     } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       confirm()
@@ -274,8 +276,8 @@ export function TargetPickerOverlay({
           </div>
         ) : null}
         <p className="tpick-hint">{t('pick.hint')}</p>
-        <div className="tpick-actions">
-          <button type="button" className="tpick-btn" data-variant="secondary" onClick={onCancel}>{t('pick.cancel')}</button>
+        <div className="tpick-actions" style={cancelable ? undefined : { gridTemplateColumns: '1fr' }}>
+          {cancelable ? <button type="button" className="tpick-btn" data-variant="secondary" onClick={onCancel}>{t('pick.cancel')}</button> : null}
           <button type="button" ref={confirmRef} className="tpick-btn" data-variant="primary" disabled={!ok} onClick={confirm}>
             {t('pick.confirm')}
           </button>

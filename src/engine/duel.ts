@@ -129,7 +129,7 @@ export function buildPlan(req: StartDuelRequest): DuelPlan {
   }
 
   // carte fisiche del giocatore: main (indice = posizione nella lista), poi extra
-  const mainCard: PlanCard[] = deck.main.map((code, i) => ({ idx: -1, code, team: ut, location: OcgLocation.DECK, sequence: 1, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'main', ...(requiredUid.has(i) ? { uid: requiredUid.get(i)! } : {}) }))
+  const mainCard: PlanCard[] = deck.main.map((code, i) => ({ idx: -1, code, team: ut, location: OcgLocation.DECK, sequence: 0, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'main', ...(requiredUid.has(i) ? { uid: requiredUid.get(i)! } : {}) }))
   const extraCard: PlanCard[] = deck.extra.map((code) => ({ idx: -1, code, team: ut, location: OcgLocation.EXTRA, sequence: 0, position: OcgPosition.FACEDOWN_DEFENSE, origin: 'extra' }))
   for (const o of ownPlaced) {
     const target = o.from === 'main' ? mainCard[o.i]! : extraCard[o.i]!

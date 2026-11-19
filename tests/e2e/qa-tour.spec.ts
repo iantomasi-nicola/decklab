@@ -140,7 +140,7 @@ for (const theme of themes) {
             await page.screenshot({ path: `${OUT}/${name}-${w}-${theme}-${lang}-vp.png` })
             if (!/editor|replay/.test(name)) {
               // pagina intera: niente barra fissa in mezzo e niente content-visibility (altrimenti i passi sotto la piega restano vuoti)
-              await page.addStyleTag({ content: 'nav.fixed{display:none!important}*{content-visibility:visible!important}' })
+              await page.addStyleTag({ content: 'nav.fixed{display:none!important}*{content-visibility:visible!important}[class*=sticky]{position:static!important}' })
               await page.waitForTimeout(150)
               await page.screenshot({ path: `${OUT}/${name}-${w}-${theme}-${lang}.png`, fullPage: true })
             }

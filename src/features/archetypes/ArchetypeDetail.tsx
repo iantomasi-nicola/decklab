@@ -259,7 +259,7 @@ function Detail({ archetype }: { archetype: Archetype }) {
             }
           />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2" data-testid="variant-list">
+          <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))]" data-testid="variant-list">
             {sorted.map((v) => (
               <VariantCard key={v.id} variant={v} cards={cards} lang={lang} />
             ))}

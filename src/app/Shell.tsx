@@ -122,6 +122,8 @@ export function Shell() {
   const wide = /^\/mazzi\/[^/]+/.test(pathname) || pathname === '/side'
   // editor combo: il campo occupa tutta l'area disponibile (nessun margine massimo né padding ampio)
   const stage = /^\/combo\/[^/]+/.test(pathname)
+  // editor e replay su telefono: niente barra alta dell'app (ha già la propria barra con "indietro"): più altezza al campo
+  const focus = /^\/combo\/[^/]+$/.test(pathname) || /^\/combo\/[^/]+\/replay$/.test(pathname)
   const pref = useSidebar((x) => x.pref)
   const setPref = useSidebar((x) => x.setPref)
   const collapsed = (pref ?? (isEditorRoute(pathname) ? 'collapsed' : 'expanded')) === 'collapsed'
@@ -167,7 +169,7 @@ export function Shell() {
 
       <div className="min-w-0">
         {/* Barra alta */}
-        <header className="sticky top-0 z-30 border-b border-line bg-bg">
+        <header className={cn('sticky top-0 z-30 border-b border-line bg-bg', focus && 'hidden md:block')}>
          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-4 md:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <LogoMark size={28} />

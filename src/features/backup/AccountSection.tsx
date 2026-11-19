@@ -117,7 +117,7 @@ export function AccountSection() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2">
           <form onSubmit={(e) => void sendLink(e)} noValidate className="flex flex-col gap-3">
             <Field
               label={t('account.email.label')}
@@ -160,7 +160,7 @@ export function AccountSection() {
               </Banner>
             ) : null}
           </form>
-          <div className="flex flex-col gap-3 sm:border-l sm:border-line sm:pl-4">
+          <div className="flex flex-col gap-3 lg:border-l lg:border-line lg:pl-4">
             <p className="text-sm font-medium text-fg">{t('account.or')}</p>
             <Button
               icon={<GoogleMark />}

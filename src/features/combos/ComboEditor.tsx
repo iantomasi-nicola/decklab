@@ -374,7 +374,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   return (
     <div
       data-combo-stage
-      className="flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]"
+      className="flex h-[calc(100dvh-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]"
     >
       <header className="flex shrink-0 items-center gap-1">
         <Tooltip label={t('combos.backToList')}>

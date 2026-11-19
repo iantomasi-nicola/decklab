@@ -41,8 +41,10 @@ export function LegalityBanner({ issues, rules, banlistLabel, banlistMissing, in
       <Banner
         tone={legal ? 'ok' : 'danger'}
         title={legal ? t('legality.legalTitle') : t('legality.illegalTitle', { count: sorted.length })}
+        className={legal ? 'items-center p-3' : undefined}
       >
-        <p>{legal ? t('legality.legalBody', { rules, banlist: banlistLabel }) : t('legality.illegalBody', { rules, banlist: banlistLabel })}</p>
+        {/* mazzo legale: su telefono resta una riga sola (più spazio alle carte) */}
+        <p className={legal && !banlistMissing ? 'hidden sm:block' : undefined}>{legal ? t('legality.legalBody', { rules, banlist: banlistLabel }) : t('legality.illegalBody', { rules, banlist: banlistLabel })}</p>
         {banlistMissing ? <p className="mt-1 text-warn">{t('legality.banlistMissing', { banlist: banlistLabel })}</p> : null}
         {sorted.length ? (
           <>
