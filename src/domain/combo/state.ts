@@ -133,7 +133,8 @@ export function overlaysOf(state: GameState, host: Uid): Uid[] {
 }
 
 function cleanPlace(pl: NPlace): Place {
-  const out: Place = { p: pl.p, loc: pl.loc }
+  const out: Place = { loc: pl.loc }
+  if (pl.p === 1) out.p = 1 // p = 0 omesso (default)
   if (pl.seq !== undefined) out.seq = pl.seq
   if (pl.pos !== undefined) out.pos = pl.pos
   if (pl.host !== undefined) out.host = pl.host

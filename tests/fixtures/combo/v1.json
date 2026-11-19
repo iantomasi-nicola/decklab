@@ -1,0 +1,53 @@
+{
+  "format": "combolab.combo",
+  "v": 1,
+  "meta": {
+    "id": "5b3f3e5e-0f1a-4f64-9a8b-0f4a6f5e0001",
+    "title": { "it": "Apertura base", "en": "Basic opener" },
+    "scope": "variant",
+    "archetype": { "name": { "it": "Esempio", "en": "Example" } },
+    "variant": { "name": { "it": "Standard", "en": "Standard" } },
+    "rules": "TCG",
+    "banlist": { "format": "TCG", "id": "2026.10" },
+    "tags": ["demo"],
+    "noteLang": ["it", "en"],
+    "favorite": false,
+    "createdAt": "2026-11-19T10:00:00Z",
+    "updatedAt": "2026-11-19T10:00:00Z",
+    "source": "manual"
+  },
+  "deck": { "main": [999000001, 999000001, 999000002], "extra": [999000003], "side": [] },
+  "cards": { "u1": 999000001, "u2": 999000002, "u3": 999000003, "o1": 14558127 },
+  "setup": {
+    "first": true,
+    "hand": { "required": ["u1", "u2"], "size": 5, "fill": "random" },
+    "opponent": {
+      "board": { "lp": 8000, "places": [] },
+      "interrupts": [{ "uid": "o1", "mode": "ask", "target": "manual" }]
+    }
+  },
+  "steps": [
+    {
+      "id": "s1", "action": "normalSummon", "card": "u1",
+      "to": { "loc": "mzone", "seq": 2, "pos": "FACEUP_ATK" },
+      "moves": [{ "uid": "u1", "to": { "loc": "mzone", "seq": 2, "pos": "FACEUP_ATK" }, "why": "summon" }],
+      "note": { "it": "Evoca Normalmente.", "en": "Normal Summon." }
+    },
+    {
+      "id": "s2", "action": "activate", "card": "u1",
+      "effect": { "kind": "trigger", "index": 1 },
+      "searched": ["u2"],
+      "moves": [{ "uid": "u2", "to": { "loc": "hand" }, "why": "search" }],
+      "note": { "it": "Cerca il pezzo chiave.", "en": "Search the key piece." }
+    }
+  ],
+  "branches": [{
+    "id": "b1",
+    "title": { "it": "Se Ash sulla ricerca", "en": "If Ash on the search" },
+    "condition": { "afterStep": "s2", "window": "activation", "opponent": { "code": 14558127, "effect": 1 } },
+    "steps": [],
+    "rejoin": null,
+    "note": { "it": "La ricerca è negata: passa alla linea B.", "en": "Search is negated: go to line B." }
+  }],
+  "endboard": { "own": { "lp": 8000, "places": [{ "uid": "u1", "place": { "loc": "mzone", "seq": 2, "pos": "FACEUP_ATK" } }] } }
+}
