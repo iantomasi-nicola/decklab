@@ -60,3 +60,6 @@
 .eng-act[data-primary='true'] { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
 .cl-cell[data-chosen] .cl-zone { outline: 3px solid var(--ok); outline-offset: -3px; background: color-mix(in srgb, var(--ok) 22%, transparent); }
 .eng-sort-row[data-dragging='true'] { transform: scale(1.02); box-shadow: var(--shadow-2); }
+
+.eng-value { position: absolute; top: -6px; left: -6px; min-width: 26px; height: 26px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--accent-fg); border: 2px solid var(--surface-1); font-size: 13px; font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.eng-order { position: absolute; top: -6px; right: -6px; }

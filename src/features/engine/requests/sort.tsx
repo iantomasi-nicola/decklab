@@ -83,7 +83,7 @@ export function SortRequest({ req, onAnswer }: { req: Req; onAnswer: (a: Answer)
             <button
               type="button"
               aria-label={nameOf(o.code)}
-              className="grid size-11 shrink-0 cursor-grab touch-none place-items-center rounded-md text-muted hover:text-fg"
+              className="-ml-2 -mr-1 grid size-11 shrink-0 cursor-grab touch-none place-items-center rounded-md text-muted hover:text-fg"
               onPointerDown={(e) => onDown(e, i)}
               onPointerMove={onMove}
               onPointerUp={() => setDrag(null)}
@@ -91,9 +91,11 @@ export function SortRequest({ req, onAnswer }: { req: Req; onAnswer: (a: Answer)
             >
               <GripVertical aria-hidden size={20} />
             </button>
-            <span className="grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-semibold tabular-nums text-muted" aria-hidden>{i + 1}</span>
-            <CardBox code={o.code} name={nameOf(o.code)} width={36} pos={o.place.pos} />
-            <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{nameOf(o.code)}</span>
+            <span className="relative shrink-0">
+              <CardBox code={o.code} name={nameOf(o.code)} width={36} pos={o.place.pos} />
+              <span className="eng-order" aria-hidden>{i + 1}</span>
+            </span>
+            <span className="line-clamp-2 min-w-0 flex-1 text-[15px] font-medium leading-snug">{nameOf(o.code)}</span>
             <span className="flex shrink-0">
               <button type="button" className="grid size-11 place-items-center rounded-md text-muted enabled:hover:text-fg disabled:opacity-35" disabled={i === 0} aria-label={t('sel.sortMoveUp', { name: nameOf(o.code) })} onClick={() => move(i, i - 1)}>
                 <ChevronUp aria-hidden size={20} />

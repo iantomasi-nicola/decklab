@@ -45,7 +45,7 @@ export function Grid({ tiles, onToggle, t, nameOf }: { tiles: Tile[]; onToggle: 
           >
             <CardFace code={x.ref.code} name={nameOf(x.ref.code)} pos={x.ref.place.pos} />
             {x.chosen ? <span className="eng-order" aria-hidden>{x.chosen}</span> : null}
-            {x.badge ? <span className="absolute bottom-1 left-1 rounded-full border border-line-strong bg-surface-1 px-1.5 text-xs font-semibold text-fg">{x.badge}</span> : null}
+            {x.badge ? <span className="eng-value" aria-hidden>{x.badge}</span> : null}
           </button>
           <span className="eng-tile-name">{nameOf(x.ref.code)}</span>
           <span className="text-[11px] leading-tight text-subtle">{x.label ?? locLabel(x.ref, t)}</span>
@@ -109,7 +109,7 @@ function CardsGrid({ req, onAnswer }: P<'cards'>) {
   useRequestKeys({ enter: confirm, escape: cancel })
   const tiles: Tile[] = req.options.filter(f.match).map((o) => ({
     key: String(o.index), ref: o, chosen: chosen.indexOf(o.index) + 1 || 0, disabled: full && !chosen.includes(o.index) && req.max > 1,
-    ...(tribute && (o.tribute ?? 1) > 1 ? { badge: t('sel.tributeValue', { n: o.tribute ?? 1 }) } : {}),
+    ...(tribute && (o.tribute ?? 1) > 1 ? { badge: `×${o.tribute}`, label: t('sel.tributeValue', { n: o.tribute ?? 1 }) } : {}),
   }))
   const counter = tribute
     ? t('sel.tributeTotal', { c: total, n: req.min })
@@ -119,7 +119,7 @@ function CardsGrid({ req, onAnswer }: P<'cards'>) {
       testId="req-cards"
       title={t(tribute ? 'sel.tributeTitle' : 'sel.cardsTitle')}
       subtitle={counter}
-      aside={<span className="eng-pill" data-tone={ok ? 'ok' : undefined} data-testid="choice-counter">{t('sel.counter', { c: chosen.length, n: req.max === req.min ? req.max : `${req.min}–${req.max}` as unknown as number })}</span>}
+      aside={<span className="eng-pill" data-tone={ok ? 'ok' : undefined} data-testid="choice-counter">{`${chosen.length} / ${req.max === req.min ? req.max : `${req.min}–${req.max}`}`}</span>}
       wide
       footer={
         <>
@@ -191,8 +191,8 @@ export function SumRequest({ req, onAnswer }: P<'sum'>) {
   const confirm = () => ok && (playSound('targetConfirm'), onAnswer(answerSum(chosen)))
   useRequestKeys({ enter: confirm })
   const valueLabel = (v: number) => t('sel.sumValue', { n: valuesOf(v).join('/') as unknown as number })
-  const must: Tile[] = req.mustSelect.map((o) => ({ key: `m${o.index}`, ref: o, chosen: -1, disabled: false, badge: valueLabel(o.value), label: t('sel.sumMust') }))
-  const opts: Tile[] = req.options.filter(f.match).map((o) => ({ key: String(o.index), ref: o, chosen: chosen.indexOf(o.index) + 1 || 0, badge: valueLabel(o.value) }))
+  const must: Tile[] = req.mustSelect.map((o) => ({ key: `m${o.index}`, ref: o, chosen: -1, disabled: false, badge: valuesOf(o.value).join('/'), label: `${t('sel.sumMust')} · ${valueLabel(o.value)}` }))
+  const opts: Tile[] = req.options.filter(f.match).map((o) => ({ key: String(o.index), ref: o, chosen: chosen.indexOf(o.index) + 1 || 0, badge: valuesOf(o.value).join('/'), label: valueLabel(o.value) }))
   return (
     <Sheet
       testId="req-sum"
@@ -244,7 +244,7 @@ export function CounterRequest({ req, onAnswer }: P<'counter'>) {
           <li key={o.uid} className="eng-row !cursor-default">
             <CardBox code={o.code} name={nameOf(o.code)} width={36} pos={o.place.pos} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15px] font-medium">{nameOf(o.code)}</span>
+              <span className="line-clamp-2 text-[15px] font-medium leading-snug">{nameOf(o.code)}</span>
               <span className="block text-sm text-muted">{t('sel.counterAvail', { n: o.available })}</span>
             </span>
             <button type="button" className="grid size-11 place-items-center rounded-md border border-line-strong bg-surface-1 disabled:opacity-40" disabled={counts[i] === 0} aria-label="−" onClick={() => set(i, -1)} data-testid={`counter-minus-${i}`}><Minus aria-hidden size={18} /></button>

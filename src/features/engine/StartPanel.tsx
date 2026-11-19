@@ -109,7 +109,7 @@ export function StartPanel({ doc, onClose }: { doc: ComboDoc; onClose?: (() => v
           ) : null}
           {orderMode === 'shuffle' ? (
             <div className="flex items-center gap-2">
-              <p className="min-w-0 flex-1 truncate text-[15px] tabular-nums" data-testid="seed">{t('start.shuffle', { seed })}</p>
+              <p className="min-w-0 flex-1 text-[15px] tabular-nums" data-testid="seed">{t('start.shuffle', { seed })}</p>
               <button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-line bg-surface-2 px-3 text-[15px] font-medium hover:bg-surface-3" onClick={() => setSeed(newSeed())} data-testid="reshuffle">
                 <Dice5 aria-hidden size={18} />
                 {t('start.reshuffle')}

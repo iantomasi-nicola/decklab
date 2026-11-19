@@ -21,10 +21,11 @@ import base from '../fixtures/combo/v1.json'
 
 initI18n()
 const params = new URLSearchParams(location.search)
-const doc = structuredClone(base) as unknown as ComboDoc
-doc.deck = { main: Array(40).fill(CODE.ash), extra: [CODE.xyz], side: [] }
-doc.cards = { u1: CODE.ash, u2: CODE.tengu }
-doc.setup.hand = { required: ['u1', 'u2'], size: 5, fill: 'random' }
+const baseDoc = structuredClone(base) as unknown as ComboDoc
+const doc0 = baseDoc
+doc0.deck = { main: Array(40).fill(CODE.ash), extra: [CODE.xyz], side: [] }
+doc0.cards = { u1: CODE.ash, u2: CODE.tengu }
+doc0.setup.hand = { required: ['u1', 'u2'], size: 5, fill: 'random' }
 
 function flowStates() {
   const reqs = sampleRequests()
@@ -41,6 +42,7 @@ function flowStates() {
 }
 
 function Harness() {
+  const doc = useEditor((s) => s.doc) ?? doc0
   const [ready, setReady] = useState(false)
   const cards = useCards()
   const view = params.get('view')
@@ -51,15 +53,15 @@ function Harness() {
     const fake = scenarioClient(states)
     ;(window as unknown as Record<string, unknown>).__fake = fake
     ;(window as unknown as Record<string, unknown>).__duel = useDuel
-    useEditor.getState().open(doc, 'harness')
+    useEditor.getState().open(doc0, 'harness')
     useDuel.getState().setClientFactory(() => fake)
     if (view === 'start') return setReady(true)
-    void useDuel.getState().start(requestFromDoc(doc, 1)).then(() => {
+    void useDuel.getState().start(requestFromDoc(useEditor.getState().doc ?? doc0, 1)).then(() => {
       if (view === 'notices') {
         const kind = params.get('kind')
         if (kind === 'error') useDuel.setState({ error: { kind: 'core', message: 'Errore di prova' } })
         if (kind === 'unsupported') useDuel.setState({ unsupported: [CODE.ash] })
-        if (kind === 'loading') useDuel.setState({ busy: true, load: { done: 12, total: 40 } })
+        if (kind === 'loading') setTimeout(() => useDuel.setState({ busy: true, load: { done: 12, total: 40 } }), 150)
       }
       setReady(true)
     })

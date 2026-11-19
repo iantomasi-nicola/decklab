@@ -73,7 +73,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   }, [reqKey])
 
   const fieldView: FieldView | null = useMemo(
-    () => (view && state ? { state, registry: view.registry, nameOf: cards.nameOf, unrevealed: { deck: view.deckCount, extra: 0 }, randomHand: 0, dragHidden: true } : null),
+    () => (view && state ? { state, registry: view.registry, nameOf: (c: number) => (c ? cards.nameOf(c) : ''), unrevealed: { deck: view.deckCount, extra: 0 }, randomHand: 0, dragHidden: true } : null),
     [view, state, cards.nameOf],
   )
 
@@ -166,7 +166,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     const list = actionsAt(legal, uid, key)
     if (!list.length) {
       playSound('error')
-      setWhy(t('why.zone'))
+      setWhy(actionsForCard(legal, uid).length ? t('why.zone') : reasonFor(uid))
       return
     }
     const hint = d.t === 'card' ? { uid: d.uid } : { zone: key }

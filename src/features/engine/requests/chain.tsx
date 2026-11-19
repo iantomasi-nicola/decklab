@@ -38,8 +38,8 @@ export function ChainRequest({ req, onAnswer }: { req: Req; onAnswer: (a: Answer
                   <span className="grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-xs font-semibold tabular-nums text-muted" aria-hidden>{i + 1}</span>
                   <CardBox code={o.code} name={nameOf(o.code)} width={40} pos={o.place.pos} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-semibold leading-snug">{nameOf(o.code)}</span>
-                    <span className="block truncate text-sm leading-snug text-muted">{descLabel(o.desc, nameOf, t, t(`kind.${kind}` as const))}</span>
+                    <span className="line-clamp-2 text-[15px] font-semibold leading-snug">{nameOf(o.code)}</span>
+                    <span className="line-clamp-2 text-sm leading-snug text-muted">{descLabel(o.desc, nameOf, t, t(`kind.${kind}` as const))}</span>
                   </span>
                   <EffectBadge kind={kind} size="md" />
                 </button>

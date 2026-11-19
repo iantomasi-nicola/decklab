@@ -19,7 +19,7 @@ Serve Node.js 22 sul tuo computer (https://nodejs.org, "LTS") e il progetto scar
 7. Il terminale mostra un indirizzo tipo `https://decklab-images.TUONOME.workers.dev`. **Copialo**: è il valore di `VITE_IMAGE_BASE_URL`.
 8. Prova: apri `<indirizzo>/small/46986414.jpg` nel browser (Dark Magician): deve apparire la carta (la prima volta ci mette un attimo).
 
-Alternativa dalla dashboard: **Storage & databases > R2 > Create bucket** (nome `decklab-images`); **Workers & Pages > Create > Create Worker**, incolla il contenuto di `workers/images/src/index.ts`, poi in **Settings > Bindings** aggiungi un bucket R2 con nome `BUCKET` e in **Variables** `ALLOWED_ORIGINS`. Il terminale è più semplice.
+Alternativa dalla dashboard: **Storage & databases > R2 > Create bucket** (nome `decklab-images`); **Workers & Pages > Create > Create Worker**, incolla il contenuto di `workers/images/worker.js` (versione JavaScript pronta da incollare, generata da `src/index.ts`), poi in **Settings > Bindings** aggiungi un bucket R2 con nome `BUCKET` e in **Variables** `ALLOWED_ORIGINS`. Il terminale è più semplice.
 
 ## 3. Supabase (login e sincronizzazione)
 1. https://supabase.com > **Start your project** > accedi con GitHub.

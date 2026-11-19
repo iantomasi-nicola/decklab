@@ -83,7 +83,7 @@ export function PositionRequest({ req, onAnswer }: P<'position'>) {
   useRequestKeys({ digit: (n) => req.positions[n - 1] && pick(req.positions[n - 1]!) })
   return (
     <Sheet testId="req-position" title={t('sel.positionTitle')} subtitle={nameOf(req.code)}>
-      <ul className="grid grid-cols-[repeat(auto-fit,minmax(104px,1fr))] gap-3 pb-3">
+      <ul className="grid gap-3 pb-3" style={{ gridTemplateColumns: `repeat(${Math.min(3, req.positions.length)}, minmax(0, 1fr))` }}>
         {req.positions.map((p, i) => {
           const def = p !== 'FACEUP_ATK'
           return (

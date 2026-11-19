@@ -214,3 +214,6 @@ export function resetDuelForTests() {
   chain = Promise.resolve()
   useDuel.setState({ status: 'off', busy: false, load: null, replaying: 0, state: null, view: null, engine: null, init: null, error: null, unsupported: [], hint: null, tick: 0 })
 }
+
+// solo sviluppo/test: permette ai test di leggere lo stato del duello
+if (import.meta.env.DEV && typeof window !== 'undefined') (window as unknown as { __duel?: typeof useDuel }).__duel = useDuel

@@ -30,7 +30,8 @@ export function Sheet({ title, subtitle, aside, children, footer, onCancel, wide
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null
     // il focus va al primo controllo utile (il primario del piede, altrimenti la prima riga)
-    const el = ref.current?.querySelector<HTMLElement>('[data-autofocus], .eng-foot [data-primary="true"]:not(:disabled), .eng-row, .eng-foot button:not(:disabled)')
+    const q = (s: string) => ref.current?.querySelector<HTMLElement>(s)
+    const el = q('[data-autofocus]') ?? q('.eng-foot [data-primary="true"]:not(:disabled)') ?? q('.eng-row') ?? q('.eng-foot button:not(:disabled)')
     el?.focus({ preventScroll: true })
     return () => prev?.focus?.({ preventScroll: true })
   }, [])
@@ -102,7 +103,7 @@ export function useRequestKeys(map: { enter?: () => void; escape?: () => void; d
 export function descLabel(desc: DescRef | null | undefined, nameOf: (code: number) => string, t: EngT, fallback?: string): string {
   if (!desc) return fallback ?? ''
   if (desc.kind === 'card') return t('sel.effectOf', { n: desc.index + 1, name: nameOf(desc.code) })
-  return fallback ?? t('sel.system', { n: desc.id })
+  return fallback ?? ''
 }
 
 export function effectKindOf(desc: DescRef | null | undefined, place: CardRef['place'], inChain: boolean): BadgeKind {
