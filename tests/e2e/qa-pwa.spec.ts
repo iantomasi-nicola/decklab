@@ -106,8 +106,9 @@ test('senza rete e senza cache: errore chiaro con "Riprova" nell\'editor del maz
     return v
   })
   await page.goto(`/mazzi/${id}`)
-  await page.waitForTimeout(3000)
-  console.log('ERRS', JSON.stringify(errs).slice(0, 1500))
+  await page.waitForTimeout(2000)
+  const failedLoads = errs.filter((e) => /ERR_FAILED/.test(e)).length
+  expect(failedLoads, 'nessun ritentativo a raffica').toBeLessThan(12)
   await expect(page.getByRole('button', { name: /Riprova|Retry/ })).toBeVisible({ timeout: 20_000 })
   await page.screenshot({ path: 'test-results/pwa/no-data-error.png' })
 })

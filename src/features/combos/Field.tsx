@@ -28,6 +28,8 @@ export interface FieldView {
   unrevealed: { deck: number; extra: number }
   /** segnaposto "N carte casuali" nella mano propria */
   randomHand: number
+  /** Deck/Extra propri trascinabili anche senza carte "non rivelate" (modalità automatica: le azioni legali scelgono la carta) */
+  dragHidden?: boolean
 }
 
 /** Larghezza / altezza del blocco campo + mano (mano propria SEMPRE sotto il campo). */
@@ -360,7 +362,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
   const count = placed.length + unrevealed
   const hidden = loc === 'deck' || loc === 'extra'
   const Icon = loc === 'gy' ? Skull : loc === 'banished' ? Ban : loc === 'deck' ? Layers : Sparkles
-  const draggableFresh = !readOnly && hidden && p === 0 && unrevealed > 0
+  const draggableFresh = !readOnly && hidden && p === 0 && (unrevealed > 0 || (!!view.dragHidden && count > 0))
   // un id per pila (anche se disattivata): ids duplicati si sovrascriverebbero nel registro di dnd-kit
   const fresh = useDraggable({ id: hidden ? freshDragId(p, loc as 'deck' | 'extra') : `none:${p}:${loc}`, data: { fresh: loc }, disabled: !draggableFresh })
   const name = t(`combos.pile.${loc}`)

@@ -24,9 +24,10 @@ export type CardDataState =
 /** Hook React: carica (una volta, in cache) il dataset da /data/manifest.json. */
 export function useCardData(): CardDataState {
   const state = useCardDataState()
+  // una volta per montaggio: se fallisce lo stato resta 'error' (con "Riprova" a cura della schermata), niente ritentativi a raffica
   useEffect(() => {
     void loadCardData().catch(() => {}) // l'errore è nello stato
-  }, [state.status === 'error'])
+  }, [])
   return state
 }
 
