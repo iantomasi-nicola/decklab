@@ -30,8 +30,7 @@ export interface ShareDialogProps {
 }
 
 /** Pagina di import a cui punta il link (`<origine>/importa#1.…`). */
-export const importBaseUrl = (): string =>
-  `${window.location.origin}${(import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')}/importa`
+export const importBaseUrl = (): string => `${window.location.origin}${(import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')}/importa`
 
 function CopyBlock({ label, value, onCopy }: { label: string; value: string; onCopy: () => void }) {
   const { t } = useTranslation()
@@ -106,7 +105,14 @@ export function ShareDialog({ open, onOpenChange, doc, legality }: ShareDialogPr
         <TabsContent value="link" className="flex flex-col gap-4">
           <p className="text-[15px] text-muted">{t('shareDlg.link.lead')}</p>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Input readOnly value={url} aria-label={t('shareDlg.link.what')} onFocus={(e) => e.currentTarget.select()} className="font-mono text-xs sm:flex-1" data-testid="share-url" />
+            <Input
+              readOnly
+              value={url}
+              aria-label={t('shareDlg.link.what')}
+              onFocus={(e) => e.currentTarget.select()}
+              className="font-mono text-xs sm:flex-1"
+              data-testid="share-url"
+            />
             <Button
               variant="primary"
               icon={copied ? <Check size={18} /> : <Copy size={18} />}
@@ -135,7 +141,11 @@ export function ShareDialog({ open, onOpenChange, doc, legality }: ShareDialogPr
               />
             ) : null}
             {qr?.warning ? (
-              <Banner tone="warn" title={t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLongTitle' : 'shareDlg.qr.longTitle')} className="w-full">
+              <Banner
+                tone="warn"
+                title={t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLongTitle' : 'shareDlg.qr.longTitle')}
+                className="w-full"
+              >
                 {t(qr.warning === 'combo.qr.tooLong' ? 'shareDlg.qr.tooLong' : 'shareDlg.qr.long', { count: qr.length })}
               </Banner>
             ) : (
@@ -156,8 +166,16 @@ export function ShareDialog({ open, onOpenChange, doc, legality }: ShareDialogPr
           />
           {texts ? (
             <>
-              <CopyBlock label={t('shareDlg.text.numbered')} value={texts.numbered} onCopy={() => void copy(t('shareDlg.text.numbered'), texts.numbered)} />
-              <CopyBlock label={t('shareDlg.text.compact')} value={texts.compact} onCopy={() => void copy(t('shareDlg.text.compact'), texts.compact)} />
+              <CopyBlock
+                label={t('shareDlg.text.numbered')}
+                value={texts.numbered}
+                onCopy={() => void copy(t('shareDlg.text.numbered'), texts.numbered)}
+              />
+              <CopyBlock
+                label={t('shareDlg.text.compact')}
+                value={texts.compact}
+                onCopy={() => void copy(t('shareDlg.text.compact'), texts.compact)}
+              />
             </>
           ) : cards.status === 'error' ? (
             <Banner tone="danger" title={t('shareDlg.text.cardsError')} />

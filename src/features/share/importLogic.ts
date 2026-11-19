@@ -81,11 +81,21 @@ export interface ComboTarget {
 }
 
 /** Salva una combo importata. Se esiste gia' una combo con lo stesso id ne crea una nuova (mai sovrascrive). */
-export async function saveImportedCombo(r: Repos, doc: ComboDoc, target: ComboTarget, now = new Date()): Promise<{ id: string; copied: boolean }> {
+export async function saveImportedCombo(
+  r: Repos,
+  doc: ComboDoc,
+  target: ComboTarget,
+  now = new Date(),
+): Promise<{ id: string; copied: boolean }> {
   let archetypeId = target.archetypeId
   let archetypeName = doc.meta.archetype.name
   if (!archetypeId) {
-    const a = await r.archetypes.create({ name: target.newArchetypeName ?? doc.meta.archetype.name, keyCards: [], starters: [], extenders: [] })
+    const a = await r.archetypes.create({
+      name: target.newArchetypeName ?? doc.meta.archetype.name,
+      keyCards: [],
+      starters: [],
+      extenders: [],
+    })
     archetypeId = a.id
     archetypeName = a.name
   } else {

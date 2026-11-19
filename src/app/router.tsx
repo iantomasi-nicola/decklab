@@ -22,6 +22,7 @@ const routeTree = root.addChildren([
   page('/combo/$comboId', () => import('./pages/ComboEditorPage'), 'ComboEditorPage'),
   page('/impara', () => import('./pages/LearnPage'), 'LearnPage'),
   page('/statistiche', () => import('./pages/StatsPage'), 'StatsPage'),
+  page('/importa', () => import('./pages/ImportPage'), 'ImportPage'),
   page('/impostazioni', () => import('./pages/SettingsPage'), 'SettingsPage'),
 ])
 
