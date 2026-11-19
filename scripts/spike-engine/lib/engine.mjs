@@ -78,12 +78,13 @@ export function runDuel(lib, { cards, scripts, decks, seed, responses = [], maxN
   if (!h) throw new Error('createDuel failed')
   try {
     for (const n of BASE_SCRIPTS) { const src = scripts.read(n); if (src != null) lib.loadScript(h, n, src) } // loadScript(null) throws a TypeError
-    const add = (team, list, location) => list.forEach((code) => lib.duelNewCard(h, { team, duelist: 0, code, controller: team, location, sequence: 0, position: P.OcgPosition.FACEDOWN_DEFENSE }))
+    const seq = decks.seq ?? 0
+    const add = (team, list, location) => list.forEach((code) => lib.duelNewCard(h, { team, duelist: 0, code, controller: team, location, sequence: seq, position: P.OcgPosition.FACEDOWN_DEFENSE }))
     add(0, decks.main, P.OcgLocation.DECK); add(0, decks.extra ?? [], P.OcgLocation.EXTRA)
     add(1, decks.opp, P.OcgLocation.DECK); add(1, decks.oppExtra ?? [], P.OcgLocation.EXTRA)
     lib.startDuel(h)
     const t1 = performance.now()
-    const all = []; const out = []; let given = 0, ended = false, pending = null, nprocess = 0
+    const all = []; const out = []; let given = 0, ended = false, diverged = false, pending = null, nprocess = 0
     for (;;) {
       const st = lib.duelProcess(h); nprocess++
       const msgs = lib.duelGetMessage(h)
@@ -91,13 +92,13 @@ export function runDuel(lib, { cards, scripts, decks, seed, responses = [], maxN
       if (st === P.OcgProcessResult.END) { ended = true; break }
       if (st === P.OcgProcessResult.CONTINUE) continue
       const req = [...msgs].reverse().find((m) => REQUEST_TYPES.has(m.type))
-      if (!req) throw new Error('WAITING without request: ' + msgs.map(msgName).join(','))
+      if (!req) { if (msgs.some((m) => m.type === T.RETRY)) { diverged = true; break } throw new Error('WAITING without request: ' + msgs.map(msgName).join(',')) } // RETRY = recorded response no longer legal (state diverged)
       let resp
       if (given < responses.length) resp = responses[given]
       else if (out.length - responses.length < maxNew) resp = pickResponse(req, given)
       else { pending = req; break }
       lib.duelSetResponse(h, resp); out.push(resp); given++
     }
-    return { messages: all, responses: out, ended, pending, nprocess, errors, tCreate: t1 - t0, tRun: performance.now() - t1, missing: scripts.missingSize?.() }
+    return { messages: all, responses: out, ended, diverged, pending, nprocess, errors, tCreate: t1 - t0, tRun: performance.now() - t1, missing: scripts.missingSize?.() }
   } finally { lib.destroyDuel(h) }
 }

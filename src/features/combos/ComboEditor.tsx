@@ -40,8 +40,8 @@ function readPanel(): PanelState {
   try {
     const v = JSON.parse(localStorage.getItem(PANEL_KEY) ?? 'null') as Partial<PanelState> | null
     const tab = v?.tab === 'setup' || v?.tab === 'info' ? v.tab : 'steps'
-    // senza preferenza salvata: su schermi larghi (>= 1280) lo spazio che avanza al campo va ai pannelli
-    const open = v ? !!v.open : window.matchMedia('(min-width: 1280px)').matches
+    // senza preferenza salvata: su schermi larghi (>= 1024) lo spazio che avanza al campo va ai pannelli
+    const open = v ? !!v.open : window.matchMedia('(min-width: 1024px)').matches
     return { open: open && window.matchMedia('(min-width: 768px)').matches, tab }
   } catch {
     return { open: false, tab: 'steps' }
@@ -224,49 +224,49 @@ export function ComboEditor({ comboId }: { comboId: string }) {
 
   const tool = 'inline-flex size-11 shrink-0 items-center justify-center rounded-md transition-colors duration-150'
   const actions = (
-    <div className="flex items-center justify-between gap-1 sm:justify-end sm:gap-1">
+    <div className="flex items-center justify-between gap-1 sm:justify-end">
       <div className="flex items-center gap-1">
-      <Tooltip label={`${t('combos.undo')} (Ctrl+Z)`}>
-        <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={() => store.undo()} data-testid="undo" />
-      </Tooltip>
-      <Tooltip label={`${t('combos.redo')} (Ctrl+Shift+Z)`}>
-        <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={() => store.redo()} data-testid="redo" />
-      </Tooltip>
+        <Tooltip label={`${t('combos.undo')} (Ctrl+Z)`}>
+          <IconButton label={t('combos.undo')} icon={<Undo2 size={20} />} disabled={!canUndo} onClick={() => store.undo()} data-testid="undo" />
+        </Tooltip>
+        <Tooltip label={`${t('combos.redo')} (Ctrl+Shift+Z)`}>
+          <IconButton label={t('combos.redo')} icon={<Redo2 size={20} />} disabled={!canRedo} onClick={() => store.redo()} data-testid="redo" />
+        </Tooltip>
       </div>
       <div className="flex items-center gap-1">
-      <Menu
-        trigger={<IconButton label={t('combos.add.menu')} icon={<Plus size={20} />} disabled={readOnly} data-testid="add-menu" />}
-        items={[
-          { id: 'own', label: t('combos.add.own'), onSelect: () => boardRef.current?.addCard(0) },
-          { id: 'opp', label: t('combos.add.opp'), onSelect: () => boardRef.current?.addCard(1) },
-          ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
-        ]}
-      />
-      <Tooltip label={t('combos.modeSetup')}>
-        <button
-          type="button"
-          aria-label={t('combos.modeSetup')}
-          aria-pressed={mode === 'setup'}
-          data-testid="mode-setup"
-          onClick={() => store.setMode(mode === 'setup' ? 'steps' : 'setup')}
-          className={cn(tool, 'cursor-pointer', mode === 'setup' ? 'bg-accent text-accent-fg' : 'text-muted hover:bg-surface-2 hover:text-fg')}
-        >
-          <SlidersHorizontal size={20} aria-hidden />
-        </button>
-      </Tooltip>
-      <Tooltip label={t('combos.panelToggle')}>
-        <button
-          type="button"
-          aria-label={t('combos.panelToggle')}
-          aria-pressed={panel.open}
-          aria-expanded={panel.open}
-          data-testid="panel-toggle"
-          onClick={togglePanel}
-          className={cn(tool, 'cursor-pointer', panel.open ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
-        >
-          <PanelRight size={20} aria-hidden />
-        </button>
-      </Tooltip>
+        <Menu
+          trigger={<IconButton label={t('combos.add.menu')} icon={<Plus size={20} />} disabled={readOnly} data-testid="add-menu" />}
+          items={[
+            { id: 'own', label: t('combos.add.own'), onSelect: () => boardRef.current?.addCard(0) },
+            { id: 'opp', label: t('combos.add.opp'), onSelect: () => boardRef.current?.addCard(1) },
+            ...(mode === 'setup' ? [{ id: 'hand', label: t('combos.add.toHand'), onSelect: () => boardRef.current?.deckToHand() }] : []),
+          ]}
+        />
+        <Tooltip label={t('combos.modeSetup')}>
+          <button
+            type="button"
+            aria-label={t('combos.modeSetup')}
+            aria-pressed={mode === 'setup'}
+            data-testid="mode-setup"
+            onClick={() => store.setMode(mode === 'setup' ? 'steps' : 'setup')}
+            className={cn(tool, 'cursor-pointer', mode === 'setup' ? 'bg-accent text-accent-fg' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+          >
+            <SlidersHorizontal size={20} aria-hidden />
+          </button>
+        </Tooltip>
+        <Tooltip label={t('combos.panelToggle')}>
+          <button
+            type="button"
+            aria-label={t('combos.panelToggle')}
+            aria-pressed={panel.open}
+            aria-expanded={panel.open}
+            data-testid="panel-toggle"
+            onClick={togglePanel}
+            className={cn(tool, 'cursor-pointer', panel.open ? 'bg-accent-soft text-accent-text' : 'text-muted hover:bg-surface-2 hover:text-fg')}
+          >
+            <PanelRight size={20} aria-hidden />
+          </button>
+        </Tooltip>
       </div>
     </div>
   )
@@ -274,7 +274,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   return (
     <div
       data-combo-stage
-      className="flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]"
+      className="flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]"
     >
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">

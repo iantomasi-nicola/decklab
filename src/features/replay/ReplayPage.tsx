@@ -1,0 +1,259 @@
+/** Replay di una combo: /combo/$comboId/replay. Campo in sola lettura + barra di controllo compatta riducibile. */
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { Link, useParams } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
+import ArrowLeft from 'lucide-react/icons/arrow-left'
+import Check from 'lucide-react/icons/check'
+import GitBranch from 'lucide-react/icons/git-branch'
+import { pickLoc } from '@/features/guide/guideModel'
+import '@/features/guide/locales'
+import { makeNoteResolver } from '@/features/guide/notes'
+import { useComboDoc } from '@/features/guide/useComboDoc'
+import { useCards } from '@/features/combos/useCards'
+import { useMediaQuery } from '@/features/combos/useCards'
+import type { ComboDoc } from '@/domain/combo/types'
+import { Banner } from '@/ui/Banner'
+import { Button } from '@/ui/Button'
+import { cn } from '@/ui/cn'
+import { Menu } from '@/ui/Menu'
+import { Skeleton } from '@/ui/Skeleton'
+import { Tooltip } from '@/ui/Tooltip'
+import { ControlBar, StepInfo, StepList, Timeline, type Names } from './ReplayParts'
+import { ReplayField } from './ReplayField'
+import { buildTimeline, initialPlayer, intervalFor, playerReducer, SPEEDS, type PlayerAction } from './replayModel'
+
+const BAR_KEY = 'combolab.replay.expanded'
+function readExpanded(): boolean | null {
+  try {
+    const v = localStorage.getItem(BAR_KEY)
+    return v === '1' ? true : v === '0' ? false : null
+  } catch {
+    return null
+  }
+}
+
+export function ReplayPage() {
+  const { comboId } = useParams({ strict: false }) as { comboId: string }
+  return <ReplayView key={comboId} comboId={comboId} />
+}
+
+const stageCls =
+  'flex h-[calc(100dvh-57px-16px-var(--bottomnav-h)-env(safe-area-inset-bottom,0px))] min-h-[420px] flex-col gap-2 md:h-[calc(100dvh-57px-16px)]'
+
+function ReplayView({ comboId }: { comboId: string }) {
+  const { t } = useTranslation()
+  const { load } = useComboDoc(comboId)
+  if (load.status === 'loading') return <Skeleton className="h-96 w-full" />
+  if (load.status === 'missing' || load.status === 'invalid')
+    return (
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-2 pt-4">
+        <Banner tone="danger" title={t(load.status === 'missing' ? 'replay.notFound' : 'replay.invalid')} />
+        <Link to="/combo" className="inline-flex min-h-11 items-center text-accent-text underline">{t('guide.back')}</Link>
+      </div>
+    )
+  return <Replay doc={load.doc} comboId={comboId} />
+}
+
+function Replay({ doc, comboId }: { doc: ComboDoc; comboId: string }) {
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language === 'it' ? 'it' : 'en'
+  const cards = useCards()
+  const isMd = useMediaQuery('(min-width: 768px)')
+  const isLg = useMediaQuery('(min-width: 1024px)')
+
+  const [branchId, setBranchId] = useState<string | null>(null)
+  const tl = useMemo(() => buildTimeline(doc, branchId), [doc, branchId])
+  const last = tl.frames.length - 1
+  const lastRef = useRef(last)
+  lastRef.current = last
+  const [p, dispatch] = useReducer((s: typeof initialPlayer, a: PlayerAction) => playerReducer(s, a, lastRef.current), initialPlayer)
+  const index = Math.min(p.index, last)
+  const frame = tl.frames[index]!
+
+  // barra: aperta di default da 768 px (telefono: solo i controlli, campo al massimo); la scelta si ricorda
+  const [stored, setStored] = useState<boolean | null>(readExpanded)
+  const expanded = stored ?? isMd
+  const setExpanded = (v: boolean) => {
+    setStored(v)
+    try {
+      localStorage.setItem(BAR_KEY, v ? '1' : '0')
+    } catch {
+      /* storage non disponibile */
+    }
+  }
+
+  // riproduzione automatica
+  useEffect(() => {
+    if (!p.playing) return
+    const h = setTimeout(() => dispatch({ type: 'tick' }), intervalFor(p.speed))
+    return () => clearTimeout(h)
+  }, [p.playing, p.speed, p.index])
+
+  // cambio ramo: riparte dal punto di diramazione
+  const firstBranch = useRef(true)
+  useEffect(() => {
+    if (firstBranch.current) {
+      firstBranch.current = false
+      return
+    }
+    dispatch({ type: 'pause' })
+    dispatch({ type: 'seek', index: branchId ? tl.branchStart - 1 : 0 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [branchId])
+
+  // scorciatoie
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const el = e.target as HTMLElement | null
+      const tag = el?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el?.isContentEditable) return
+      if (el?.closest('[role="menu"], [role="dialog"]')) return
+      // su un pulsante lo spazio/invio fanno già il clic
+      const onButton = tag === 'BUTTON' || tag === 'A'
+      switch (e.key) {
+        case ' ':
+          if (onButton) return
+          e.preventDefault()
+          dispatch({ type: 'toggle' })
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          dispatch({ type: 'next' })
+          break
+        case 'ArrowLeft':
+          e.preventDefault()
+          dispatch({ type: 'prev' })
+          break
+        case 'Home':
+          e.preventDefault()
+          dispatch({ type: 'seek', index: 0 })
+          break
+        case 'End':
+          e.preventDefault()
+          dispatch({ type: 'seek', index: lastRef.current })
+          break
+        case '+':
+        case '=':
+          dispatch({ type: 'speed', speed: SPEEDS[Math.min(SPEEDS.indexOf(p.speed) + 1, SPEEDS.length - 1)]! })
+          break
+        case '-':
+          dispatch({ type: 'speed', speed: SPEEDS[Math.max(SPEEDS.indexOf(p.speed) - 1, 0)]! })
+          break
+      }
+    }
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [p.speed])
+
+  const nameOfUid = useCallback((uid: string) => (doc.cards[uid] !== undefined ? cards.nameOf(doc.cards[uid]!) : uid), [doc.cards, cards])
+  const resolver = useMemo(
+    () =>
+      makeNoteResolver(doc, (code) => {
+        const c = cards.byId(code)
+        return c ? [c.name.en, ...(c.name.it ? [c.name.it] : [])] : []
+      }),
+    [doc, cards],
+  )
+  const names: Names = { nameOf: cards.nameOf, nameOfUid, resolver, lang }
+
+  const title = pickLoc(doc.meta.title, lang) ?? t('combos.untitled')
+  const branches = doc.branches
+  const activeBranch = branchId ? branches.find((b) => b.id === branchId) : undefined
+  const branchName = (b: ComboDoc['branches'][number], n: number) => pickLoc(b.title, lang) ?? t('replay.branchUntitled', { n })
+  const counter = frame.inBranch
+    ? t('replay.stepBranch', { n: frame.label, total: tl.frames.length - tl.branchStart })
+    : index === 0
+      ? t('replay.startShort')
+      : t('replay.step', { n: frame.label, total: tl.branchStart - 1 })
+  const hasSteps = last > 0
+
+  const lineItems = [
+    { id: 'main', label: t('replay.main'), icon: branchId === null ? <Check size={18} /> : <span className="inline-block w-[18px]" />, onSelect: () => setBranchId(null) },
+    ...branches.map((b, i) => ({
+      id: b.id,
+      label: branchName(b, i + 1),
+      icon: branchId === b.id ? <Check size={18} /> : <span className="inline-block w-[18px]" />,
+      onSelect: () => setBranchId(b.id),
+    })),
+  ]
+
+  const panel = isLg && expanded
+  return (
+    <div data-combo-stage data-testid="replay-page" className={stageCls}>
+      <header className="flex shrink-0 items-center gap-2">
+        <Tooltip label={t('replay.back')}>
+          <Link
+            to="/combo/$comboId/guida"
+            params={{ comboId }}
+            aria-label={t('replay.back')}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-150 hover:bg-surface-2 hover:text-fg"
+          >
+            <ArrowLeft size={20} aria-hidden />
+          </Link>
+        </Tooltip>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-semibold leading-6">{title}</h1>
+          <p className="truncate text-sm leading-5 text-muted">{t('replay.title')}</p>
+        </div>
+        {branches.length ? (
+          <Menu
+            items={lineItems}
+            trigger={
+              <Button icon={<GitBranch size={18} />} aria-label={`${t('replay.line')}: ${activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}`} data-testid="rp-line" className="max-w-[55%] min-w-0 shrink">
+                <span className="truncate">{activeBranch ? branchName(activeBranch, branches.indexOf(activeBranch) + 1) : t('replay.main')}</span>
+              </Button>
+            }
+          />
+        ) : null}
+      </header>
+
+      <div className="flex min-h-0 flex-1 gap-3">
+        <div className="min-h-0 min-w-0 flex-1">
+          <ReplayField doc={doc} frame={frame} frameKey={`${branchId ?? 'main'}:${index}`} nameOf={cards.nameOf} />
+        </div>
+        {panel ? (
+          <aside aria-label={t('replay.timeline')} data-testid="replay-panel" className="flex min-h-0 w-[clamp(300px,28vw,380px)] shrink-0 flex-col gap-3 rounded-lg border border-line bg-surface-1 p-3">
+            <StepInfo frame={frame} names={names} />
+            <div className="h-px shrink-0 bg-line" />
+            <StepList frames={tl.frames} index={index} branchStart={tl.branchStart} names={names} onSeek={(i) => dispatch({ type: 'seek', index: i })} />
+          </aside>
+        ) : null}
+      </div>
+
+      <div className="flex shrink-0 flex-col gap-2">
+        {expanded && !isLg ? (
+          <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface-1 p-2">
+            <StepInfo frame={frame} names={names} clamp />
+            {hasSteps ? <Timeline frames={tl.frames} index={index} branchStart={tl.branchStart} onSeek={(i) => dispatch({ type: 'seek', index: i })} /> : null}
+          </div>
+        ) : null}
+        {!hasSteps ? (
+          <p className="rounded-lg border border-line bg-surface-1 px-3 py-2 text-sm text-muted" data-testid="replay-empty">
+            {t('replay.empty')}{' '}
+            <Link to="/combo/$comboId" params={{ comboId }} className="text-accent-text underline">{t('replay.openEditor')}</Link>
+          </p>
+        ) : null}
+        <ControlBar
+          index={index}
+          last={last}
+          playing={p.playing}
+          speed={p.speed}
+          label={counter}
+          expanded={expanded}
+          hasSteps={hasSteps}
+          onToggle={() => dispatch({ type: 'toggle' })}
+          onPrev={() => dispatch({ type: 'prev' })}
+          onNext={() => dispatch({ type: 'next' })}
+          onFirst={() => dispatch({ type: 'seek', index: 0 })}
+          onLast={() => dispatch({ type: 'seek', index: last })}
+          onPlay={() => dispatch({ type: 'toggle' })}
+          onSpeed={() => dispatch({ type: 'cycleSpeed' })}
+          onExpand={() => setExpanded(!expanded)}
+        />
+      </div>
+      <p className={cn('sr-only')} aria-live="polite">{frame.step ? counter : t('replay.start')}</p>
+      <p className="sr-only">{t('replay.keys')}</p>
+    </div>
+  )
+}

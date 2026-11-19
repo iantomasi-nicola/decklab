@@ -13,9 +13,10 @@ const A = ser(base.messages)
 let same = 0
 for (let i = 0; i < 5; i++) { const r = runDuel(lib, { cards: cdb, scripts: store, decks, seed, responses: base.responses, maxNew: 0 }); if (ser(r.messages) === A) same++ }
 const r2 = runDuel(lib2, { cards: cdb, scripts: store, decks, seed, responses: base.responses, maxNew: 0 })
-const other = runDuel(lib, { cards: cdb, scripts: store, decks, seed: [5n, 6n, 7n, 8n], responses: [], maxNew: 0 })
+const otherSeed = runDuel(lib, { cards: cdb, scripts: store, decks, seed: [5n, 6n, 7n, 8n], responses: base.responses, maxNew: 0 })
+const otherOrder = runDuel(lib, { cards: cdb, scripts: store, decks: resolveDecks(cdb, SKY, undefined, 999), seed, responses: [], maxNew: 0 })
 const first = (r) => r.messages.filter((m) => m.type === 'x' || true).slice(0, 12).map((m) => m.type + (m.count ?? '')).join(',')
-console.log('determinism: same-instance replays identical', same + '/5', '| second core instance identical', ser(r2.messages) === A, '| different seed gives different messages', ser(other.messages) !== ser(runDuel(lib, { cards: cdb, scripts: store, decks, seed, responses: [], maxNew: 0 }).messages))
+console.log('determinism: same-instance replays identical', same + '/5', '| second core instance identical', ser(r2.messages) === A, '| different core seed (same deck order+responses) differs', ser(otherSeed.messages) !== A, '(diverged/RETRY: ' + otherSeed.diverged + ')', '| different deck order differs', ser(otherOrder.messages) !== ser(runDuel(lib, { cards: cdb, scripts: store, decks, seed, responses: [], maxNew: 0 }).messages))
 // undo cost vs N (warm, scripts in memory): median of 7
 const med = (a) => a.sort((x, y) => x - y)[a.length >> 1]
 const rows = []

@@ -11,6 +11,7 @@ const page = await browser.newPage()
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console.error]', m.text().slice(0, 200)) })
 const sizes = []
 page.on('response', (r) => { if (r.url().endsWith('.wasm')) sizes.push([r.url().split('/').pop(), r.headers()['content-length']]) })
+if (process.env.THROTTLE) { const c = await page.context().newCDPSession(page); await c.send('Emulation.setCPUThrottlingRate', { rate: +process.env.THROTTLE }); console.log('CPU throttle x' + process.env.THROTTLE) }
 await page.goto('http://localhost:8765/'); await page.waitForFunction(() => window.ready)
 const scriptsBase = mode === 'raw' ? 'https://raw.githubusercontent.com/ProjectIgnis/CardScripts/5b613bfc3c122f48238e32f85015b32892577a42/' : 'http://localhost:8765/cs/'
 const rss0 = rss()

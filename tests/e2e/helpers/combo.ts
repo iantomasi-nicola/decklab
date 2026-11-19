@@ -122,7 +122,7 @@ export async function touchDrag(page: Page, from: Locator, to: Locator, o: { hol
   const send = (type: 'touchStart' | 'touchMove' | 'touchEnd', x?: number, y?: number) =>
     cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: x!, y: y!, id: 1 }] })
   await send('touchStart', a.x, a.y)
-  await page.waitForTimeout(o.hold ?? 260)
+  await page.waitForTimeout(o.hold ?? 350)
   const n = 10
   for (let i = 1; i <= n; i++) {
     await send('touchMove', a.x + ((b.x - a.x) * i) / n, a.y + ((b.y - a.y) * i) / n)

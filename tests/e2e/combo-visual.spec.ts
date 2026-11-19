@@ -83,7 +83,7 @@ for (const [w, h] of SHOTS) {
         await page.evaluate(() => document.fonts.ready)
         await page.waitForTimeout(400)
         const g = await checkField(page, `${w}x${h}`)
-        if (w >= 1280) expect(await page.locator('[data-panel]').count(), 'pannello aperto di default su schermi larghi').toBe(1)
+        if (w >= 1024) expect(await page.locator('[data-panel]').count(), 'pannello aperto di default su schermi larghi').toBe(1)
         else expect(await page.locator('[data-panel]').count(), 'pannello chiuso di default').toBe(0)
         expect(g.sw).toBeLessThanOrEqual(w)
         await page.screenshot({ path: `${OUT}/combo-editor-${w}-${theme}-${lang}.png` })

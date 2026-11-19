@@ -1,6 +1,7 @@
+import type { TFunction } from 'i18next'
 import type { Step } from '@/domain/combo/types'
 
-type T = (key: string, opts?: Record<string, unknown>) => string
+type T = TFunction
 
 export interface Headline { verb: string; card: string; sub: string }
 

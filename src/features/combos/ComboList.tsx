@@ -90,7 +90,7 @@ export function ComboList() {
                 <h2 className="mb-3 text-lg font-semibold">{nm(arch?.name)}</h2>
                 <ul className="flex flex-col gap-2">
                   {list.map((r) => (
-                    <ComboRow key={r.id} r={r} variants={variants} nm={nm} children={groups.byMother.get(r.id) ?? []} depth={0} byMother={groups.byMother} />
+                    <ComboRow key={r.id} r={r} variants={variants} nm={nm} linked={groups.byMother.get(r.id) ?? []} depth={0} byMother={groups.byMother} />
                   ))}
                 </ul>
               </section>
@@ -107,14 +107,14 @@ function ComboRow({
   r,
   variants,
   nm,
-  children,
+  linked,
   depth,
   byMother,
 }: {
   r: ComboRecord
   variants: Variant[]
   nm: (n: { it?: string; en?: string } | undefined) => string
-  children: ComboRecord[]
+  linked: ComboRecord[]
   depth: number
   byMother: Map<string, ComboRecord[]>
 }) {
@@ -150,10 +150,10 @@ function ComboRow({
         <IconButton label={t('combos.duplicate')} icon={<Copy size={18} />} onClick={() => void dup()} />
         <IconButton label={t('combos.delete')} icon={<Trash2 size={18} />} onClick={() => void del()} />
       </div>
-      {children.length ? (
+      {linked.length ? (
         <ul className="mt-2 flex flex-col gap-2" aria-label={t('combos.linked')}>
-          {children.map((c) => (
-            <ComboRow key={c.id} r={c} variants={variants} nm={nm} children={byMother.get(c.id) ?? []} depth={depth + 1} byMother={byMother} />
+          {linked.map((c) => (
+            <ComboRow key={c.id} r={c} variants={variants} nm={nm} linked={byMother.get(c.id) ?? []} depth={depth + 1} byMother={byMother} />
           ))}
         </ul>
       ) : null}
