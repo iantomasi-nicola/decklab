@@ -107,7 +107,7 @@ function Gallery({ label, cards, nameOf }: { label: string; cards: BoardCard[]; 
             <div className="relative">
               <CardImage id={c.code} alt={nameOf(c.code)} size="small" />
               {c.overlays > 0 ? (
-                <span className="absolute -bottom-1 -left-1 rounded-full border border-line-strong bg-surface-1 px-1.5 text-xs font-semibold leading-5 text-fg shadow-1" title={t('guide.end.materials', { count: c.overlays })}>
+                <span className="absolute -left-1 -top-1 rounded-full border border-line-strong bg-surface-1 px-1.5 text-xs font-semibold leading-5 text-fg shadow-1" title={t('guide.end.materials', { count: c.overlays })}>
                   ×{c.overlays}
                 </span>
               ) : null}

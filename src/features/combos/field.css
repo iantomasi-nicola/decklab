@@ -77,6 +77,10 @@
   .cl-valid.cl-over .cl-zone {
     background: color-mix(in srgb, var(--accent-text) 30%, var(--accent-soft));
   }
+  .cl-filled:not(.cl-valid) .cl-zone {
+    border-color: transparent;
+    background: transparent;
+  }
   .cl-dim {
     opacity: 0.45;
   }

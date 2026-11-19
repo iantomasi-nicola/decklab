@@ -5,7 +5,7 @@ import { newIds, seedGuideWithIds, type Seeded } from './helpers/guide'
 const WIDTHS = [375, 768, 1024, 1440] as const
 const THEMES = ['dark', 'light'] as const
 const LANGS = ['it', 'en'] as const
-const OUT = 'test-results/guide'
+const OUT = process.env.SHOTS_DIR ?? 'test-results/guide'
 mkdirSync(OUT, { recursive: true })
 
 async function prepare(page: Page, theme: string, lang: string) {

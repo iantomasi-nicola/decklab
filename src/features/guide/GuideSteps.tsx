@@ -27,18 +27,31 @@ export interface GuideCtx {
 function Thumb({ code, name, className }: { code: number | undefined; name: string; className?: string }) {
   if (code === undefined) {
     return (
-      <div aria-hidden className={cn('grid place-items-center rounded-[6px] border border-dashed border-line-strong text-subtle', className)} style={{ aspectRatio: '59 / 86' }}>
-        <CircleDot size={20} />
+      <div aria-hidden className={cn('grid h-10 place-items-center rounded-[6px] border border-dashed border-line-strong text-subtle', className)}>
+        <CircleDot size={18} />
       </div>
     )
   }
   return <CardImage id={code} alt={name} size="small" className={className} />
 }
 
+/** Numero (linea principale) o lettera (ramo) del passo `id`. */
+function refLabel(doc: ComboDoc, id: string): string {
+  const i = doc.steps.findIndex((s) => s.id === id)
+  if (i >= 0) return String(i + 1)
+  for (const b of doc.branches) {
+    const j = b.steps.findIndex((s) => s.id === id)
+    if (j >= 0) return String.fromCharCode(97 + (j % 26))
+  }
+  return ''
+}
+
 function StepBody({ step, ctx }: { step: Step; ctx: GuideCtx }) {
   const { t } = useTranslation()
   const { nameOfUid } = ctx
   const h = stepHeadline(step, t, nameOfUid)
+  const refNo = step.action === 'resolve' && step.ref ? refLabel(ctx.doc, step.ref) : ''
+  if (refNo) h.sub = [h.sub, t('guide.steps.resolves', { n: refNo })].filter(Boolean).join(' · ')
   const details = stepDetails(step)
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -146,7 +159,7 @@ export function StepsList({ ctx, variants }: { ctx: GuideCtx; variants: VariantR
               {!last ? <span aria-hidden className="mt-1 w-px flex-1 bg-line-strong/60" /> : null}
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-3">
-              <div className={cn('flex gap-3', gs.chain && 'border-l-2 border-warn pl-3', gs.group && !gs.chain && 'border-l-2 border-dashed border-accent-text pl-3')}>
+              <div className={cn('flex gap-3 border-l-2 pl-3', gs.chain ? 'border-warn' : gs.group ? 'border-dashed border-accent-text' : 'border-transparent')}>
                 <div className="w-14 shrink-0 sm:w-16">
                   <Thumb code={gs.step.card ? ctx.doc.cards[gs.step.card] : undefined} name={gs.step.card ? ctx.nameOfUid(gs.step.card) : ''} />
                 </div>
@@ -157,7 +170,7 @@ export function StepsList({ ctx, variants }: { ctx: GuideCtx; variants: VariantR
               ))}
               {here.map((v) => (
                 <p key={v.id} className="text-sm text-muted">
-                  <Link to="/combo/$comboId/guida" params={{ comboId: v.id }} className="inline-flex min-h-11 items-center text-accent-text underline underline-offset-2 sm:min-h-0">
+                  <Link to="/combo/$comboId/guida" params={{ comboId: v.id }} className="inline-flex min-h-11 items-center text-accent-text underline underline-offset-2">
                     {t('guide.steps.variantHere', { title: pickLoc(v.title, ctx.lang) ?? '—' })}
                   </Link>
                 </p>

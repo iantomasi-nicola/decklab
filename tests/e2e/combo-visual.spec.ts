@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs'
 import { C, openCombo, openPanel, seedCombo, type SeedCombo } from './helpers/combo'
 
 /** Editor combo: screenshot 375/768/1024/1440 × scuro/chiaro × IT/EN + controlli geometrici del campo. */
-const OUT = 'test-results/visual'
+const OUT = process.env.SHOT_DIR ?? 'test-results/visual'
 mkdirSync(OUT, { recursive: true })
 
 const RATIO = 100 / 103.07

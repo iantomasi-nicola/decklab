@@ -81,6 +81,7 @@ function Cell({
   children,
   overlay,
   occupant,
+  filled,
   onOpen,
 }: {
   dest: Dest
@@ -91,6 +92,8 @@ function Cell({
   /** sopra le carte (es. badge dei conteggi) */
   overlay?: ReactNode
   occupant?: Uid | undefined
+  /** c'è una carta nella zona: la cornice tratteggiata sparisce (restano visibili solo carta e, se serve, l'evidenziazione) */
+  filled?: boolean
   onOpen?: () => void
 }) {
   const { highlight, onZone } = useField()
@@ -107,7 +110,7 @@ function Cell({
         if (valid) onZone(dest, e.currentTarget)
         else if (!(e.target as HTMLElement).closest('[data-card]')) onOpen?.()
       }}
-      className={cn('cl-cell', p === 0 && 'cl-own', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
+      className={cn('cl-cell', p === 0 && 'cl-own', (filled ?? occupant !== undefined) && 'cl-filled', valid && 'cl-valid', valid && isOver && 'cl-over', dim && 'cl-dim')}
       style={style}
     >
       <div aria-hidden className="cl-box cl-zone" />
@@ -255,6 +258,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
       dest={{ t: 'pile', p, loc }}
       p={p}
       style={style}
+      filled={count > 0}
       onOpen={count > 0 && pilesOpen ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
@@ -268,6 +272,12 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
         count > 0 && !pilesOpen ? (
           <span className="cl-badge -bottom-1 -right-1">{count}</span>
         ) : count > 0 ? (
+          <>
+            {loc === 'gy' || loc === 'banished' ? (
+              <span aria-hidden className="cl-badge -left-1 -top-1 grid place-items-center !px-0">
+                <Icon className="size-[11px]" />
+              </span>
+            ) : null}
           <button
             type="button"
             aria-label={`${name}: ${count}`}
@@ -280,6 +290,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
           >
             {count}
           </button>
+          </>
         ) : undefined
       }
     >
