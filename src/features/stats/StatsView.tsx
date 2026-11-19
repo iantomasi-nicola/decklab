@@ -31,6 +31,7 @@ import { buildProject, downloadText, exportText } from './deckspaceIO'
 import { useCardNames } from './names'
 import { Stepper, useLang } from './parts'
 import { useAnalysis, useStatsModel } from './useStatsModel'
+import './locales'
 import './stats.css'
 
 const LS_KEY = 'combolab.stats.variant'
@@ -249,7 +250,6 @@ export function StatsView() {
         variant={model.variant}
         rows={rows}
         canonical={model.canonical}
-        saved={saved}
         update={update}
         cards={model.cards}
         onCreated={choose}

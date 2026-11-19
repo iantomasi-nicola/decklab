@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { HandResult } from '@/domain/stats'
 import { ROLE_PRESETS } from '@/domain/stats'
 import { ChartCard } from './charts/ChartCard'
@@ -7,7 +8,7 @@ import { HBars } from './charts/HBars'
 import { pct } from './format'
 import { useLang } from './parts'
 
-export const roleName = (t: (k: string) => string, role: string): string => ((ROLE_PRESETS as readonly string[]).includes(role) ? t(`statsLab.roles.${role}.name`) : role)
+export const roleName = (t: TFunction, role: string): string => ((ROLE_PRESETS as readonly string[]).includes(role) ? t(`statsLab.roles.${role}.name`) : role)
 
 export function HandTab({ hand, name }: { hand: HandResult; name: (id: number) => string }) {
   const { t } = useTranslation()
@@ -79,7 +80,7 @@ export function HandTab({ hand, name }: { hand: HandResult; name: (id: number) =
   )
 }
 
-function describe(b: HandResult['topBricks'][number], name: (id: number) => string, t: (k: string, o?: Record<string, unknown>) => string): string {
+function describe(b: HandResult['topBricks'][number], name: (id: number) => string, t: TFunction): string {
   const parts = b.cards.map((c) => (c.n > 1 ? `${name(c.id)} ×${c.n}` : name(c.id)))
   if (b.fill > 0) parts.push(t('statsLab.hand.fillCards', { count: b.fill }))
   return parts.join(' + ')

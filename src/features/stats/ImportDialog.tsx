@@ -20,7 +20,6 @@ export function ImportDialog({
   variant,
   rows,
   canonical,
-  saved,
   update,
   cards,
   onCreated,
@@ -30,7 +29,6 @@ export function ImportDialog({
   variant: Variant | undefined
   rows: DeckRow[]
   canonical: (id: number) => number
-  saved: SavedStats
   update: (fn: (s: SavedStats) => SavedStats) => void
   cards: CardsState
   onCreated: (variantId: string) => void
