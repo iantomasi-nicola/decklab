@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "version": "147.89-14863d3b",
- "builtAt": "2026-11-19T02:43:50.919Z",
+ "builtAt": "2026-11-19T02:44:18.497Z",
  "files": {
   "cards": "cards.147.89-14863d3b.json",
   "banlists": "banlists.147.89-14863d3b.json",
@@ -14,7 +14,7 @@
  "sources": {
   "ygoprodeck": {
    "dbVersion": "147.89",
-   "lastUpdate": null
+   "lastUpdate": "2026-11-16 16:00:28"
   },
   "babelcdb": {
    "commit": "7be9fd135c073d8b9086925853e3cd1cc4ad55ea",

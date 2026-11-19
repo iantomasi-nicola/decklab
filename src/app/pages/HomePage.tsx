@@ -14,15 +14,15 @@ export function HomePage() {
   return (
     <>
       <header className="mb-8 md:mb-10">
-        <h1 className="max-w-[18ch] text-[34px] font-semibold leading-[1.1] tracking-tight md:text-5xl">{t('home.greeting')}</h1>
+        <h1 className="max-w-[18ch] text-[34px] font-semibold leading-[1.1] tracking-tight md:text-4xl lg:text-5xl">{t('home.greeting')}</h1>
         <p className="mt-3 max-w-[56ch] text-base text-muted md:text-lg">{t('home.lead')}</p>
       </header>
 
-      <section aria-labelledby="quick-title" className="mb-8">
+      <section aria-labelledby="quick-title" className="@container mb-8">
         <h2 id="quick-title" className="mb-3 text-sm font-medium text-muted">
           {t('home.quickTitle')}
         </h2>
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid grid-cols-1 gap-3 @xl:grid-cols-2">
           {items.map(({ to, key, Icon }) => (
             <li key={to}>
               <Link to={to} className="block rounded-lg">
