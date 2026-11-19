@@ -64,9 +64,12 @@ async function checkField(page: Page, label: string) {
   expect(g.f.l, `${label}: campo a sinistra`).toBeGreaterThanOrEqual(-1)
   expect(g.f.r, `${label}: campo a destra`).toBeLessThanOrEqual(g.vw + 1)
   expect(g.f.b, `${label}: campo in basso`).toBeLessThanOrEqual(g.vh + 1)
-  const fit = Math.min(g.s.w, g.s.h * RATIO)
-  expect(g.f.w / fit, `${label}: il campo riempie min(larghezza, altezza)`).toBeGreaterThan(0.97)
-  expect(Math.abs(g.f.w / g.f.h - RATIO), `${label}: proporzioni del playmat`).toBeLessThan(0.01)
+  const fillsStage = g.f.w / g.s.w > 0.99 && g.f.h / g.s.h > 0.99 // aree strette (telefono, colonna accanto al pannello): layout a 5 colonne che riempie tutta l'area
+  if (!fillsStage) {
+    const fit = Math.min(g.s.w, g.s.h * RATIO)
+    expect(g.f.w / fit, `${label}: il campo riempie min(larghezza, altezza)`).toBeGreaterThan(0.97)
+    expect(Math.abs(g.f.w / g.f.h - RATIO), `${label}: proporzioni del playmat`).toBeLessThan(0.01)
+  }
   expect(g.cellsOut, `${label}: zone fuori dal campo`).toBe(0)
   expect(g.cardsOut, `${label}: carte tagliate`).toBe(0)
   expect(g.handBelow, `${label}: la mano è sotto il campo`).toBe(true)

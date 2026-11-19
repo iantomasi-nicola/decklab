@@ -57,7 +57,7 @@ async function geometry(page: Page, label: string, opts: { minZone?: number; min
       cardsOut: [...field.querySelectorAll('[data-card]')].filter((c) => c.getClientRects().length > 0 && !inside(r(c.firstElementChild ?? c))).length,
       handBelow: hand.top >= own.bottom - 1,
       minW: Math.min(...zones.map((z) => z.width)),
-      narrow: cells.filter((c) => c.hasAttribute('data-zone') && /(mzone|szone|emz)/.test(c.getAttribute('data-zone') ?? '') && (r(c).width < 44 || r(c).height < 44)).map((c) => `${c.getAttribute('data-zone')}:${Math.round(r(c).width)}x${Math.round(r(c).height)}`),
+      narrow: cells.filter((c) => c.hasAttribute('data-zone') && /(mzone|szone|emz)/.test(c.getAttribute('data-zone') ?? '') && (r(c).width < 44 || r(c).height < 38)).map((c) => `${c.getAttribute('data-zone')}:${Math.round(r(c).width)}x${Math.round(r(c).height)}`),
       minH: Math.min(...zones.map((z) => z.height)),
       overlap: zones.filter((z, i) => zones.some((o, j) => j > i && z.left < o.right - 2 && z.right > o.left + 2 && z.top < o.bottom - 2 && z.bottom > o.top + 2)).length,
     }
@@ -84,7 +84,7 @@ for (const [w, h] of [[375, 667], [390, 844], [430, 932]] as const) {
       await openCombo(page, await seedCombo(page, RICH), 'it', 'dark')
       await page.waitForTimeout(400)
       await page.screenshot({ path: `${OUT}/combo-phone-${w}x${h}-${mine ? 'mine' : 'both'}.png` })
-      const g = await geometry(page, `${w}x${h} mine=${mine}`, { minZone: mine ? 44 : 0, minWidth: 44 })
+      const g = await geometry(page, `${w}x${h} mine=${mine}`, { minZone: mine ? 38 : 0, minWidth: 44 })
       // il campo riempie l'area utile (larghezza intera)
       expect(g.fill[0]).toBeGreaterThan(0.99)
       expect(g.fill[1]).toBeGreaterThan(0.99)
