@@ -167,13 +167,13 @@ function drawCard(ctx: CanvasRenderingContext2D, c: ExportCard, img: HTMLImageEl
     ctx.stroke()
     ctx.fillStyle = C.fg
     ctx.globalAlpha = gone ? 0.6 : 1
-    const px = Math.max(10, Math.round(w * 0.115))
+    const px = Math.max(10, Math.round(w * 0.1))
     ctx.font = font(600, px)
     ctx.textAlign = 'center'
     ctx.textBaseline = 'alphabetic'
-    const lines = wrap(ctx, c.name, w * 0.84, 4)
-    const startY = y + h - px * 1.25 * lines.length - h * 0.04
-    lines.forEach((l, i) => ctx.fillText(l, x + w / 2, startY + (i + 1) * px * 1.25 - px * 0.25))
+    const lines = wrap(ctx, c.name, w * 0.86, 3)
+    const startY = y + h * 0.56
+    lines.forEach((l, i) => ctx.fillText(l, x + w / 2, startY + (i + 1) * px * 1.22))
     ctx.globalAlpha = 1
     ctx.textAlign = 'left'
   }
@@ -215,7 +215,7 @@ function drawCard(ctx: CanvasRenderingContext2D, c: ExportCard, img: HTMLImageEl
   if (remaining > 1) pill(ctx, `×${remaining}`, x + w - pad, by, ph, 'rgba(14,16,21,0.9)', C.fg, px, 'right')
 }
 
-function drawList(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, maxH: number, title: string, items: ExportLine[], tone: 'out' | 'in', empty: string) {
+function drawList(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, lineH: number, title: string, items: ExportLine[], tone: 'out' | 'in', empty: string): number {
   const color = tone === 'out' ? C.danger : C.ok
   const sign = tone === 'out' ? '−' : '+'
   const total = items.reduce((n, i) => n + i.count, 0)
@@ -231,13 +231,12 @@ function drawList(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
   ctx.textAlign = 'right'
   ctx.fillText(`${sign}${total}`, x + w - 18, y + headH / 2 + 1)
   ctx.textAlign = 'left'
-  const lineH = Math.max(26, Math.min(44, (maxH - headH - 12) / Math.max(1, items.length)))
   const px = Math.round(Math.min(30, lineH * 0.68))
   ctx.font = font(500, px)
   if (!items.length) {
     ctx.fillStyle = C.muted
     ctx.fillText(empty, x + 18, y + headH + 12 + lineH / 2)
-    return
+    return headH + 12 + lineH
   }
   items.forEach((it, i) => {
     const cy = y + headH + 12 + i * lineH + lineH / 2
@@ -250,7 +249,12 @@ function drawList(ctx: CanvasRenderingContext2D, x: number, y: number, w: number
     const off = 18 + Math.max(60, ctx.measureText('+3').width + 18)
     ctx.fillText(ellipsize(ctx, it.name, w - off - 12), x + off, cy)
   })
+  return headH + 12 + items.length * lineH
 }
+
+const LIST_HEAD = 52 + 12
+/** Altezza di riga: 44 px se c'è spazio, altrimenti si stringe (mai sotto 26). */
+const lineHeightFor = (free: number, rows: number) => Math.max(26, Math.min(44, Math.floor((free - LIST_HEAD * 2) / Math.max(2, rows))))
 
 export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanvasElement> {
   const { w: W, h: H } = SIZES[input.orientation]
@@ -290,8 +294,9 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
     let yy = y + 60 + (lines.length - 1) * lh
     ctx.fillStyle = C.muted
     ctx.font = font(500, 30)
-    yy += 52
-    ctx.fillText(ellipsize(ctx, input.subtitle, maxW), x, yy)
+    const sub = wrap(ctx, input.subtitle.replace(/ · /g, '\u00A0· '), maxW, 2)
+    sub.forEach((l, i) => ctx.fillText(l, x, yy + 52 + i * 38))
+    yy += 52 + (sub.length - 1) * 38
     return yy + 28
   }
 
@@ -302,9 +307,11 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
     const contentW = W - pad * 2
     let y = header(pad, pad - 8, contentW)
     const colW = (contentW - 24) / 2
-    const listH = Math.min(52 + 12 + Math.min(maxLines, 15) * 44 + 8, 700)
-    drawList(ctx, pad, y, colW, listH, input.labels.out, input.outs, 'out', input.labels.noSwaps)
-    drawList(ctx, pad + colW + 24, y, colW, listH, input.labels.in, input.ins, 'in', input.labels.noSwaps)
+    const lh = Math.max(26, Math.min(44, Math.floor(680 / Math.max(1, Math.min(maxLines, 15)))))
+    const listH = Math.max(
+      drawList(ctx, pad, y, colW, lh, input.labels.out, input.outs, 'out', input.labels.noSwaps),
+      drawList(ctx, pad + colW + 24, y, colW, lh, input.labels.in, input.ins, 'in', input.labels.noSwaps),
+    )
     y += listH + 36
     ctx.fillStyle = C.muted
     ctx.font = font(700, 26)
@@ -318,10 +325,10 @@ export async function renderSidePlanCanvas(input: ExportInput): Promise<HTMLCanv
     const gridW = W - pad * 2 - rightW - 48
     const rx = W - pad - rightW
     let y = header(rx, pad - 8, rightW)
-    const free = H - y - footerH - 24
-    const half = (free - 24) / 2
-    drawList(ctx, rx, y, rightW, half, input.labels.out, input.outs, 'out', input.labels.noSwaps)
-    drawList(ctx, rx, y + half + 24, rightW, half, input.labels.in, input.ins, 'in', input.labels.noSwaps)
+    const free = H - y - footerH - 24 - 24
+    const lh = lineHeightFor(free, Math.max(1, input.outs.length) + Math.max(1, input.ins.length))
+    const outH = drawList(ctx, rx, y, rightW, lh, input.labels.out, input.outs, 'out', input.labels.noSwaps)
+    drawList(ctx, rx, y + outH + 24, rightW, lh, input.labels.in, input.ins, 'in', input.labels.noSwaps)
     y = pad
     ctx.fillStyle = C.muted
     ctx.font = font(700, 26)
