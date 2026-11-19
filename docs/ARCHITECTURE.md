@@ -287,6 +287,10 @@ Il file mostra il modello del sito (interpretazione mia dai campi; le parti marc
 | `combo_strings` / `brick_strings` / `forbidden_strings` / `draw_strings` | Per ogni carta: con quali carte fa combo, con quali è brick (a coppie ripetute = es. "due copie di sé stessa"), combinazioni vietate, combinazioni che pescano | Li generiamo **dalle combo salvate** (vedi sotto) e restano modificabili |
 | `combo_labels` | Tabella precalcolata: ogni coppia/tris di carte della mano → `PLAYABLE` o `BRICK` (inserita a mano dall'utente nel sito) | **Etichettatura automatica** da combo salvate + override manuale |
 
+**Compatibilità tra carte C2 (requisito dell'utente)**: non tutte le carte con tag C2 fanno combo se pescate insieme. Il modello quindi NON assume che due C2 qualsiasi siano giocabili: ogni coppia (e tris) è PLAYABLE solo se esplicitamente compatibile. Fonti, in ordine di priorità: (1) etichette manuali dell'utente; (2) `combo_strings`/`brick_strings` per carta (formato Deckspace); (3) combo salvate (le "carte necessarie" di una combo rendono compatibile quell'insieme); (4) gruppi di compatibilità (es. C2-A, C2-B: carte dello stesso gruppo fanno combo tra loro). Il default per coppie non coperte è "da confermare" (né giocabile né brick) e viene mostrato come incertezza nel risultato, non nascosto.
+
+**Probabilità post-side**: ogni calcolo accetta un `deckOverride` (mazzo dopo gli swap di un piano di side). La pagina mostra Pre-side / Post-side per matchup con la differenza (Δ playable%, Δ brick%) e la composizione dopo i cambi.
+
 **Come lo rendo più smart** (senza copiarne grafica né contenuti):
 1. **Import del file `.json` di Deckspace** (e export nello stesso formato, per interoperabilità): il progetto diventa una variante con ruoli e etichette.
 2. **Etichette automatiche**: invece di etichettare a mano centinaia di coppie/tris, una mano è `PLAYABLE` se contiene le "carte necessarie" (`setup.hand.required`) di almeno una combo salvata (con grado di rischio se la combo ha un ramo che fallisce contro un handtrap). Le coppie/tris che non copre nessuna combo sono suggerite come `BRICK` da confermare. Le correzioni manuali vincono sempre.
