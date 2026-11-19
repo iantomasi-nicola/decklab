@@ -142,8 +142,10 @@ function ComboRow({
           {doc?.meta?.derivedFrom ? <GitFork aria-hidden size={18} className="shrink-0 text-accent-text" /> : null}
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[16px] font-medium">{nm(r.name)}</span>
-            <span className="block truncate text-sm text-muted">
-              {v ? nm(v.name) : t('combos.general')} · {t('combos.stepsCount', { count: steps })} · {date}
+            <span className="flex flex-wrap gap-x-3 text-sm text-muted">
+              <span>{v ? nm(v.name) : t('combos.general')}</span>
+              <span>{t('combos.stepsCount', { count: steps })}</span>
+              <span>{date}</span>
             </span>
           </span>
         </Link>

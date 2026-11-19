@@ -329,7 +329,7 @@ function Pile({ p, loc, style }: { p: PlayerIdx; loc: PileLoc; style: CSSPropert
                 e.stopPropagation()
                 onPile(p, loc)
               }}
-              className="cl-badge pointer-events-auto -bottom-1 -right-1 cursor-pointer before:absolute before:-inset-2.5 before:content-[''] hover:border-accent-text"
+              className="cl-badge pointer-events-auto -bottom-1 -right-1 cursor-pointer before:absolute before:-inset-1 before:content-[''] hover:border-accent-text"
             >
               {count}
             </button>

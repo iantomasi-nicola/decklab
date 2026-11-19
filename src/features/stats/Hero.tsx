@@ -35,7 +35,7 @@ export function Hero({
           <p className="mt-2 text-base font-medium text-fg">{t('statsLab.hero.playable')}</p>
         </div>
         <p className="max-w-[34ch] text-[15px] text-muted md:text-right">
-          {t('statsLab.hero.deck', { size: hand.deckSize, blanks: hand.blanks, rules: hand.ruleCount })}
+          {t(hand.blanks ? 'statsLab.hero.deckAssumed' : 'statsLab.hero.deck', { size: hand.deckSize, blanks: hand.blanks, count: hand.ruleCount })}
         </p>
       </div>
       <div className="mt-6">

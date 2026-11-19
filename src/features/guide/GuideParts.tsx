@@ -37,7 +37,7 @@ export function Section({ title, aside, children, className, id }: { title: stri
   return (
     <section aria-labelledby={id} className={cn('flex min-w-0 flex-col gap-3', className)}>
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id={id} className="text-lg font-semibold leading-7">{title}</h2>
+        <h2 id={id} className="scroll-mt-[8.25rem] text-lg font-semibold leading-7">{title}</h2>
         {aside}
       </div>
       {children}

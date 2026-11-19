@@ -23,7 +23,7 @@ import { Menu } from '@/ui/Menu'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/Toast'
 import { EndBoardSection, HandSection, VariantsSection } from './GuideParts'
-import { StepsList, type GuideCtx } from './GuideSteps'
+import { StepsSection, type GuideCtx } from './GuideSteps'
 import { endboardState, endSummary, motherDivergence, pickLoc, stepsUsingCards, variantsOf } from './guideModel'
 import { legalityOf, limitedCards, type Legality } from './legality'
 import './locales'
@@ -130,7 +130,7 @@ function Guide({ doc, comboId, lang, all }: { doc: ComboDoc; comboId: string; la
   const variant = doc.meta.variant ? pickLoc(doc.meta.variant.name, lang) : undefined
   const subtitle = [archetype, variant].filter(Boolean).join(' / ')
 
-  const ctx: GuideCtx = { doc, lang, nameOf, nameOfUid, resolver, flagged }
+  const ctx: GuideCtx = useMemo(() => ({ doc, lang, nameOf, nameOfUid, resolver, flagged }), [doc, lang, nameOf, nameOfUid, resolver, flagged])
 
   const copy = async (text: string) => {
     try {
@@ -222,7 +222,7 @@ function Guide({ doc, comboId, lang, all }: { doc: ComboDoc; comboId: string; la
       <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:items-start lg:gap-x-10">
         <section aria-labelledby="guide-steps" className="order-2 flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
           <h2 id="guide-steps" className="text-lg font-semibold leading-7">{t('guide.steps.title')}</h2>
-          <StepsList ctx={ctx} variants={variants} />
+          <StepsSection ctx={ctx} variants={variants} />
         </section>
         {/* colonna laterale da 1024 px; sotto, le sezioni si dispongono nell'ordine mano · passi · board · varianti */}
         <div className="contents lg:col-start-2 lg:row-start-1 lg:flex lg:flex-col lg:gap-8">

@@ -248,7 +248,7 @@ export function AddCardDialog({
               value={dest}
               onValueChange={setDest}
               options={(['hand', 'mzone', 'szone', 'gy', 'banished'] as AddDest[]).map((v) => ({ value: v, label: t(`combos.add.d.${v}`) }))}
-              className="flex-wrap"
+              className="!grid !grid-cols-2 min-[480px]:!grid-cols-5"
             />
           )}
         </Field>

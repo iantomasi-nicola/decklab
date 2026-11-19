@@ -169,17 +169,16 @@ export function StatsView() {
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line pt-4">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="grid gap-4 border-t border-line pt-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+          <div className="flex min-w-0 flex-col gap-2">
             <Switch
-              className="min-w-0"
               checked={saved.settings.useAssumedDeckSize}
               onCheckedChange={(v) => setSettings({ useAssumedDeckSize: v })}
               label={t('statsLab.assumed.label')}
               description={t('statsLab.assumed.hint')}
             />
             {saved.settings.useAssumedDeckSize ? (
-              <Stepper label={t('statsLab.assumed.size')} value={saved.settings.assumedDeckSize} min={20} max={100} onChange={(n) => setSettings({ assumedDeckSize: n })} />
+              <Stepper label={t('statsLab.assumed.size')} value={saved.settings.assumedDeckSize} min={20} max={100} onChange={(n) => setSettings({ assumedDeckSize: n })} className="self-start" />
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">

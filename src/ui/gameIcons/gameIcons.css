@@ -1,0 +1,94 @@
+/* Colori dei tipi di effetto. Mai l'unico segnale: ogni tipo ha anche forma e icona proprie (leggibili in scala di grigi). */
+:root {
+  --k-ignition: #f5a35b;
+  --k-quick: #5cc8f2;
+  --k-trigger: #ee8fe0;
+  --k-continuous: #7fd8a6;
+  --k-activation: #a89dff;
+  --k-chain: #f2d25c;
+}
+:root[data-theme='light'] {
+  --k-ignition: #9a4d05;
+  --k-quick: #0b6591;
+  --k-trigger: #97298d;
+  --k-continuous: #12693f;
+  --k-activation: #4536cf;
+  --k-chain: #745400;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --k-ignition: #9a4d05;
+    --k-quick: #0b6591;
+    --k-trigger: #97298d;
+    --k-continuous: #12693f;
+    --k-activation: #4536cf;
+    --k-chain: #745400;
+  }
+}
+
+.ebadge {
+  --k: var(--fg-muted);
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--eb, 32px);
+  height: var(--eb, 32px);
+  color: var(--k);
+  vertical-align: middle;
+}
+.ebadge[data-size='sm'] { --eb: 28px; }
+.ebadge[data-size='md'] { --eb: 36px; }
+.ebadge[data-kind='ignition'] { --k: var(--k-ignition); }
+.ebadge[data-kind='quick'] { --k: var(--k-quick); }
+.ebadge[data-kind='trigger'] { --k: var(--k-trigger); }
+.ebadge[data-kind='continuous'] { --k: var(--k-continuous); }
+.ebadge[data-kind='activation'] { --k: var(--k-activation); }
+.ebadge[data-kind='chain'] { --k: var(--k-chain); }
+.ebadge > svg.ebadge-shape,
+.ebadge > .ebadge-icon {
+  grid-area: 1 / 1;
+}
+.ebadge-shape {
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in srgb, var(--k) 16%, var(--surface-1));
+  stroke: var(--k);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+.ebadge-shape * {
+  vector-effect: non-scaling-stroke;
+}
+.ebadge[data-kind='chain'] .ebadge-shape {
+  fill: var(--surface-1);
+  stroke-width: 3px;
+}
+.ebadge-num {
+  grid-area: 1 / 1;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.ebadge[data-size='md'] .ebadge-num { font-size: 15px; }
+.ebadge-pip {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  border: 1.5px solid var(--k);
+  background: var(--surface-1);
+  color: var(--fg);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}

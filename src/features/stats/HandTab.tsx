@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import type { HandResult } from '@/domain/stats'
@@ -5,14 +6,18 @@ import { ROLE_PRESETS } from '@/domain/stats'
 import { ChartCard } from './charts/ChartCard'
 import { Columns } from './charts/Columns'
 import { HBars } from './charts/HBars'
+import { Button } from '@/ui/Button'
 import { pct } from './format'
 import { useLang } from './parts'
+
+const ODDS_FIRST = 10
 
 export const roleName = (t: TFunction, role: string): string => ((ROLE_PRESETS as readonly string[]).includes(role) ? t(`statsLab.roles.${role}.name`) : role)
 
 export function HandTab({ hand, name }: { hand: HandResult; name: (id: number) => string }) {
   const { t } = useTranslation()
   const lang = useLang()
+  const [allOdds, setAllOdds] = useState(false)
   const p = (v: number) => pct(v, lang, v < 0.1 ? 1 : 0)
   const odds = [...hand.cardOdds].sort((a, b) => b.p - a.p || b.count - a.count)
   const roles = [...hand.roleOdds].sort((a, b) => b.p - a.p)
@@ -48,7 +53,14 @@ export function HandTab({ hand, name }: { hand: HandResult; name: (id: number) =
         subtitle={t('statsLab.hand.oddsSub', { count: hand.handSize })}
         table={{ head: [t('statsLab.col.card'), t('statsLab.col.copies'), t('statsLab.col.prob')], rows: odds.map((o) => [name(o.id), o.count, pct(o.p, lang)]) }}
       >
-        <HBars rows={odds.map((o) => ({ key: o.id, label: name(o.id), sub: `×${o.count}`, value: o.p, text: p(o.p) }))} max={1} />
+        <HBars rows={(allOdds ? odds : odds.slice(0, ODDS_FIRST)).map((o) => ({ key: o.id, label: name(o.id), sub: `×${o.count}`, value: o.p, text: p(o.p) }))} max={1} />
+        {odds.length > ODDS_FIRST ? (
+          <div className="mt-4">
+            <Button variant="secondary" onClick={() => setAllOdds((v) => !v)}>
+              {allOdds ? t('statsLab.hand.showFewer') : t('statsLab.hand.showAll', { count: odds.length - ODDS_FIRST })}
+            </Button>
+          </div>
+        ) : null}
       </ChartCard>
 
       <ChartCard
