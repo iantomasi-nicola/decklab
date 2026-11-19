@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import Search from 'lucide-react/icons/search'
 import Ellipsis from 'lucide-react/icons/ellipsis'
 import ChevronRight from 'lucide-react/icons/chevron-right'
+import PanelLeftClose from 'lucide-react/icons/panel-left-close'
+import PanelLeftOpen from 'lucide-react/icons/panel-left-open'
 import { cn } from '@/ui/cn'
 import { IconButton } from '@/ui/IconButton'
 import { BottomSheet } from '@/ui/BottomSheet'
@@ -14,11 +16,12 @@ import { NAV } from './nav'
 import { SyncIndicator } from './SyncIndicator'
 import { CommandPalette } from './CommandPalette'
 import { usePalette } from './palette'
+import { isEditorRoute, useSidebar } from './sidebar'
 
 const linkBase =
   'relative flex min-h-11 items-center gap-3 rounded-md px-3 text-[15px] font-medium transition-colors duration-150'
 
-function SidebarNav() {
+function SidebarNav({ collapsed }: { collapsed: boolean }) {
   const { t } = useTranslation()
   return (
     <nav aria-label={t('nav.label')} className="flex flex-col gap-1">
@@ -27,7 +30,9 @@ function SidebarNav() {
           key={to}
           to={to}
           activeOptions={{ exact: to === '/' }}
-          className={cn(linkBase, 'text-muted hover:bg-surface-2 hover:text-fg')}
+          aria-label={collapsed ? t(`nav.${key}`) : undefined}
+          title={collapsed ? t(`nav.${key}`) : undefined}
+          className={cn(linkBase, collapsed && 'justify-center px-0', 'text-muted hover:bg-surface-2 hover:text-fg')}
           activeProps={{ className: 'bg-accent-soft !text-fg' }}
         >
           {({ isActive }) => (
@@ -37,7 +42,7 @@ function SidebarNav() {
                 className={cn('absolute left-0 top-2 bottom-2 w-1 rounded-full', isActive ? 'bg-accent-text' : 'bg-transparent')}
               />
               <Icon aria-hidden size={20} className={isActive ? 'text-accent-text' : undefined} />
-              {t(`nav.${key}`)}
+              {!collapsed && t(`nav.${key}`)}
             </>
           )}
         </Link>
@@ -115,9 +120,25 @@ export function Shell() {
   const moreActive = secondary.some((n) => n.to === pathname)
   // l'editor di mazzo ha bisogno di più larghezza (pannelli affiancati)
   const wide = /^\/(mazzi|combo)\/[^/]+/.test(pathname)
+  const pref = useSidebar((x) => x.pref)
+  const setPref = useSidebar((x) => x.setPref)
+  const collapsed = (pref ?? (isEditorRoute(pathname) ? 'collapsed' : 'expanded')) === 'collapsed'
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'b') {
+        e.preventDefault()
+        setPref(collapsed ? 'expanded' : 'collapsed')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [collapsed, setPref])
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[var(--sidebar-w)_minmax(0,1fr)]">
+    <div
+      className="min-h-dvh md:grid md:grid-cols-[var(--sw)_minmax(0,1fr)]"
+      style={{ ['--sw' as string]: collapsed ? '72px' : 'var(--sidebar-w)' }}
+    >
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[90] focus:rounded-md focus:bg-accent focus:px-4 focus:py-3 focus:text-accent-fg"
@@ -127,13 +148,18 @@ export function Shell() {
 
       {/* Sidebar (>= 768) */}
       <aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line bg-surface-1 px-3 py-5 md:flex">
-        <div className="flex items-center gap-3 px-3">
+        <div className={cn('flex items-center gap-3 px-3', collapsed && 'justify-center px-0')}>
           <LogoMark size={32} />
-          <span className="text-[17px] font-semibold tracking-tight">{t('app.name')}</span>
+          {!collapsed && <span className="text-[17px] font-semibold tracking-tight">{t('app.name')}</span>}
         </div>
-        <SidebarNav />
-        <div className="mt-auto px-3">
-          <SyncIndicator showLabel />
+        <SidebarNav collapsed={collapsed} />
+        <div className={cn('mt-auto flex flex-col gap-2 px-3', collapsed && 'items-center px-0')}>
+          <SyncIndicator showLabel={!collapsed} />
+          <IconButton
+            label={collapsed ? t('nav.expand') : t('nav.collapse')}
+            icon={collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            onClick={() => setPref(collapsed ? 'expanded' : 'collapsed')}
+          />
         </div>
       </aside>
 

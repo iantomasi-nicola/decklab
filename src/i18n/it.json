@@ -14,7 +14,9 @@
     "stats": "Statistiche",
     "settings": "Impostazioni",
     "more": "Altro",
-    "moreTitle": "Altre sezioni"
+    "moreTitle": "Altre sezioni",
+    "collapse": "Riduci il menu",
+    "expand": "Espandi il menu"
   },
   "common": {
     "close": "Chiudi",
