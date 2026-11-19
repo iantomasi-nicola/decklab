@@ -5,3 +5,8 @@
 - Ottimizzare l'uso giornaliero e settimanale di Claude: niente sub-agenti per compiti piccoli, prompt dei sub-agenti brevi e autosufficienti (puntano a `docs/`), niente riletture inutili, niente screenshot ridondanti, test mirati prima della suite completa.
 - Flusso di progetto: lavoro per fasi (`docs/ROADMAP.md`); a fine fase mi fermo e attendo l'ok.
 - Branch di sviluppo: `ccr-66bffddf-j9bdnn`. Nessuna PR senza richiesta esplicita.
+
+## Regole di comunicazione (permanenti)
+- Dire all'utente, passo passo, cosa si sta facendo (breve, prima e dopo ogni passo significativo).
+- Allegare screenshot dove servono (schermate UI, difetti, confronti) con SendUserFile.
+- Sub-agenti: riportare all'utente la percentuale di completamento di ciascuno, aggiornata ogni 10%. I sub-agenti devono inviare al principale una riga di avanzamento a ogni 10% (SendMessage), e il principale la inoltra.
