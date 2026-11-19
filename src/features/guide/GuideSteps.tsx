@@ -369,7 +369,7 @@ export function StepsSection({ ctx, variants }: { ctx: GuideCtx; variants: Varia
   const lastIdx = items.length - 1
   return (
     <>
-      <div ref={toolbar} data-testid="guide-toolbar" className="sticky top-[57px] z-20 -mx-1 bg-bg px-1 py-2">
+      <div ref={toolbar} data-testid="guide-toolbar" className="sticky top-[57px] z-20 md:top-[61px] -mx-1 bg-bg px-1 py-2">
         <div className="flex items-center gap-2">
           <Button
             icon={<ListTree size={18} />}

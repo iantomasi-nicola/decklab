@@ -61,6 +61,7 @@ export function TournamentTab({
             label={t('statsLab.tour.plan')}
             value={plan}
             onValueChange={onPlan}
+            className="flex-wrap"
             options={[
               { value: 'first', label: t('statsLab.tour.first') },
               { value: 'second', label: t('statsLab.tour.second') },
@@ -74,7 +75,7 @@ export function TournamentTab({
             label={t('statsLab.tour.mode')}
             value={mode}
             onValueChange={onMode}
-            className="sm:flex-wrap"
+            className="flex-wrap"
             options={TOUR_MODES.map((m) => ({ value: m, label: t(`statsLab.tour.modes.${m}`) }))}
           />
         </div>

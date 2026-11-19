@@ -268,7 +268,7 @@ test.describe('alternative al trascinamento', () => {
     await page.getByTestId('note').fill('Summon the engine.')
     await page.getByTestId('step-menu-1').click()
     await page.getByRole('menuitem', { name: /Free order|Ordine libero/ }).click()
-    await expect(page.locator('[data-steps] li').nth(1)).toContainText(/Free order|Ordine libero/)
+    await expect(page.locator('[data-steps] li[data-block="group"]')).toBeVisible() // i due passi raggruppati formano un blocco comprimibile
     await page.getByTestId('step-menu-1').click()
     await page.getByRole('menuitem', { name: /Move up|Sposta su/ }).click()
     const steps = await expect.poll(async () => (await savedSteps(page)).length).toBe(3).then(() => savedSteps(page))

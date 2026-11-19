@@ -15,7 +15,7 @@ const smallTargets = (page: Page) =>
       .filter((r) => r.h > 0 && (r.h < 43.5 || r.w < 43.5)),
   )
 
-const SHOTS = 'test-results/decks/stats'
+const SHOTS = 'test-results/stats-shots'
 mkdirSync(SHOTS, { recursive: true })
 
 const WIDTHS = [375, 768, 1024, 1440] as const
