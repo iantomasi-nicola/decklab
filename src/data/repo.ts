@@ -1,5 +1,6 @@
 import { liveQuery, type Observable } from 'dexie'
 import type { Archetype, Localized, Meta, Variant } from '@/domain/types'
+import type { SidePlan } from '@/domain/side/types'
 import {
   db as defaultDb,
   type BoardRecord,
@@ -101,11 +102,19 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
   const a = base('archetypes', ['variants', 'combos'])
   const v = base('variants', ['combos'])
   const c = base('combos')
+  const sp = base('sidePlans')
 
   /** Cancella/ripristina i combo di un insieme (per archetipo o variante); al restore ripristina solo i cancellati con lo stesso timestamp. */
   async function cascadeCombos(rows: ComboRecord[], now: Date, deletedAt: string | null, onlyDeletedAt?: string | null) {
     const targets = rows.filter((r) => (deletedAt ? r.deletedAt === null : r.deletedAt !== null && r.deletedAt === onlyDeletedAt))
     if (targets.length) await writeEntities(db, 'combos', targets.map((r) => ({ ...r, deletedAt })), now)
+  }
+
+  /** Piani di side di una variante: stessa logica dei combo (al restore tornano solo quelli cancellati insieme alla variante). */
+  async function cascadePlans(variantId: string, now: Date, deletedAt: string | null, onlyDeletedAt?: string | null) {
+    const rows = await db.sidePlans.where('variantId').equals(variantId).toArray()
+    const targets = rows.filter((r) => (deletedAt ? r.deletedAt === null : r.deletedAt !== null && r.deletedAt === onlyDeletedAt))
+    if (targets.length) await writeEntities(db, 'sidePlans', targets.map((r) => ({ ...r, deletedAt })), now)
   }
 
   const archetypes = {
@@ -116,7 +125,7 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
   }
 
   async function softDeleteArchetype(id: string, deleted: boolean) {
-    await tx(['archetypes', 'variants', 'combos'], async () => {
+    await tx(['archetypes', 'variants', 'combos', 'sidePlans'], async () => {
       const cur = await db.archetypes.get(id)
       if (!cur) return
       const now = clock.now()
@@ -126,12 +135,13 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
       const vs = await db.variants.where('archetypeId').equals(id).toArray()
       const vt = vs.filter((r) => (deleted ? r.deletedAt === null : r.deletedAt !== null && r.deletedAt === prevStamp))
       if (vt.length) await writeEntities(db, 'variants', vt.map((r) => ({ ...r, deletedAt: stamp })), now)
+      for (const r of vt) await cascadePlans(r.id, now, stamp, prevStamp)
       await cascadeCombos(await db.combos.where('archetypeId').equals(id).toArray(), now, stamp, prevStamp)
     })
   }
 
   async function duplicateArchetype(id: string): Promise<Archetype> {
-    return tx(['archetypes', 'variants', 'combos'], async () => {
+    return tx(['archetypes', 'variants', 'combos', 'sidePlans'], async () => {
       const src = await db.archetypes.get(id)
       if (!src || src.deletedAt !== null) throw new Error(`archetypes/${id} non trovato`)
       const now = clock.now()
@@ -158,6 +168,10 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
         variantId: r.variantId === null ? null : (variantIds.get(r.variantId) ?? null),
       }))
       if (newCombos.length) await writeEntities(db, 'combos', newCombos, now)
+      const newPlans = alive(await db.sidePlans.toArray())
+        .filter((r) => variantIds.has(r.variantId))
+        .map((r) => ({ ...structuredClone(r), id: clock.uuid(), variantId: variantIds.get(r.variantId)! }))
+      if (newPlans.length) await writeEntities(db, 'sidePlans', newPlans, now)
       return copy!
     })
   }
@@ -174,19 +188,20 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
   }
 
   async function softDeleteVariant(id: string, deleted: boolean) {
-    await tx(['variants', 'combos'], async () => {
+    await tx(['variants', 'combos', 'sidePlans'], async () => {
       const cur = await db.variants.get(id)
       if (!cur) return
       const now = clock.now()
       const stamp = deleted ? now.toISOString() : null
       await writeEntities(db, 'variants', [{ ...cur, deletedAt: stamp }], now)
       await cascadeCombos(await db.combos.where('variantId').equals(id).toArray(), now, stamp, cur.deletedAt)
+      await cascadePlans(id, now, stamp, cur.deletedAt)
     })
   }
 
   /** Duplica una variante (e i suoi combo) nello stesso archetipo o in `targetArchetypeId`. */
   async function duplicateVariant(id: string, targetArchetypeId?: string): Promise<Variant> {
-    return tx(['variants', 'combos'], async () => {
+    return tx(['variants', 'combos', 'sidePlans'], async () => {
       const src = await db.variants.get(id)
       if (!src || src.deletedAt !== null) throw new Error(`variants/${id} non trovato`)
       const now = clock.now()
@@ -201,6 +216,8 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
       const cs = alive(await db.combos.where('variantId').equals(id).toArray())
       const newCombos = cs.map((r) => ({ ...structuredClone(r), id: clock.uuid(), archetypeId, variantId: newId }))
       if (newCombos.length) await writeEntities(db, 'combos', newCombos, now)
+      const newPlans = alive(await db.sidePlans.where('variantId').equals(id).toArray()).map((r) => ({ ...structuredClone(r), id: clock.uuid(), variantId: newId }))
+      if (newPlans.length) await writeEntities(db, 'sidePlans', newPlans, now)
       return copy!
     })
   }
@@ -223,6 +240,22 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
         const name = src.name ? copyName(src.name) : undefined
         const copy = { ...structuredClone(src), id: clock.uuid(), variantId, deletedAt: null, ...(name ? { name } : {}) }
         return (await writeEntities(db, 'combos', [copy], clock.now()))[0]!
+      }),
+  }
+
+  // ---------- side plans (uno per matchup di una variante) ----------
+  const sidePlans = {
+    ...sp.repo,
+    listByVariant: async (variantId: string): Promise<SidePlan[]> => alive(await db.sidePlans.where('variantId').equals(variantId).toArray()),
+    watchByVariant: (variantId: string) => liveQuery(async () => alive(await db.sidePlans.where('variantId').equals(variantId).toArray())),
+    /** Duplica un piano (nuovo UUID), con campi del matchup da sovrascrivere; opzionalmente su un'altra variante. */
+    duplicate: async (id: string, opts: { name?: string; turn?: SidePlan['matchup']['turn']; variantId?: string } = {}): Promise<SidePlan> =>
+      tx(['sidePlans'], async () => {
+        const src = await db.sidePlans.get(id)
+        if (!src || src.deletedAt !== null) throw new Error(`sidePlans/${id} non trovato`)
+        const matchup = { ...structuredClone(src.matchup), ...(opts.name !== undefined ? { name: opts.name } : {}), ...(opts.turn ? { turn: opts.turn } : {}) }
+        const copy: SidePlan = { ...structuredClone(src), id: clock.uuid(), variantId: opts.variantId ?? src.variantId, matchup, deletedAt: null }
+        return (await writeEntities(db, 'sidePlans', [copy], clock.now()))[0]!
       }),
   }
 
@@ -252,7 +285,7 @@ export function createRepos(db: DecklabDB = defaultDb, clock: Clock = systemCloc
     }),
   }
 
-  return { archetypes, variants, combos, boards, tags, settings }
+  return { archetypes, variants, combos, boards, tags, settings, sidePlans }
 }
 
 export type Repos = ReturnType<typeof createRepos>

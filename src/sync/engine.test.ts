@@ -166,6 +166,7 @@ describe('sync engine', () => {
     await b.repos.archetypes.create(arch('B1'))
     await b.repos.tags.create({ name: 'tag-b' })
     await b.repos.boards.create({ name: { it: 'Board' }, payload: [] })
+    await a.repos.sidePlans.create({ variantId: va.id, matchup: { name: 'Snake-Eye', note: '', turn: 'first' }, outs: [{ cardId: 1, count: 1 }], ins: [{ cardId: 2, count: 1 }] })
     await b.repos.archetypes.update(a1.id, { keyCards: [42] })
 
     await a.engine.syncNow()
@@ -178,6 +179,7 @@ describe('sync engine', () => {
       expect(await d.repos.combos.list()).toHaveLength(1)
       expect(await d.repos.tags.list()).toHaveLength(1)
       expect(await d.repos.boards.list()).toHaveLength(1)
+      expect(await d.repos.sidePlans.list()).toHaveLength(1)
       expect(await d.repos.settings.get('lang')).toBe('it')
       expect((await d.repos.archetypes.get(a1.id))?.keyCards).toEqual([42])
     }

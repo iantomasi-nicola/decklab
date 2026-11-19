@@ -1,5 +1,5 @@
 /**
- * Client del Web Worker dello Stats Lab. Due canali indipendenti (mani e sensibilità), ognuno con il suo worker e un solo calcolo alla volta:
+ * Client del Web Worker dello Stats Lab. Canali indipendenti (mani pre-side, mani post-side, sensibilità), ognuno con il suo worker e un solo calcolo alla volta:
  * se ne parte uno nuovo mentre l'altro gira, il worker viene terminato e ricreato (l'enumerazione è sincrona e non si può interrompere
  * altrimenti). Senza Worker (test) gira sul thread corrente.
  */
@@ -15,13 +15,13 @@ export interface AnalysisHandlers {
   onError?: (message: string) => void
 }
 
-export type Channel = 'hands' | 'sens'
+export type Channel = 'hands' | 'post' | 'sens'
 
 interface Slot {
   worker: Worker | null
   active: { id: number; handlers: AnalysisHandlers } | null
 }
-const slots: Record<Channel, Slot> = { hands: { worker: null, active: null }, sens: { worker: null, active: null } }
+const slots: Record<Channel, Slot> = { hands: { worker: null, active: null }, post: { worker: null, active: null }, sens: { worker: null, active: null } }
 let seq = 0
 
 function spawn(slot: Slot): Worker {

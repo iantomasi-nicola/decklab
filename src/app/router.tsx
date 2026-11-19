@@ -24,6 +24,7 @@ const routeTree = root.addChildren([
   page('/combo/$comboId/replay', () => import('@/features/replay/ReplayPage'), 'ReplayPage'),
   page('/impara', () => import('./pages/LearnPage'), 'LearnPage'),
   page('/statistiche', () => import('./pages/StatsPage'), 'StatsPage'),
+  page('/side', () => import('./pages/SidePage'), 'SidePage'),
   page('/importa', () => import('./pages/ImportPage'), 'ImportPage'),
   page('/impostazioni', () => import('./pages/SettingsPage'), 'SettingsPage'),
 ])

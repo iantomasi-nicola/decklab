@@ -383,7 +383,8 @@ describe('etichette: suggerimenti e combo', () => {
 
 describe('compatibilità C2: due C2 qualsiasi non sono giocabili', () => {
   it('coppia non coperta = da confermare (né giocabile né brick), con fascia min–max', () => {
-    const r = computeHand(input([card(1, 3, ['C2']), card(2, 3, ['C2'])]), 5)
+    // le coppie con sé stesse sono brick per carta, così resta da confermare solo la coppia A+B
+    const r = computeHand(input([card(1, 3, ['C2'], { brickWith: [1] }), card(2, 3, ['C2'], { brickWith: [2] })]), 5)
     const both = (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5)
     expect(r.playable).toBe(0)
     close(r.unknown, both)
@@ -397,7 +398,7 @@ describe('compatibilità C2: due C2 qualsiasi non sono giocabili', () => {
   })
   it('elenco delle coppie da confermare, ordinato per probabilità, con p corretta', () => {
     const r = computeHand(input([card(1, 3, ['C2']), card(2, 1, ['C2']), card(3, 2, ['C2'])]), 5, { detail: true })
-    expect(r.unknownPairs.map((p) => p.ids.join(','))).toEqual(['1,3', '1,1', '1,2', '3,3', '2,3'].sort((a, b) => 0 * a.length + 0 * b.length || 0).length ? r.unknownPairs.map((p) => p.ids.join(',')) : [])
+    expect(r.unknownPairs.map((p) => p.ids.join(',')).sort()).toEqual(['1,1', '1,2', '1,3', '2,3', '3,3'])
     const p13 = r.unknownPairs.find((p) => p.ids.join() === '1,3')!.p
     close(p13, (C(40, 5) - C(37, 5) - C(38, 5) + C(35, 5)) / C(40, 5))
     const p11 = r.unknownPairs.find((p) => p.ids.join() === '1,1')!.p
@@ -405,7 +406,7 @@ describe('compatibilità C2: due C2 qualsiasi non sono giocabili', () => {
     for (let i = 1; i < r.unknownPairs.length; i++) expect(r.unknownPairs[i - 1]!.p).toBeGreaterThanOrEqual(r.unknownPairs[i]!.p)
   })
   it('fonte 1: l\'etichetta manuale decide la coppia (PLAYABLE o BRICK) e toglie l\'incertezza', () => {
-    const cards = [card(1, 3, ['C2']), card(2, 3, ['C2'])]
+    const cards = [card(1, 3, ['C2'], { brickWith: [1] }), card(2, 3, ['C2'], { brickWith: [2] })]
     const play = computeHand(input(cards, { '1,2': 'PLAYABLE' }), 5)
     expect(play.unknown).toBe(0)
     close(play.playable, (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5))
@@ -413,24 +414,24 @@ describe('compatibilità C2: due C2 qualsiasi non sono giocabili', () => {
     expect(brick.playable + brick.unknown).toBe(0)
   })
   it('fonte 2: combo/brick per carta; il brick per carta vince sul gruppo e sulla combo salvata', () => {
-    const grp = [card(1, 3, ['C2-A'], { brickWith: [2] }), card(2, 3, ['C2-A'])]
+    const grp = [card(1, 1, ['C2-A'], { brickWith: [2] }), card(2, 1, ['C2-A'])]
     const r = computeHand(input(grp), 5)
     expect(r.playable + r.unknown).toBe(0)
-    const withCombo = computeHand(input([card(1, 3, ['C2'], { brickWith: [2] }), card(2, 3, ['C2'])], {}, 40, [[1, 2]]), 5)
+    const withCombo = computeHand(input([card(1, 1, ['C2'], { brickWith: [2] }), card(2, 1, ['C2'])], {}, 40, [[1, 2]]), 5)
     expect(withCombo.playable + withCombo.unknown).toBe(0)
-    expect(computeHand(input([card(1, 3, ['C2'], { comboWith: [2] }), card(2, 3, ['C2'])]), 5).unknown).toBe(0)
+    expect(computeHand(input([card(1, 1, ['C2'], { comboWith: [2] }), card(2, 1, ['C2'])]), 5).unknown).toBe(0)
   })
   it('fonte 3: una combo salvata rende compatibile quell\'insieme', () => {
-    const r = computeHand(input([card(1, 3, ['C2']), card(2, 3, ['C2'])], {}, 40, [[1, 2]]), 5)
+    const r = computeHand(input([card(1, 3, ['C2'], { brickWith: [1] }), card(2, 3, ['C2'], { brickWith: [2] })], {}, 40, [[1, 2]]), 5)
     expect(r.unknown).toBe(0)
     close(r.playable, (C(40, 5) - 2 * C(37, 5) + C(34, 5)) / C(40, 5))
   })
   it('fonte 4: gruppi C2-A/C2-B; il tag di gruppo implica il ruolo engine', () => {
     const cards = [card(1, 2, ['C2-A']), card(2, 2, ['C2-A']), card(3, 2, ['C2-B'])]
     const r = computeHand(input(cards), 5, { detail: true })
-    // 1+2 stesso gruppo: giocabile; 1+3 e 2+3 gruppi diversi: da confermare
-    expect(buildRules(input(cards), 5).map((x) => x.join()).sort()).toEqual(['1,2'])
-    expect(r.unknownPairs.map((p) => p.ids.join()).sort()).toEqual(['1,3', '2,3', '3,3'].sort())
+    // stesso gruppo (anche una carta con sé stessa) = compatibili; gruppi diversi senza altra fonte = da confermare
+    expect(buildRules(input(cards), 5).map((x) => x.join()).sort()).toEqual(['1,1', '1,2', '2,2', '3,3'])
+    expect(r.unknownPairs.map((p) => p.ids.join()).sort()).toEqual(['1,3', '2,3'])
     expect(r.playable).toBeGreaterThan(0)
     expect(r.unknown).toBeGreaterThan(0)
   })

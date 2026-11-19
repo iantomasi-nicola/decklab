@@ -4,7 +4,7 @@ import { repos } from '@/data/repo'
 import { comboToRule, sortByImpact, type HandInput, type HandResult, type SensitivityItem, type StatsCard } from '@/domain/stats'
 import { useCards } from '@/features/decks/cardData'
 import { useObservable } from '@/features/decks/useObservable'
-import { runAnalysis } from './statsClient'
+import { runAnalysis, type Channel } from './statsClient'
 import { useSavedStats, type SavedStats } from './statsStore'
 
 export interface DeckRow {
@@ -43,7 +43,7 @@ export interface Analysis {
 }
 
 /** Mani 5 e 6 con tutti i dettagli, nel worker (con debounce), a ogni cambio dell'input. */
-export function useAnalysis(input: HandInput | null): Analysis {
+export function useAnalysis(input: HandInput | null, channel: Channel = 'hands'): Analysis {
   const [state, setState] = useState<Analysis>({ hands: null, progress: 0, running: false, error: null })
   const key = useMemo(() => (input ? JSON.stringify(input) : ''), [input])
   const first = useRef(true)
@@ -65,7 +65,7 @@ export function useAnalysis(input: HandInput | null): Analysis {
           onDone: () => setState((s) => ({ ...s, running: false, progress: 100 })),
           onError: (error) => setState((s) => ({ ...s, running: false, error })),
         },
-        'hands',
+        channel,
       )
     }, delay)
     return () => {
