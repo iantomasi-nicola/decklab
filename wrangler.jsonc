@@ -1,0 +1,10 @@
+{
+  // Pubblicazione dell'app (file statici di dist/) con Cloudflare Workers Builds.
+  // Il Worker delle immagini è separato (workers/images).
+  "name": "decklab",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
