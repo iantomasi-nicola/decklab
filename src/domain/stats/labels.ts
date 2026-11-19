@@ -1,14 +1,14 @@
-import { collectRules, labelKey, mergeCards } from './hand'
+import { collectRules, effectiveLabelFrom, mergeCards } from './hand'
 import type { HandInput, Label } from './types'
 
-/** Etichetta "automatica" di un insieme (senza override manuali): da ruoli, partner e combo salvate. */
+/** Etichetta "automatica" di un insieme (senza override manuali): da ruoli, partner, combo salvate e sottoinsiemi. */
 export function derivedLabel(input: HandInput, ids: readonly number[], handSize = 6): Label {
-  return collectRules({ ...input, labels: {} }, handSize, false).has(labelKey(ids)) ? 'PLAYABLE' : 'BRICK'
+  return effectiveLabelFrom(collectRules({ ...input, labels: {} }, handSize, false), {}, ids)
 }
 
-/** Etichetta effettiva: l'override manuale vince sempre. */
+/** Etichetta effettiva: l'override manuale sull'insieme esatto vince sempre. */
 export function effectiveLabel(input: HandInput, ids: readonly number[], handSize = 6): Label {
-  return input.labels[labelKey(ids)] ?? derivedLabel(input, ids, handSize)
+  return effectiveLabelFrom(collectRules({ ...input, labels: {} }, handSize, false), input.labels, ids)
 }
 
 export interface LabelTargets {
@@ -18,32 +18,30 @@ export interface LabelTargets {
 }
 
 /**
- * Coppie e tris da rivedere: le coppie tra carte C2 (con copie sufficienti) e, per ogni coppia BRICK, ciascuna carta C3 che potrebbe completarla.
- * Sono *suggerimenti*: tutto il resto della mano resta riempimento non-engine.
+ * Coppie e tris da rivedere: tutte le coppie tra carte C2/C3 e tutti i tris di carte C2/C3 con almeno una C3 (le carte S1 sono già giocabili da sole),
+ * limitati alle copie realmente presenti. Il valore automatico viene dai ruoli; l'utente corregge solo le eccezioni.
  */
 export function labelTargets(input: HandInput, handSize = 6): LabelTargets {
-  const cards = mergeCards(input.cards)
-  const c2 = cards.filter((c) => c.tags.includes('C2'))
-  const c3 = cards.filter((c) => c.tags.includes('C3'))
-  const pairs: number[][] = []
-  for (let i = 0; i < c2.length; i++) for (let j = i; j < c2.length; j++) if (i !== j || c2[i]!.count >= 2) pairs.push([c2[i]!.id, c2[j]!.id])
-  const count = new Map(cards.map((c) => [c.id, c.count]))
-  const seen = new Set<string>()
-  const trios: number[][] = []
-  for (const p of pairs) {
-    if (effectiveLabel(input, p, handSize) !== 'BRICK') continue
-    for (const c of c3) {
-      const trio = [...p, c.id].sort((a, b) => a - b)
-      const need = new Map<number, number>()
-      for (const id of trio) need.set(id, (need.get(id) ?? 0) + 1)
-      if ([...need].some(([id, n]) => (count.get(id) ?? 0) < n)) continue
-      const key = trio.join(',')
-      if (seen.has(key)) continue
-      seen.add(key)
-      trios.push(trio)
+  const cards = mergeCards(input.cards).filter((c) => !c.tags.includes('S1') && (c.tags.includes('C2') || c.tags.includes('C3')))
+  const multisets = (size: number): number[][] => {
+    const out: number[][] = []
+    const rec = (start: number, chosen: number[]) => {
+      if (chosen.length === size) {
+        out.push(chosen.map((i) => cards[i]!.id))
+        return
+      }
+      for (let i = start; i < cards.length; i++) {
+        if (chosen.filter((x) => x === i).length >= cards[i]!.count) continue
+        rec(i, [...chosen, i])
+      }
     }
+    rec(0, [])
+    return out
   }
-  return { pairs, trios }
+  const withC3 = (ids: number[]) => ids.some((id) => cards.find((c) => c.id === id)?.tags.includes('C3'))
+  const pairs = multisets(2).filter((p) => handSize >= 2 && p.every((id) => cards.find((c) => c.id === id)?.tags.includes('C2')))
+  const trios = handSize >= 3 ? multisets(3).filter(withC3) : []
+  return { pairs: pairs.map((p) => [...p].sort((a, b) => a - b)), trios: trios.map((t) => [...t].sort((a, b) => a - b)) }
 }
 
 /** Una mano "richiesta" da una combo salvata (`setup.hand.required` + mappa uid → passcode) come regola PLAYABLE. */

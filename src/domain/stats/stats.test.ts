@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { analyze, atLeastOne, buildRules, comb, composition, computeHand, hypergeom, labelKey, mergeCards, parseDeckspace, poissonBinomial, roundPlan, sensitivity, serializeDeckspace, tournament } from './index'
+import { analyze, atLeastOne, buildRules, comb, composition, computeHand, effectiveLabel, engineIds, hypergeom, labelKey, mergeCards, parseDeckspace, poissonBinomial, roundPlan, sensitivity, serializeDeckspace, tournament } from './index'
 import type { HandInput, Label, StatsCard } from './index'
 import type { Card } from '../types'
 
@@ -86,8 +86,12 @@ describe('mano iniziale: casi calcolati a mano', () => {
   })
 })
 
-/** Riferimento indipendente: enumera le mani come sottoinsiemi di carte fisiche. */
-function brute(cards: StatsCard[], rules: number[][], total: number, h: number): number {
+/** Riferimento indipendente: enumera le mani come sottoinsiemi di carte fisiche e classifica con la definizione (non con il raggruppamento). */
+function brute(inp: HandInput, h: number): number {
+  const cards = mergeCards(inp.cards)
+  const total = inp.assumedDeckSize && inp.assumedDeckSize > cards.reduce((a, c) => a + c.count, 0) ? inp.assumedDeckSize : cards.reduce((a, c) => a + c.count, 0)
+  const engine = new Set(engineIds(cards, inp.labels, inp.extraRules))
+  const rules = buildRules(inp, h)
   const physical: number[] = []
   for (const c of cards) for (let i = 0; i < c.count; i++) physical.push(c.id)
   while (physical.length < total) physical.push(-1)
@@ -96,9 +100,16 @@ function brute(cards: StatsCard[], rules: number[][], total: number, h: number):
   const pick = (start: number, left: number, chosen: number[]) => {
     if (left === 0) {
       all++
-      const ms = new Map<number, number>()
-      for (const id of chosen) ms.set(id, (ms.get(id) ?? 0) + 1)
-      if (rules.some((r) => { const need = new Map<number, number>(); for (const id of r) need.set(id, (need.get(id) ?? 0) + 1); return [...need].every(([id, n]) => (ms.get(id) ?? 0) >= n) })) good++
+      const e = chosen.filter((id) => engine.has(id))
+      let ok: boolean
+      if (e.length === 0) ok = false
+      else if (e.length <= 3) ok = effectiveLabel(inp, e, h) === 'PLAYABLE'
+      else {
+        const ms = new Map<number, number>()
+        for (const id of e) ms.set(id, (ms.get(id) ?? 0) + 1)
+        ok = rules.some((r) => { const need = new Map<number, number>(); for (const id of r) need.set(id, (need.get(id) ?? 0) + 1); return [...need].every(([id, n]) => (ms.get(id) ?? 0) >= n) })
+      }
+      if (ok) good++
       return
     }
     for (let i = start; i <= physical.length - left; i++) pick(i + 1, left - 1, [...chosen, physical[i]!])
@@ -115,17 +126,18 @@ describe('mano iniziale: confronto con enumerazione bruta', () => {
     card(4, 1, ['C3']),
     card(5, 1, ['NE']),
   ]
-  const labels: Record<string, Label> = { [labelKey([3, 3, 4])]: 'PLAYABLE', [labelKey([3, 4])]: 'BRICK', [labelKey([2, 4, 4])]: 'PLAYABLE' }
+  const labels: Record<string, Label> = { [labelKey([3, 3, 4])]: 'PLAYABLE', [labelKey([3, 4])]: 'BRICK', [labelKey([2, 4, 4])]: 'PLAYABLE', [labelKey([1, 2])]: 'BRICK', [labelKey([2, 2, 3])]: 'BRICK' }
   for (const [h, n] of [[5, 12], [6, 13], [5, 15]] as const) {
     it(`mano ${h}, mazzo ${n}`, () => {
       const inp = input(cards, labels, n)
       const rules = buildRules(inp, h)
-      close(computeHand(inp, h).playable, brute(mergeCards(cards), rules, n, h), 1e-12)
+      void rules
+      close(computeHand(inp, h).playable, brute(inp, h), 1e-12)
     })
   }
   it('con regole extra (mano richiesta di una combo)', () => {
     const inp = input([card(1, 2, ['C2']), card(2, 1, ['C3']), card(3, 3, [])], {}, 12, [[1, 2, 3]])
-    close(computeHand(inp, 5).playable, brute(mergeCards(inp.cards), buildRules(inp, 5), 12, 5))
+    close(computeHand(inp, 5).playable, brute(inp, 5))
     expect(computeHand(inp, 5).playable).toBeGreaterThan(0)
   })
 })
@@ -327,8 +339,10 @@ describe('etichette: suggerimenti e combo', () => {
     expect(t.pairs).toEqual([[1, 1], [1, 2]])
     expect(derivedLabel(inp, [1, 2])).toBe('PLAYABLE')
     expect(derivedLabel(inp, [1, 1])).toBe('BRICK')
-    // unico tris: la coppia BRICK (1,1) + ciascuna carta C3 (2 e 3)
-    expect(t.trios).toEqual([[1, 1, 2], [1, 1, 3]])
+    expect(t.trios).toEqual([[1, 1, 2], [1, 1, 3], [1, 2, 3]])
+    // il tris eredita PLAYABLE dal sottoinsieme giocabile (1,2); l'override sull'insieme esatto vince
+    expect(derivedLabel(inp, [1, 2, 3])).toBe('PLAYABLE')
+    expect(effectiveLabel({ ...inp, labels: { '1,2,3': 'BRICK' } }, [1, 2, 3])).toBe('BRICK')
     expect(effectiveLabel({ ...inp, labels: { '1,2': 'BRICK' } }, [1, 2])).toBe('BRICK')
     expect(effectiveLabel({ ...inp, labels: { '1,1,3': 'PLAYABLE' } }, [1, 1, 3])).toBe('PLAYABLE')
     expect(comboToRule({ setup: { hand: { required: ['a', 'b'] } }, cards: { a: 10, b: 11 } })).toEqual([10, 11])
@@ -347,7 +361,8 @@ describe('etichette: suggerimenti e combo', () => {
     const filePairs = Object.keys(p.project.labelSets.C2PAIR_NE_FILL!)
     const fileTrios = Object.keys(p.project.labelSets.C2_BRICKPAIR_PLUS_C3_NE_FILL!)
     expect(filePairs.filter((k) => !pairKeys.has(k))).toEqual([])
-    const missing = fileTrios.filter((k) => !trioKeys.has(k))
-    console.log('pairs', t.pairs.length, 'file', filePairs.length, '| trios', t.trios.length, 'file', fileTrios.length, 'missing', missing.length)
+    expect(fileTrios.filter((k) => !trioKeys.has(k))).toEqual([])
+    expect(t.pairs).toHaveLength(33)
+    expect(t.trios.length).toBeGreaterThanOrEqual(220)
   })
 })

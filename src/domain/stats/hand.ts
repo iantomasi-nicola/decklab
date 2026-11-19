@@ -105,8 +105,29 @@ export function buildRules(input: HandInput, handSize: number): number[][] {
   return kept.map((k) => k.ids)
 }
 
+/**
+ * Etichetta effettiva di un insieme di 1-3 carte engine (la mano contiene esattamente quelle carte engine, il resto è riempimento):
+ * l'etichetta esplicita sull'insieme esatto vince; altrimenti è PLAYABLE se lo dice una regola derivata (S1, partner, combo salvate)
+ * o se lo è un suo sottoinsieme proprio; altrimenti BRICK.
+ */
+export function effectiveLabelFrom(derived: Map<string, number[]>, labels: Record<string, Label>, ids: readonly number[]): Label {
+  const sorted = [...ids].sort((a, b) => a - b)
+  const key = sorted.join(',')
+  const explicit = labels[key]
+  if (explicit) return explicit
+  if (derived.has(key)) return 'PLAYABLE'
+  if (sorted.length > 1) {
+    for (let i = 0; i < sorted.length; i++) {
+      if (i > 0 && sorted[i] === sorted[i - 1]) continue
+      const sub = sorted.filter((_, j) => j !== i)
+      if (effectiveLabelFrom(derived, labels, sub) === 'PLAYABLE') return 'PLAYABLE'
+    }
+  }
+  return 'BRICK'
+}
+
 /** Passcode che devono restare distinti (engine): ruoli engine + carte citate da etichette/regole. */
-function engineIds(cards: StatsCard[], labels: Record<string, Label>, extraRules: number[][] | undefined): number[] {
+export function engineIds(cards: StatsCard[], labels: Record<string, Label>, extraRules: number[][] | undefined): number[] {
   const inDeck = new Set(cards.map((c) => c.id))
   const ids = new Set<number>(cards.filter(isEngineTag).map((c) => c.id))
   for (const key of Object.keys(labels)) for (const id of parseLabelKey(key)) if (inDeck.has(id)) ids.add(id)
@@ -150,6 +171,26 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
     byAnchor[pairs[0]![0]]!.push({ idx: pairs.map((p) => p[0]), need: pairs.map((p) => p[1]) })
   }
 
+  // mani con al più 3 carte engine: etichetta effettiva dell'insieme esatto (codice numerico → giocabile)
+  const base = m + 1
+  const derived = collectRules({ ...input, labels: {} }, handSize, false)
+  const small = new Map<number, boolean>()
+  const addSmall = (is: number[]) => {
+    const ms = new Map<number, number>()
+    for (const i of is) ms.set(i, (ms.get(i) ?? 0) + 1)
+    for (const [i, n] of ms) if (n > counts[i]!) return
+    if (is.length > handSize) return
+    const code = is.reduce((a, i) => a * base + i + 1, 0)
+    small.set(code, effectiveLabelFrom(derived, input.labels, is.map((i) => ids[i]!)) === 'PLAYABLE')
+  }
+  for (let a = 0; a < m; a++) {
+    addSmall([a])
+    for (let b = a; b < m; b++) {
+      addSmall([a, b])
+      for (let c = b; c < m; c++) addSmall([a, b, c])
+    }
+  }
+
   const k = new Int8Array(m)
   const hist = new Array<number>(handSize + 1).fill(0)
   let playableW = 0
@@ -157,7 +198,13 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const tops: { w: number; k: number[]; fill: number }[] = []
   let topFloor = 0
 
-  const isPlayable = (): boolean => {
+  const isPlayable = (used: number): boolean => {
+    if (used === 0) return false
+    if (used <= 3) {
+      let code = 0
+      for (let i = 0; i < m; i++) for (let n = k[i]!; n > 0; n--) code = code * base + i + 1
+      return small.get(code) === true
+    }
     for (let i = 0; i < m; i++) {
       if (k[i] === 0) continue
       const list = byAnchor[i]!
@@ -176,7 +223,8 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
       if (remaining > F) return
       const wt = w * comb(F, remaining)
       if (wt === 0) return
-      if (isPlayable()) playableW += wt
+
+      if (isPlayable(used)) playableW += wt
       else {
         brickW += wt
         if (opts.detail && wt > topFloor) {

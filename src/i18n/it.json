@@ -399,7 +399,15 @@
       "fromStart": "Dall'inizio",
       "empty": "Nessun passo. Trascina una carta su una zona del campo: ogni rilascio crea un passo.",
       "insertHint": "I nuovi passi vengono inseriti dopo il passo {{n}}.",
-      "toEnd": "Vai in fondo"
+      "toEnd": "Vai in fondo",
+      "search": "Cerca nei passi o vai al passo n.",
+      "noMatch": "Nessuno",
+      "prevMatch": "Risultato precedente",
+      "nextMatch": "Risultato successivo",
+      "collapseAll": "Comprimi blocchi",
+      "expandAll": "Espandi blocchi",
+      "chainBlock": "Catena ({{count}} anelli)",
+      "groupBlock": "Ordine libero ({{count}} passi)"
     },
     "step": {
       "menu": "Azioni del passo {{n}}",

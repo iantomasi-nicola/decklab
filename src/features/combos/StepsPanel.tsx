@@ -1,8 +1,10 @@
-import { useMemo } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import ChevronDown from 'lucide-react/icons/chevron-down'
+import ChevronRight from 'lucide-react/icons/chevron-right'
 import ChevronUp from 'lucide-react/icons/chevron-up'
+import Search from 'lucide-react/icons/search'
 import CircleAlert from 'lucide-react/icons/circle-alert'
 import Ellipsis from 'lucide-react/icons/ellipsis'
 import GitFork from 'lucide-react/icons/git-fork'
@@ -35,6 +37,109 @@ export function describeStep(s: Step, nameOf: (uid: string) => string, t: TFunct
   return s.card ? `${base}${method}: ${nameOf(s.card)}` : base
 }
 
+/** Blocchi comprimibili: catene (stesso `chain.id`) e gruppi "ordine libero" (stesso `group`), sempre contigui. */
+type Segment =
+  | { kind: 'step'; i: number }
+  | { kind: 'chain' | 'group'; key: string; indices: number[] }
+
+function segmentsOf(steps: Step[]): Segment[] {
+  const out: Segment[] = []
+  let i = 0
+  while (i < steps.length) {
+    const s = steps[i]!
+    const key = s.chain ? `chain:${s.chain.id}` : s.group ? `group:${s.group}` : null
+    if (!key) {
+      out.push({ kind: 'step', i: i++ })
+      continue
+    }
+    const indices = [i]
+    while (steps[i + 1] && (steps[i + 1]!.chain ? `chain:${steps[i + 1]!.chain!.id}` : steps[i + 1]!.group ? `group:${steps[i + 1]!.group}` : null) === key) indices.push(++i)
+    i++
+    out.push(indices.length > 1 ? { kind: key.startsWith('chain') ? 'chain' : 'group', key, indices } : { kind: 'step', i: indices[0]! })
+  }
+  return out
+}
+
+const noteOf = (s: Step, lang: 'it' | 'en') => s.note?.[lang] ?? s.note?.it ?? s.note?.en ?? ''
+
+interface RowProps {
+  s: Step
+  i: number
+  total: number
+  selected: boolean
+  why: string[] | undefined
+  match: boolean
+  inBlock: boolean
+  label: string
+  note: string
+  onDerive: (index: number, inclusive: boolean) => void
+}
+
+/** Riga di un passo. Memorizzata: con 100 passi cambia solo ciò che cambia davvero. `content-visibility` salta il rendering fuori schermo. */
+const StepRow = memo(function StepRow({ s, i, total, selected, why, match, inBlock, label, note, onDerive }: RowProps) {
+  const { t } = useTranslation()
+  const store = useEditor.getState()
+  const items: MenuItem[] = [
+    { id: 'here', label: t('combos.step.insertAfter'), onSelect: () => store.setCursor(i + 1) },
+    {
+      id: 'replace',
+      label: t('combos.step.replace'),
+      icon: <Replace size={18} />,
+      onSelect: () => store.edit((d) => ({ doc: { ...d, steps: d.steps.filter((x) => x.id !== s.id) }, cursor: i })),
+    },
+    { id: 'up', label: t('combos.step.up'), icon: <ChevronUp size={18} />, disabled: i === 0, onSelect: () => store.moveStep(s.id, -1) },
+    { id: 'down', label: t('combos.step.down'), icon: <ChevronDown size={18} />, disabled: i === total - 1, onSelect: () => store.moveStep(s.id, 1) },
+    {
+      id: 'group',
+      label: s.group ? t('combos.step.ungroup') : t('combos.step.group'),
+      icon: s.group ? <Link2Off size={18} /> : <Link2 size={18} />,
+      disabled: !s.group && i === 0,
+      onSelect: () => store.toggleGroup(s.id),
+    },
+    { id: 'derive-incl', label: t('combos.step.deriveIncl'), icon: <GitFork size={18} />, onSelect: () => onDerive(i, true) },
+    { id: 'derive-excl', label: t('combos.step.deriveExcl'), icon: <GitFork size={18} />, onSelect: () => onDerive(i, false) },
+    { id: 'delete', label: t('combos.step.delete'), icon: <Trash2 size={18} />, danger: true, onSelect: () => store.removeStep(s.id) },
+  ]
+  return (
+    <li
+      data-step-id={s.id}
+      data-step-index={i}
+      data-incoherent={why ? '' : undefined}
+      data-match={match || undefined}
+      style={selected ? undefined : { contentVisibility: 'auto', containIntrinsicSize: 'auto 56px' }}
+      className={cn(
+        'rounded-md border bg-surface-1',
+        selected ? 'border-accent-text' : 'border-line',
+        why && 'border-warn/70',
+        match && !selected && 'ring-2 ring-accent-text/50',
+        inBlock && 'rounded-l-none',
+      )}
+    >
+      <div className="flex items-center gap-1 pr-1">
+        <button
+          type="button"
+          onClick={() => store.setCursor(i + 1)}
+          aria-current={selected ? 'step' : undefined}
+          className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left"
+        >
+          <span className="grid h-7 min-w-8 shrink-0 place-items-center rounded-full bg-surface-3 px-1.5 text-sm font-semibold tabular-nums text-fg">{i + 1}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[15px] font-medium text-fg">{label}</span>
+            {note ? <span className="block truncate text-sm text-muted">{note}</span> : null}
+          </span>
+          {why ? (
+            <span className="shrink-0 text-warn" title={t('combos.incoherent.step')}>
+              <CircleAlert size={18} aria-label={t('combos.incoherent.step')} />
+            </span>
+          ) : null}
+        </button>
+        <Menu trigger={<IconButton label={t('combos.step.menu', { n: i + 1 })} icon={<Ellipsis size={20} />} data-testid={`step-menu-${i}`} />} items={items} />
+      </div>
+      {selected ? <StepEditor step={s} /> : null}
+    </li>
+  )
+})
+
 export function StepsPanel({
   doc,
   cursor,
@@ -47,17 +152,69 @@ export function StepsPanel({
   onDerive: (index: number, inclusive: boolean) => void
 }) {
   const { t, i18n } = useTranslation()
+  const lang = i18n.language === 'it' ? 'it' : 'en'
   const store = useEditor.getState()
   const bad = useMemo(() => incoherentSteps(doc), [doc])
   const sel = cursor - 1
-  const nameOfCode = (uid: string) => nameOf(uid)
-  const groupIndex = (i: number) => {
-    const g = doc.steps[i]?.group
-    if (!g) return null
-    const prev = doc.steps[i - 1]?.group === g
-    const next = doc.steps[i + 1]?.group === g
-    return { first: !prev, last: !next }
+  const segments = useMemo(() => segmentsOf(doc.steps), [doc.steps])
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
+  const [query, setQuery] = useState('')
+  const [matchPos, setMatchPos] = useState(0)
+  const listRef = useRef<HTMLOListElement>(null)
+
+  // testo di ogni passo (per la ricerca e le righe): calcolato una volta per documento
+  const labels = useMemo(() => doc.steps.map((s) => describeStep(s, nameOf, t)), [doc.steps, nameOf, t])
+  const notes = useMemo(() => doc.steps.map((s) => noteOf(s, lang)), [doc.steps, lang])
+
+  // ricerca: numero = salto a quel passo; testo = passi che contengono le parole (azione, carta, nota)
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return [] as number[]
+    if (/^\d+$/.test(q)) {
+      const n = Number(q)
+      return n >= 1 && n <= doc.steps.length ? [n - 1] : []
+    }
+    return doc.steps.flatMap((s, i) => ((labels[i] + ' ' + notes[i] + ' ' + (s.note?.it ?? '') + ' ' + (s.note?.en ?? '')).toLowerCase().includes(q) ? [i] : []))
+  }, [query, doc.steps, labels, notes])
+  const matchSet = useMemo(() => new Set(matches), [matches])
+
+  const jump = (i: number) => {
+    store.setCursor(i + 1)
+    // apri i blocchi che lo contengono
+    const seg = segments.find((sg) => sg.kind !== 'step' && sg.indices.includes(i))
+    if (seg && seg.kind !== 'step') setCollapsed((c) => (c.has(seg.key) ? new Set([...c].filter((k) => k !== seg.key)) : c))
   }
+  const step = (d: 1 | -1) => {
+    if (!matches.length) return
+    const n = (matchPos + d + matches.length) % matches.length
+    setMatchPos(n)
+    jump(matches[n]!)
+  }
+
+  // scorrimento automatico al passo corrente
+  useEffect(() => {
+    if (sel < 0) return
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-step-index="${sel}"]`)
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [sel, collapsed, doc.steps.length])
+
+  const toggle = (key: string) => setCollapsed((c) => (c.has(key) ? new Set([...c].filter((k) => k !== key)) : new Set([...c, key])))
+
+  const row = (i: number, inBlock: boolean) => (
+    <StepRow
+      key={doc.steps[i]!.id}
+      s={doc.steps[i]!}
+      i={i}
+      total={doc.steps.length}
+      selected={i === sel}
+      why={bad.get(i)}
+      match={matchSet.has(i) && !!query.trim()}
+      inBlock={inBlock}
+      label={labels[i]!}
+      note={notes[i]!}
+      onDerive={onDerive}
+    />
+  )
 
   return (
     <div className="flex flex-col gap-3">
@@ -68,81 +225,80 @@ export function StepsPanel({
       ) : null}
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">{t('combos.steps.title', { count: doc.steps.length })}</h2>
-        <Button variant="ghost" onClick={() => store.setCursor(0)} disabled={cursor === 0}>
-          {t('combos.steps.fromStart')}
-        </Button>
-      </div>
-      {doc.steps.length === 0 ? <p className="rounded-md border border-dashed border-line-strong p-4 text-[15px] text-muted">{t('combos.steps.empty')}</p> : null}
-      <ol className="flex flex-col gap-1.5" data-steps>
-        {doc.steps.map((s, i) => {
-          const g = groupIndex(i)
-          const selected = i === sel
-          const why = bad.get(i)
-          const items: MenuItem[] = [
-            { id: 'here', label: t('combos.step.insertAfter'), onSelect: () => store.setCursor(i + 1) },
-            {
-              id: 'replace',
-              label: t('combos.step.replace'),
-              icon: <Replace size={18} />,
-              onSelect: () => {
-                store.edit((d) => ({ doc: { ...d, steps: d.steps.filter((x) => x.id !== s.id) }, cursor: i }))
-              },
-            },
-            { id: 'up', label: t('combos.step.up'), icon: <ChevronUp size={18} />, disabled: i === 0, onSelect: () => store.moveStep(s.id, -1) },
-            { id: 'down', label: t('combos.step.down'), icon: <ChevronDown size={18} />, disabled: i === doc.steps.length - 1, onSelect: () => store.moveStep(s.id, 1) },
-            {
-              id: 'group',
-              label: s.group ? t('combos.step.ungroup') : t('combos.step.group'),
-              icon: s.group ? <Link2Off size={18} /> : <Link2 size={18} />,
-              disabled: !s.group && i === 0,
-              onSelect: () => store.toggleGroup(s.id),
-            },
-            { id: 'derive-incl', label: t('combos.step.deriveIncl'), icon: <GitFork size={18} />, onSelect: () => onDerive(i, true) },
-            { id: 'derive-excl', label: t('combos.step.deriveExcl'), icon: <GitFork size={18} />, onSelect: () => onDerive(i, false) },
-            { id: 'delete', label: t('combos.step.delete'), icon: <Trash2 size={18} />, danger: true, onSelect: () => store.removeStep(s.id) },
-          ]
-          return (
-            <li
-              key={s.id}
-              data-step-id={s.id}
-              data-step-index={i}
-              data-incoherent={why ? '' : undefined}
-              className={cn(
-                'rounded-md border bg-surface-1',
-                selected ? 'border-accent-text' : 'border-line',
-                why && 'border-warn/70',
-                g && 'border-l-4 border-l-accent-text',
-                g && !g.first && 'rounded-t-none',
-                g && !g.last && 'rounded-b-none',
-              )}
+        <div className="flex items-center gap-1">
+          {segments.some((sg) => sg.kind !== 'step') ? (
+            <Button
+              variant="ghost"
+              onClick={() => setCollapsed(collapsed.size ? new Set() : new Set(segments.flatMap((sg) => (sg.kind === 'step' ? [] : [sg.key]))))}
+              data-testid="toggle-blocks"
             >
-              <div className="flex items-center gap-1 pr-1">
-                <button
-                  type="button"
-                  onClick={() => store.setCursor(i + 1)}
-                  aria-current={selected ? 'step' : undefined}
-                  className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left"
-                >
-                  <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-3 text-sm font-semibold tabular-nums text-fg">{i + 1}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium text-fg">{describeStep(s, nameOfCode, t)}</span>
-                    {(s.note?.[i18n.language === 'it' ? 'it' : 'en'] ?? s.note?.it ?? s.note?.en) ? (
-                      <span className="block truncate text-sm text-muted">{s.note?.[i18n.language === 'it' ? 'it' : 'en'] ?? s.note?.it ?? s.note?.en}</span>
-                    ) : null}
-                  </span>
-                  {s.group ? <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-xs text-accent-text">{t('combos.step.freeOrder')}</span> : null}
-                  {why ? (
-                    <span className="shrink-0 text-warn" title={t('combos.incoherent.step')}>
-                      <CircleAlert size={18} aria-label={t('combos.incoherent.step')} />
-                    </span>
-                  ) : null}
-                </button>
-                <Menu
-                  trigger={<IconButton label={t('combos.step.menu', { n: i + 1 })} icon={<Ellipsis size={20} />} data-testid={`step-menu-${i}`} />}
-                  items={items}
-                />
-              </div>
-              {selected ? <StepEditor step={s} /> : null}
+              {t(collapsed.size ? 'combos.steps.expandAll' : 'combos.steps.collapseAll')}
+            </Button>
+          ) : null}
+          <Button variant="ghost" onClick={() => store.setCursor(0)} disabled={cursor === 0}>
+            {t('combos.steps.fromStart')}
+          </Button>
+        </div>
+      </div>
+      {doc.steps.length > 8 ? (
+        <div className="flex items-center gap-1">
+          <div className="relative min-w-0 flex-1">
+            <Search aria-hidden size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+            <input
+              type="search"
+              value={query}
+              data-testid="step-search"
+              placeholder={t('combos.steps.search')}
+              aria-label={t('combos.steps.search')}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setMatchPos(0)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  if (matches.length === 1 || matchPos === 0) jump(matches[0] ?? 0)
+                  if (matches.length > 1) step(e.shiftKey ? -1 : 1)
+                }
+              }}
+              className="min-h-11 w-full rounded-md border border-line-strong bg-surface-1 pl-9 pr-3 text-[15px] text-fg placeholder:text-subtle hover:border-accent-text focus-visible:border-accent-text"
+            />
+          </div>
+          {query.trim() ? (
+            <>
+              <span className="shrink-0 px-1 text-sm tabular-nums text-muted" data-testid="step-matches">
+                {matches.length ? `${Math.min(matchPos + 1, matches.length)}/${matches.length}` : t('combos.steps.noMatch')}
+              </span>
+              <IconButton label={t('combos.steps.prevMatch')} icon={<ChevronUp size={18} />} disabled={!matches.length} onClick={() => step(-1)} />
+              <IconButton label={t('combos.steps.nextMatch')} icon={<ChevronDown size={18} />} disabled={!matches.length} onClick={() => step(1)} />
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      {doc.steps.length === 0 ? <p className="rounded-md border border-dashed border-line-strong p-4 text-[15px] text-muted">{t('combos.steps.empty')}</p> : null}
+      <ol className="flex flex-col gap-1.5" data-steps ref={listRef}>
+        {segments.map((sg) => {
+          if (sg.kind === 'step') return row(sg.i, false)
+          const open = !collapsed.has(sg.key) || sg.indices.includes(sel)
+          const first = doc.steps[sg.indices[0]!]!
+          const title =
+            sg.kind === 'chain' ? t('combos.steps.chainBlock', { count: sg.indices.length }) : t('combos.steps.groupBlock', { count: sg.indices.length })
+          return (
+            <li key={sg.key + sg.indices[0]} data-block={sg.kind} className="flex flex-col gap-1.5 rounded-md border-l-4 border-l-accent-text bg-surface-2/40 pl-1.5">
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() => toggle(sg.key)}
+                className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-fg hover:bg-surface-2"
+              >
+                {open ? <ChevronDown size={18} aria-hidden /> : <ChevronRight size={18} aria-hidden />}
+                <span className="min-w-0 flex-1 truncate">{title}</span>
+                <span className="shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-xs tabular-nums text-accent-text">
+                  {sg.indices[0]! + 1}–{sg.indices[sg.indices.length - 1]! + 1}
+                </span>
+                {sg.kind === 'group' ? <span className="sr-only">{first.group}</span> : null}
+              </button>
+              {open ? <ol className="flex flex-col gap-1.5 pb-1.5 pr-1.5">{sg.indices.map((i) => row(i, true))}</ol> : null}
             </li>
           )
         })}

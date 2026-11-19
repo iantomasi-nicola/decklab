@@ -399,7 +399,15 @@
       "fromStart": "From the start",
       "empty": "No steps yet. Drag a card onto a field zone: every drop creates a step.",
       "insertHint": "New steps are inserted after step {{n}}.",
-      "toEnd": "Go to the end"
+      "toEnd": "Go to the end",
+      "search": "Search steps or go to step n",
+      "noMatch": "None",
+      "prevMatch": "Previous match",
+      "nextMatch": "Next match",
+      "collapseAll": "Collapse blocks",
+      "expandAll": "Expand blocks",
+      "chainBlock": "Chain ({{count}} links)",
+      "groupBlock": "Free order ({{count}} steps)"
     },
     "step": {
       "menu": "Actions for step {{n}}",
