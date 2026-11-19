@@ -67,7 +67,7 @@ for (const [w, h] of [[375, 812], [768, 1024], [1024, 768]] as const) {
       await page.screenshot({ path: `${OUT}/combo-resp-${w}-lp.png` })
       await page.keyboard.press('Escape')
       await page.waitForTimeout(350)
-      await page.getByTestId('add-menu').click()
+      await page.getByTestId((await page.getByTestId('add-menu').count()) ? 'add-menu' : 'more-menu').click()
       await page.getByRole('menuitem', { name: /Aggiungi carta o token/ }).click()
       await audit(page, `${w} aggiungi`)
       await page.screenshot({ path: `${OUT}/combo-resp-${w}-add.png` })

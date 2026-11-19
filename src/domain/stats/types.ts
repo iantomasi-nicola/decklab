@@ -1,6 +1,8 @@
 /** Tipi puri dello Stats Lab (modello Deckspace: ARCHITECTURE.md §11.1). Nessuna dipendenza da React/DOM. */
 
 export type Label = 'PLAYABLE' | 'BRICK'
+/** Stato di un insieme di carte: oltre alle etichette, "da confermare" quando nessuna fonte lo copre (né giocabile né brick). */
+export type LabelState = Label | 'UNKNOWN'
 
 /** Ruoli con significato per il calcolo; qualunque altra stringa è un tag libero (solo informativo). */
 export const ROLE = { S1: 'S1', C2: 'C2', C3: 'C3', NS: 'NS', NE: 'NE', GARNET: 'GARNET' } as const
@@ -41,6 +43,12 @@ export const DEFAULT_SETTINGS: StatsSettings = {
   drawPowerMode: 'fast',
 }
 
+/** Scambio di un piano di side: una copia di `out` esce dal Main, una di `in` entra (0 = nessuna carta: sola uscita o sola entrata). */
+export interface Swap {
+  out: number
+  in: number
+}
+
 /** Ingresso del calcolo: mazzo con ruoli + etichette manuali + regole extra (es. dalle combo salvate). */
 export interface HandInput {
   cards: StatsCard[]
@@ -50,6 +58,10 @@ export interface HandInput {
   extraRules?: number[][]
   /** Dimensione del mazzo ipotetico (riempimento con carte vuote); ignorata se ≤ al totale. */
   assumedDeckSize?: number | null
+  /** Mazzo dopo gli scambi di un piano di side (si applicano al Main di `cards`). */
+  deckOverride?: Swap[]
+  /** Profili (ruoli, partner) delle carte che entrano dal Side e non sono nel Main. */
+  pool?: StatsCard[]
 }
 
 export interface HandCardRef {
@@ -69,8 +81,14 @@ export interface HandResult {
   deckSize: number
   /** Carte vuote aggiunte dal mazzo ipotetico. */
   blanks: number
+  /** Mani certamente giocabili (limite inferiore della fascia). */
   playable: number
+  /** Mani certamente brick. */
   brick: number
+  /** Mani "da confermare": giocabili solo se una coppia non coperta da nessuna fonte è compatibile. playable + unknown + brick = 1. */
+  unknown: number
+  /** Coppie C2 da confermare, ordinate per probabilità di comparire in mano. */
+  unknownPairs: { ids: number[]; p: number }[]
   /** Probabilità di avere j carte engine in mano, j = 0..handSize. */
   engineHist: number[]
   /** Mani brick più probabili (raggruppate per tipo di carta). */

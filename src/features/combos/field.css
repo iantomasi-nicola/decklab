@@ -273,8 +273,8 @@
       grid-template-rows: calc(var(--th) * 0.4) calc(var(--th) * 0.5) calc(var(--th) * 0.75) calc(var(--th) * 0.75) var(--th) var(--th) var(--th) calc(var(--th) * 0.5) var(--th);
     }
     .cl-mine .cl-grid {
-      --u: 4.9;
-      grid-template-rows: calc(var(--th) * 0.4) 0 0 0 var(--th) var(--th) var(--th) calc(var(--th) * 0.5) var(--th);
+      --u: 5;
+      grid-template-rows: calc(var(--th) * 0.4) 0 0 0 var(--th) var(--th) var(--th) calc(var(--th) * 0.6) var(--th);
     }
     .cl-mine .cl-opp-main {
       display: none;

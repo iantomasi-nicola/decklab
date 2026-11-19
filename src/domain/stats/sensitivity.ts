@@ -1,4 +1,4 @@
-import { computeHand, engineIds, mergeCards } from './hand'
+import { applyOverride, computeHand, engineIds, mergeCards } from './hand'
 import type { HandInput, SensitivityItem } from './types'
 
 export const MAX_COPIES = 3
@@ -16,7 +16,8 @@ function fillIds(input: HandInput): Set<number> {
 }
 
 /** Calcoli distinti che `sensitivity` eseguirà (per la barra di avanzamento): due per ogni carta engine più i due del riempimento. */
-export function sensitivitySteps(input: HandInput): number {
+export function sensitivitySteps(rawInput: HandInput): number {
+  const input = applyOverride(rawInput)
   const cards = mergeCards(input.cards)
   const fill = fillIds(input)
   return cards.filter((c) => !fill.has(c.id)).length * 2 + 3
@@ -28,7 +29,8 @@ export function sensitivitySteps(input: HandInput): number {
  * Le carte di riempimento (non-engine) si calcolano una volta sola per tutte; la voce `id 0` è "una carta non-engine qualunque".
  * `onItem` riceve ogni voce appena pronta (risultati parziali); `shouldStop` permette di interrompere.
  */
-export function sensitivity(input: HandInput, handSize: number, onStep?: () => void, onItem?: (item: SensitivityItem) => void): SensitivityItem[] {
+export function sensitivity(rawInput: HandInput, handSize: number, onStep?: () => void, onItem?: (item: SensitivityItem) => void): SensitivityItem[] {
+  const input = applyOverride(rawInput)
   const cards = mergeCards(input.cards)
   const fill = fillIds(input)
   const base = computeHand(input, handSize).playable

@@ -7,7 +7,7 @@
  * (ipergeometrica multivariata). Una mano è PLAYABLE se contiene almeno un insieme PLAYABLE (vedi `buildRules`).
  */
 import { comb, atLeastOne } from './math'
-import { ENGINE_ROLES, type HandExample, type HandInput, type HandResult, type Label, type StatsCard } from './types'
+import { ENGINE_ROLES, type HandExample, type HandInput, type HandResult, type Label, type LabelState, type StatsCard } from './types'
 
 export const labelKey = (ids: readonly number[]): string => [...ids].sort((a, b) => a - b).join(',')
 export const parseLabelKey = (key: string): number[] => key.split(',').map(Number).filter((n) => Number.isFinite(n))
@@ -36,7 +36,33 @@ export function deckSize(input: Pick<HandInput, 'cards' | 'assumedDeckSize'>): {
   return { total, size, blanks: size - total }
 }
 
-const isEngineTag = (c: StatsCard) => c.tags.some((t) => ENGINE_ROLES.includes(t))
+/** Tag di gruppo di compatibilità (C2-A, C2-B, …): carte dello stesso gruppo fanno combo tra loro. Implicano il ruolo C2. */
+export const isGroupTag = (t: string): boolean => /^C2-.+/.test(t)
+export const groupsOf = (c: StatsCard): string[] => c.tags.filter(isGroupTag)
+export const isC2 = (c: StatsCard): boolean => c.tags.includes('C2') || c.tags.some(isGroupTag)
+const isEngineTag = (c: StatsCard) => c.tags.some((t) => ENGINE_ROLES.includes(t) || isGroupTag(t))
+
+/** Applica `deckOverride` (scambi di un piano di side): il Main diventa il mazzo dopo i cambi. Senza scambi restituisce l'input stesso. */
+export function applyOverride(input: HandInput): HandInput {
+  const swaps = input.deckOverride
+  if (!swaps?.length) return input
+  const map = new Map(mergeCards(input.cards).map((c) => [c.id, c]))
+  for (const sw of swaps) {
+    if (sw.out) {
+      const c = map.get(sw.out)
+      if (c && c.count > 0) c.count -= 1
+    }
+    if (sw.in) {
+      const have = map.get(sw.in)
+      if (have) have.count += 1
+      else {
+        const prof = input.pool?.find((c) => c.id === sw.in)
+        map.set(sw.in, { id: sw.in, count: 1, tags: [...(prof?.tags ?? [])], comboWith: [...(prof?.comboWith ?? [])], brickWith: [...(prof?.brickWith ?? [])] })
+      }
+    }
+  }
+  return { ...input, cards: [...map.values()].filter((c) => c.count > 0), deckOverride: undefined }
+}
 
 /** Multiinsieme di passcode → conteggi per id. */
 function multiset(ids: readonly number[]): Map<number, number> {
@@ -51,12 +77,12 @@ const isSubMultiset = (small: Map<number, number>, big: Map<number, number>) => 
 }
 
 /**
- * Regole PLAYABLE minimali (insiemi di passcode). Derivate dai ruoli:
- *  - singola: carta S1;
- *  - coppia: i partner sono in `comboWith` (di una o dell'altra) e non in `brickWith`;
- *  - extraRules: mani "richieste" delle combo salvate;
- * poi le etichette esplicite vincono: PLAYABLE aggiunge, BRICK toglie quell'esatto insieme.
- * I tris non hanno derivazione: restano BRICK finché l'utente (o la combo) non li dichiara PLAYABLE.
+ * Regole PLAYABLE (insiemi di passcode), con le fonti in ordine di priorità:
+ *  1. etichette manuali (applicate per ultime: PLAYABLE aggiunge, BRICK toglie quell'esatto insieme);
+ *  2. per carta (Deckspace): coppia compatibile se i partner sono in `comboWith` (di una o dell'altra) e non in `brickWith`;
+ *  3. combo salvate: le carte necessarie (`extraRules`) rendono compatibile quell'insieme;
+ *  4. gruppi di compatibilità: carte con lo stesso tag C2-X fanno combo tra loro (salvo `brickWith`);
+ *  la carta S1 è giocabile da sola. Due C2 qualsiasi NON sono compatibili per default: vedi `collectUnknownPairs`.
  */
 export function collectRules(input: HandInput, handSize: number, applyLabels = true): Map<string, number[]> {
   const cards = mergeCards(input.cards)
@@ -79,10 +105,18 @@ export function collectRules(input: HandInput, handSize: number, applyLabels = t
       const b = engine[j]!
       const combo = (a.comboWith ?? []).includes(b.id) || (b.comboWith ?? []).includes(a.id)
       const brick = (a.brickWith ?? []).includes(b.id) || (b.brickWith ?? []).includes(a.id)
-      if (combo && !brick) add(i === j ? [a.id, a.id] : [a.id, b.id])
+      // priorità delle fonti: combo/brick per carta (Deckspace) > gruppo di compatibilità; le combo salvate e le etichette si aggiungono dopo
+      const group = groupsOf(a).some((g) => groupsOf(b).includes(g))
+      if ((combo || group) && !brick) add(i === j ? [a.id, a.id] : [a.id, b.id])
     }
   }
-  for (const r of input.extraRules ?? []) add(r)
+  const brickPair = (x: number, y: number) => {
+    const a = cards.find((c) => c.id === x)
+    const b = cards.find((c) => c.id === y)
+    return (a?.brickWith ?? []).includes(y) || (b?.brickWith ?? []).includes(x)
+  }
+  // una combo salvata (fonte 3) non scavalca il brick per carta (fonte 2) su una coppia
+  for (const r of input.extraRules ?? []) if (!(r.length === 2 && brickPair(r[0]!, r[1]!))) add(r)
   if (applyLabels) {
     for (const [key, label] of Object.entries(input.labels)) {
       const ids = parseLabelKey(key)
@@ -92,6 +126,30 @@ export function collectRules(input: HandInput, handSize: number, applyLabels = t
     }
   }
   return rules
+}
+
+/**
+ * Coppie C2 che nessuna fonte copre: né giocabili (partner, gruppo, combo salvata) né brick (`brickWith`).
+ * Con `applyLabels` si escludono anche quelle già decise da un'etichetta manuale.
+ */
+export function collectUnknownPairs(input: HandInput, handSize: number, applyLabels = true): Map<string, number[]> {
+  const cards = mergeCards(input.cards).filter(isC2)
+  const derived = collectRules({ ...input, labels: {} }, handSize, false)
+  const out = new Map<string, number[]>()
+  if (handSize < 2) return out
+  for (let i = 0; i < cards.length; i++) {
+    for (let j = i; j < cards.length; j++) {
+      const a = cards[i]!
+      const b = cards[j]!
+      if (i === j && a.count < 2) continue
+      const key = labelKey([a.id, b.id])
+      if (derived.has(key)) continue
+      if ((a.brickWith ?? []).includes(b.id) || (b.brickWith ?? []).includes(a.id)) continue
+      if (applyLabels && input.labels[key]) continue
+      out.set(key, [a.id, b.id].sort((x, y) => x - y))
+    }
+  }
+  return out
 }
 
 export function buildRules(input: HandInput, handSize: number): number[][] {
@@ -106,24 +164,33 @@ export function buildRules(input: HandInput, handSize: number): number[][] {
 }
 
 /**
- * Etichetta effettiva di un insieme di 1-3 carte engine (la mano contiene esattamente quelle carte engine, il resto è riempimento):
- * l'etichetta esplicita sull'insieme esatto vince; altrimenti è PLAYABLE se lo dice una regola derivata (S1, partner, combo salvate)
- * o se lo è un suo sottoinsieme proprio; altrimenti BRICK.
+ * Stato effettivo di un insieme di 1-3 carte engine (la mano contiene esattamente quelle carte engine, il resto è riempimento):
+ * l'etichetta esplicita sull'insieme esatto vince; altrimenti PLAYABLE se lo dice una regola derivata o un suo sottoinsieme proprio;
+ * altrimenti UNKNOWN (da confermare) se lo è la coppia stessa o un suo sottoinsieme; altrimenti BRICK.
+ * Senza `unknown` nessun insieme è "da confermare" (comportamento a due stati).
  */
-export function effectiveLabelFrom(derived: Map<string, number[]>, labels: Record<string, Label>, ids: readonly number[]): Label {
+export function effectiveLabelFrom(
+  derived: Map<string, number[]>,
+  labels: Record<string, Label>,
+  ids: readonly number[],
+  unknown?: Map<string, number[]>,
+): LabelState {
   const sorted = [...ids].sort((a, b) => a - b)
   const key = sorted.join(',')
   const explicit = labels[key]
   if (explicit) return explicit
   if (derived.has(key)) return 'PLAYABLE'
+  let maybe = unknown?.has(key) ?? false
   if (sorted.length > 1) {
     for (let i = 0; i < sorted.length; i++) {
       if (i > 0 && sorted[i] === sorted[i - 1]) continue
       const sub = sorted.filter((_, j) => j !== i)
-      if (effectiveLabelFrom(derived, labels, sub) === 'PLAYABLE') return 'PLAYABLE'
+      const st = effectiveLabelFrom(derived, labels, sub, unknown)
+      if (st === 'PLAYABLE') return 'PLAYABLE'
+      if (st === 'UNKNOWN') maybe = true
     }
   }
-  return 'BRICK'
+  return maybe ? 'UNKNOWN' : 'BRICK'
 }
 
 /** Passcode che devono restare distinti (engine): ruoli engine + carte citate da etichette/regole. */
@@ -142,12 +209,22 @@ export interface EnumOptions {
   detail?: boolean
 }
 
-/** Cuore del calcolo: probabilità PLAYABLE/BRICK per una mano di `handSize` carte. */
-export function computeHand(input: HandInput, handSize: number, opts: EnumOptions = {}): HandResult {
+/** P(la mano contiene la coppia): almeno una copia di ciascuna (due copie se è la stessa carta). */
+function pairOdds(size: number, h: number, ca: number, cb: number, same: boolean): number {
+  const total = comb(size, h)
+  if (same) return 1 - (comb(size - ca, h) + ca * comb(size - ca, h - 1)) / total
+  return 1 - (comb(size - ca, h) + comb(size - cb, h) - comb(size - ca - cb, h)) / total
+}
+
+type Anchored = { idx: number[]; need: number[] }[][]
+
+/** Cuore del calcolo: probabilità PLAYABLE / da confermare / BRICK per una mano di `handSize` carte. `deckOverride` si applica prima. */
+export function computeHand(rawInput: HandInput, handSize: number, opts: EnumOptions = {}): HandResult {
+  const input = applyOverride(rawInput)
   const cards = mergeCards(input.cards)
   const { size, blanks } = deckSize({ cards, assumedDeckSize: input.assumedDeckSize })
   const empty: HandResult = {
-    handSize, deckSize: size, blanks, playable: 0, brick: 0, engineHist: new Array(handSize + 1).fill(0),
+    handSize, deckSize: size, blanks, playable: 0, brick: 0, unknown: 0, unknownPairs: [], engineHist: new Array(handSize + 1).fill(0),
     topBricks: [], cardOdds: [], roleOdds: [], ruleCount: 0,
   }
   if (size < handSize || handSize <= 0) return empty
@@ -159,29 +236,37 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const F = size - engineTotal
   const m = ids.length
 
-  // regole → indice per anchor (il tipo con indice minore)
+  // regole → indice per anchor (il tipo con indice minore); `P` = giocabili, `O` = giocabili + coppie da confermare (caso ottimistico)
   const rules = buildRules(input, handSize)
-  type R = { idx: number[]; need: number[] }
-  const byAnchor: R[][] = Array.from({ length: m }, () => [])
-  for (const r of rules) {
-    const ms = multiset(r)
-    const pairs = [...ms.entries()].map(([id, n]) => [idx.get(id), n] as const).filter((p): p is readonly [number, number] => p[0] !== undefined)
-    if (pairs.length !== ms.size) continue // cita carte non engine: non può accadere (engineIds le include), difensivo
-    pairs.sort((a, b) => a[0] - b[0])
-    byAnchor[pairs[0]![0]]!.push({ idx: pairs.map((p) => p[0]), need: pairs.map((p) => p[1]) })
+  const unknownLabelled = collectUnknownPairs(input, handSize, true)
+  const anchor = (list: number[][]): Anchored => {
+    const out: Anchored = Array.from({ length: m }, () => [])
+    for (const r of list) {
+      const ms = multiset(r)
+      const pairs = [...ms.entries()].map(([id, n]) => [idx.get(id), n] as const).filter((p): p is readonly [number, number] => p[0] !== undefined)
+      if (pairs.length !== ms.size) continue // cita carte non engine: non può accadere (engineIds le include), difensivo
+      pairs.sort((x, y) => x[0] - y[0])
+      out[pairs[0]![0]]!.push({ idx: pairs.map((q) => q[0]), need: pairs.map((q) => q[1]) })
+    }
+    return out
   }
+  const byAnchorP = anchor(rules)
+  const hasUnknown = unknownLabelled.size > 0
+  const byAnchorO = hasUnknown ? anchor([...rules, ...unknownLabelled.values()]) : byAnchorP
 
-  // mani con al più 3 carte engine: etichetta effettiva dell'insieme esatto (codice numerico → giocabile)
+  // mani con al più 3 carte engine: stato effettivo dell'insieme esatto (codice numerico → 0 brick, 1 da confermare, 2 giocabile)
   const base = m + 1
   const derived = collectRules({ ...input, labels: {} }, handSize, false)
-  const small = new Map<number, boolean>()
+  const unknownAll = collectUnknownPairs(input, handSize, false)
+  const small = new Map<number, number>()
   const addSmall = (is: number[]) => {
     const ms = new Map<number, number>()
     for (const i of is) ms.set(i, (ms.get(i) ?? 0) + 1)
     for (const [i, n] of ms) if (n > counts[i]!) return
     if (is.length > handSize) return
-    const code = is.reduce((a, i) => a * base + i + 1, 0)
-    small.set(code, effectiveLabelFrom(derived, input.labels, is.map((i) => ids[i]!)) === 'PLAYABLE')
+    const code = is.reduce((acc, i) => acc * base + i + 1, 0)
+    const st = effectiveLabelFrom(derived, input.labels, is.map((i) => ids[i]!), unknownAll)
+    small.set(code, st === 'PLAYABLE' ? 2 : st === 'UNKNOWN' ? 1 : 0)
   }
   for (let a = 0; a < m; a++) {
     addSmall([a])
@@ -194,6 +279,7 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const k = new Int8Array(m)
   const hist = new Array<number>(handSize + 1).fill(0)
   let playableW = 0
+  let unknownW = 0
   let brickW = 0
   const tops: { w: number; k: number[]; fill: number }[] = []
   let topFloor = 0
@@ -210,10 +296,9 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
 
   const pres = new Int16Array(handSize + 1) // tipi presenti nella mano parziale
   let np = 0
-  /** Con almeno 4 carte engine in mano vale solo "contiene una regola PLAYABLE" (monotona): niente etichette sull'insieme esatto. */
-  const ruleSatisfied = (): boolean => {
+  const satisfied = (by: Anchored): boolean => {
     for (let p = 0; p < np; p++) {
-      const list = byAnchor[pres[p]!]!
+      const list = by[pres[p]!]!
       for (let r = 0; r < list.length; r++) {
         const { idx: ri, need } = list[r]!
         let ok = true
@@ -227,26 +312,28 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
 
   /**
    * Visita il nodo "mano con queste carte engine, il resto riempimento", poi i nodi con una carta engine in più (tipi di indice ≥ start).
-   * Ogni composizione si visita una sola volta e senza scorrere i tipi assenti. Senza dettagli, un nodo giocabile con ≥4 carte engine
-   * assegna in blocco tutte le sue estensioni (sono tutte giocabili): somma Vandermonde w·C(carte libere, posti rimasti).
+   * Con almeno 4 carte engine vale solo "contiene una regola" (monotona): se è giocabile e non servono i dettagli, tutte le estensioni
+   * del nodo lo sono e si assegnano in blocco (somma di Vandermonde w·C(carte libere, posti rimasti)).
+   * Classe: 2 = giocabile, 1 = giocabile solo se una coppia da confermare è compatibile, 0 = brick.
    */
   const rec = (start: number, used: number, w: number, code: number) => {
     const rem = handSize - used
-    const playable = used === 0 ? false : used <= 3 ? small.get(code) === true : ruleSatisfied()
-    if (prune && used >= 4 && playable) {
+    const cls = used === 0 ? 0 : used <= 3 ? (small.get(code) ?? 0) : satisfied(byAnchorP) ? 2 : hasUnknown && satisfied(byAnchorO) ? 1 : 0
+    if (prune && used >= 4 && cls === 2) {
       playableW += w * cb(restFrom[start]!, rem)
       return
     }
     if (rem <= F) {
       const wt = w * cb(F, rem)
       if (wt > 0) {
-        if (playable) playableW += wt
+        if (cls === 2) playableW += wt
+        else if (cls === 1) unknownW += wt
         else {
           brickW += wt
           if (opts.detail && wt > topFloor) {
             tops.push({ w: wt, k: Array.from(k), fill: rem })
             if (tops.length > TOP * 4) {
-              tops.sort((a, b) => b.w - a.w)
+              tops.sort((x, y) => y.w - x.w)
               tops.length = TOP
               topFloor = tops[TOP - 1]!.w
             }
@@ -272,11 +359,11 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   rec(0, 0, 1, 0)
 
   const denom = comb(size, handSize)
-  const res: HandResult = { ...empty, playable: playableW / denom, brick: brickW / denom, ruleCount: rules.length }
+  const res: HandResult = { ...empty, playable: playableW / denom, unknown: unknownW / denom, brick: brickW / denom, ruleCount: rules.length }
   if (!opts.detail) return res
 
   res.engineHist = hist.map((x) => x / denom)
-  tops.sort((a, b) => b.w - a.w)
+  tops.sort((x, y) => y.w - x.w)
   res.topBricks = tops.slice(0, TOP).map<HandExample>((t) => ({
     cards: t.k.map((n, i) => ({ id: ids[i]!, n })).filter((c) => c.n > 0),
     fill: t.fill,
@@ -286,5 +373,9 @@ export function computeHand(input: HandInput, handSize: number, opts: EnumOption
   const roles = new Map<string, number>()
   for (const c of cards) for (const t of c.tags) roles.set(t, (roles.get(t) ?? 0) + c.count)
   res.roleOdds = [...roles.entries()].map(([role, copies]) => ({ role, copies, p: atLeastOne(size, copies, handSize) }))
+  const cnt = new Map(cards.map((c) => [c.id, c.count]))
+  res.unknownPairs = [...unknownLabelled.values()]
+    .map((pair) => ({ ids: pair, p: pairOdds(size, handSize, cnt.get(pair[0]!)!, cnt.get(pair[1]!)!, pair[0] === pair[1]) }))
+    .sort((x, y) => y.p - x.p)
   return res
 }

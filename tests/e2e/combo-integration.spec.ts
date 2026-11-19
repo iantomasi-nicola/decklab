@@ -42,7 +42,7 @@ test.describe('integrazioni (desktop)', () => {
     await chooseMenu(page, 'normalSummon')
     const row = page.locator('[data-steps] li[data-step-id]').first()
     await expect(row.locator('svg[viewBox="0 0 24 24"]').first()).toBeVisible()
-    await expect(page.locator('[data-turn-ui]').first()).toContainText(/Normal Summon|Normale/)
+    await expect(page.locator('[data-turn-ui]').first()).toContainText(/Normal used|Normale/)
   })
 
   test('OPT dichiarato dall\'utente: x.opt nel passo', async ({ page }) => {
@@ -50,9 +50,9 @@ test.describe('integrazioni (desktop)', () => {
     await chooseMenu(page, 'activate')
     await page.locator('[data-steps] li[data-step-id] button').first().click()
     await page.getByTestId('step-opt').selectOption('name')
-    await expect.poll(async () => ((await savedSteps(page))[0]!.x as { opt?: unknown } | undefined)?.opt).toBe('name')
+    await expect.poll(async () => ((await savedSteps(page))[0]?.x as { opt?: unknown } | undefined)?.opt).toBe('name')
     await page.getByTestId('step-opt').selectOption('auto')
-    await expect.poll(async () => ((await savedSteps(page))[0]!.x as { opt?: unknown } | undefined)?.opt).toBeUndefined()
+    await expect.poll(async () => (((await savedSteps(page))[0]?.x as { opt?: unknown } | undefined) ?? { opt: undefined }).opt).toBeUndefined()
   })
 
   test('Condividi dal menu apre la finestra con link e testo', async ({ page }) => {
