@@ -1,0 +1,38 @@
+import { createRootRoute, createRoute, createRouter, lazyRouteComponent } from '@tanstack/react-router'
+import { Shell } from './Shell'
+import { PagePending } from './PagePending'
+
+const root = createRootRoute({ component: Shell })
+
+const page = <P extends string>(path: P, load: () => Promise<Record<string, unknown>>, name: string) =>
+  createRoute({
+    getParentRoute: () => root,
+    path,
+    // lazy: ogni pagina è un chunk a parte
+    component: lazyRouteComponent(load as never, name as never),
+  })
+
+const routeTree = root.addChildren([
+  page('/', () => import('./pages/HomePage'), 'HomePage'),
+  page('/archetipi', () => import('./pages/ArchetypesPage'), 'ArchetypesPage'),
+  page('/mazzi', () => import('./pages/DecksPage'), 'DecksPage'),
+  page('/combo', () => import('./pages/CombosPage'), 'CombosPage'),
+  page('/impara', () => import('./pages/LearnPage'), 'LearnPage'),
+  page('/statistiche', () => import('./pages/StatsPage'), 'StatsPage'),
+  page('/impostazioni', () => import('./pages/SettingsPage'), 'SettingsPage'),
+])
+
+export const router = createRouter({
+  routeTree,
+  defaultPreload: 'intent',
+  defaultPendingMs: 150,
+  defaultPendingMinMs: 200,
+  defaultPendingComponent: PagePending,
+  scrollRestoration: true,
+})
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router
+  }
+}

@@ -1,4 +1,4 @@
-import Dexie, { type EntityTable } from 'dexie'
+import Dexie, { type EntityTable, type Table } from 'dexie'
 import type { Archetype, Localized, Meta, Variant } from '@/domain/types'
 
 /** Tabelle sincronizzate con Supabase (stesso nome locale e remoto). */
@@ -88,8 +88,8 @@ export class DecklabDB extends Dexie {
   }
 
   /** Accesso tipizzato per nome tabella (usato da repo, sync e backup). */
-  entities<T extends SyncTable>(table: T): EntityTable<EntityMap[T], 'id'> {
-    return this.table(table) as unknown as EntityTable<EntityMap[T], 'id'>
+  entities<T extends SyncTable>(table: T): Table<EntityMap[T], string> {
+    return this.table(table) as unknown as Table<EntityMap[T], string>
   }
 
   get allSyncedTables() {

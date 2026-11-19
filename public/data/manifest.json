@@ -1,0 +1,263 @@
+{
+ "schema": 1,
+ "version": "147.89-276f4d08",
+ "builtAt": "2026-11-19T02:42:27.938Z",
+ "files": {
+  "cards": "cards.147.89-276f4d08.json",
+  "banlists": "banlists.147.89-276f4d08.json",
+  "archetypes": "archetypes.147.89-276f4d08.json",
+  "texts": {
+   "en": "texts.en.147.89-276f4d08.json",
+   "it": "texts.it.147.89-276f4d08.json"
+  }
+ },
+ "sources": {
+  "ygoprodeck": {
+   "dbVersion": "147.89",
+   "lastUpdate": "2026-11-16 16:00:28"
+  },
+  "babelcdb": {
+   "commit": "7be9fd135c073d8b9086925853e3cd1cc4ad55ea",
+   "files": [
+    "cards.cdb",
+    "release-betb.cdb",
+    "prerelease-betb-en.cdb",
+    "prerelease-dbgv.cdb",
+    "prerelease-imph.cdb",
+    "prerelease-mvb1.cdb",
+    "prerelease-others.cdb",
+    "prerelease-paso.cdb",
+    "prerelease-rv02.cdb",
+    "prerelease-yac1.cdb"
+   ]
+  },
+  "lflists": {
+   "commit": "336ec7e282c3a6e8c0b621108a050fdeb98ababc"
+  },
+  "archetypes": {
+   "url": "https://raw.githubusercontent.com/ProjectIgnis/Distribution/master/config/strings.conf"
+  }
+ },
+ "counts": {
+  "cards": 15006,
+  "aliases": 496,
+  "banlists": 30,
+  "archetypes": 756
+ },
+ "banlists": [
+  {
+   "format": "OCG",
+   "id": "2020.01",
+   "date": "2020-03-11",
+   "commit": "f419a85d74",
+   "cards": 171
+  },
+  {
+   "format": "OCG",
+   "id": "2020.04",
+   "date": "2020-03-20",
+   "commit": "c87f32a6d6",
+   "cards": 189
+  },
+  {
+   "format": "OCG",
+   "id": "2020.07",
+   "date": "2020-06-30",
+   "commit": "adc99126c8",
+   "cards": 187
+  },
+  {
+   "format": "OCG",
+   "id": "2020.10",
+   "date": "2020-10-24",
+   "commit": "acb76db752",
+   "cards": 187
+  },
+  {
+   "format": "OCG",
+   "id": "2021.01",
+   "date": "2021-02-22",
+   "commit": "39f33cfd5d",
+   "cards": 187
+  },
+  {
+   "format": "OCG",
+   "id": "2021.04",
+   "date": "2021-03-14",
+   "commit": "22667b1d44",
+   "cards": 182
+  },
+  {
+   "format": "OCG",
+   "id": "2021.07",
+   "date": "2021-06-30",
+   "commit": "cd041c375b",
+   "cards": 180
+  },
+  {
+   "format": "OCG",
+   "id": "2021.10",
+   "date": "2021-10-01",
+   "commit": "12d2cc5131",
+   "cards": 179
+  },
+  {
+   "format": "OCG",
+   "id": "2022.01",
+   "date": "2022-01-08",
+   "commit": "2141430c61",
+   "cards": 181
+  },
+  {
+   "format": "OCG",
+   "id": "2022.04",
+   "date": "2022-04-01",
+   "commit": "3d05e19c58",
+   "cards": 181
+  },
+  {
+   "format": "OCG",
+   "id": "2022.07",
+   "date": "2022-06-30",
+   "commit": "8659f6e29f",
+   "cards": 173
+  },
+  {
+   "format": "OCG",
+   "id": "2022.10",
+   "date": "2022-10-01",
+   "commit": "05d8998d4c",
+   "cards": 180
+  },
+  {
+   "format": "OCG",
+   "id": "2023.1",
+   "date": "2023-01-28",
+   "commit": "3cad7bf141",
+   "cards": 185
+  },
+  {
+   "format": "OCG",
+   "id": "2023.10",
+   "date": "2023-10-01",
+   "commit": "5f51ced598",
+   "cards": 190
+  },
+  {
+   "format": "OCG",
+   "id": "2023.4",
+   "date": "2023-04-01",
+   "commit": "1d2026c701",
+   "cards": 190
+  },
+  {
+   "format": "OCG",
+   "id": "2023.7",
+   "date": "2023-07-03",
+   "commit": "8ff4dbdff0",
+   "cards": 188
+  },
+  {
+   "format": "OCG",
+   "id": "2024.01",
+   "date": "2023-12-29",
+   "commit": "44ee9724ab",
+   "cards": 190
+  },
+  {
+   "format": "OCG",
+   "id": "2024.04",
+   "date": "2024-04-01",
+   "commit": "ce41f7be81",
+   "cards": 190
+  },
+  {
+   "format": "OCG",
+   "id": "2024.07",
+   "date": "2024-06-30",
+   "commit": "c816c0ee2f",
+   "cards": 192
+  },
+  {
+   "format": "OCG",
+   "id": "2024.10",
+   "date": "2024-09-26",
+   "commit": "fc725c7528",
+   "cards": 189
+  },
+  {
+   "format": "OCG",
+   "id": "2025.01",
+   "date": "2024-12-23",
+   "commit": "7c46a3c0d2",
+   "cards": 187
+  },
+  {
+   "format": "OCG",
+   "id": "2025.04",
+   "date": "2025-04-01",
+   "commit": "943022e85f",
+   "cards": 182
+  },
+  {
+   "format": "OCG",
+   "id": "2025.07",
+   "date": "2025-07-15",
+   "commit": "3e2ffc8171",
+   "cards": 178
+  },
+  {
+   "format": "OCG",
+   "id": "2025.10",
+   "date": "2025-10-04",
+   "commit": "eec7351363",
+   "cards": 182
+  },
+  {
+   "format": "OCG",
+   "id": "2026.01",
+   "date": "2025-12-26",
+   "commit": "e8dc35ae6b",
+   "cards": 186
+  },
+  {
+   "format": "OCG",
+   "id": "2026.04",
+   "date": "2026-04-03",
+   "commit": "14808256f6",
+   "cards": 193
+  },
+  {
+   "format": "OCG",
+   "id": "2026.07",
+   "date": "2026-07-02",
+   "commit": "ca4e65bf38",
+   "cards": 199
+  },
+  {
+   "format": "OCG",
+   "id": "2026.10",
+   "date": "2026-10-02",
+   "commit": "d849cd3916",
+   "cards": 202
+  },
+  {
+   "format": "TCG",
+   "id": "2020.12",
+   "date": "2020-12-25",
+   "commit": "d9e0535918",
+   "cards": 190
+  },
+  {
+   "format": "GENESYS",
+   "id": "147.89",
+   "date": null,
+   "commit": null,
+   "cards": 773
+  }
+ ],
+ "notes": [
+  "GENESYS: pointsCap non impostato (tetto non verificato)",
+  "archetypes: solo nomi EN (nessuna fonte IT)"
+ ]
+}
