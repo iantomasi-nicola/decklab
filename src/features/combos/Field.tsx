@@ -70,6 +70,7 @@ function Slot({
   children,
   className,
   occupant,
+  onOpen,
 }: {
   dest: Dest
   p: PlayerIdx
@@ -78,6 +79,7 @@ function Slot({
   children?: ReactNode
   className?: string
   occupant?: Uid | undefined
+  onOpen?: () => void
 }) {
   const { highlight, onZone } = useField()
   const id = destKey(dest)
@@ -91,6 +93,7 @@ function Slot({
       data-valid={valid || undefined}
       onClick={(e) => {
         if (valid) onZone(dest, e.currentTarget)
+        else if (!(e.target as HTMLElement).closest('[data-card]')) onOpen?.()
       }}
       className={cn(
         'relative min-w-0 rounded-[0.9cqw] border border-dashed bg-surface-1/60 transition-[opacity,box-shadow,background-color] duration-150',
@@ -130,7 +133,7 @@ function CardCounters({ uid }: { uid: Uid }) {
 
 /** Carta in campo/mano/pila: trascinabile, cliccabile, con menu contestuale. */
 function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: string; style?: CSSProperties; inPile?: boolean }) {
-  const { view, selected, picking, onCardClick, onCardDouble, onCardMenu, onCardKey } = useField()
+  const { view, selected, picking, highlight, onCardClick, onCardDouble, onCardMenu, onCardKey } = useField()
   const place = view.state.places[uid]
   const code = view.registry[uid] ?? 0
   const name = view.nameOf(code)
@@ -154,6 +157,7 @@ function FieldCard({ uid, className, style, inPile }: { uid: Uid; className?: st
       aria-pressed={isSel}
       title={name}
       onClick={() => {
+        if (inPile && highlight) return // il clic spetta alla pila (destinazione)
         const now = Date.now()
         if (now - lastTap.current < 350) {
           lastTap.current = 0
@@ -219,6 +223,7 @@ function Pile({ p, loc, col, kind }: { p: PlayerIdx; loc: PileLoc; col: number; 
       dest={{ t: 'pile', p, loc }}
       p={p}
       style={cell(p, kind, col)}
+      onOpen={count > 0 ? () => onPile(p, loc) : undefined}
       label={
         count === 0 ? (
           <span className="flex flex-col items-center gap-[0.6cqw]">
@@ -252,7 +257,7 @@ function Pile({ p, loc, col, kind }: { p: PlayerIdx; loc: PileLoc; col: number; 
           e.stopPropagation()
           onPile(p, loc)
         }}
-        className="absolute bottom-[-0.8cqw] right-[-0.8cqw] z-20 grid min-h-[5.2cqw] min-w-[5.2cqw] cursor-pointer place-items-center rounded-full border border-line-strong bg-surface-1 px-[0.9cqw] text-[max(9px,2.5cqw)] font-semibold tabular-nums leading-none text-fg shadow-1 hover:border-accent-text"
+        className="absolute bottom-[-0.8cqw] right-[-0.8cqw] z-20 grid min-h-[5.2cqw] before:absolute before:-inset-2.5 before:content-[''] min-w-[5.2cqw] cursor-pointer place-items-center rounded-full border border-line-strong bg-surface-1 px-[0.9cqw] text-[max(9px,2.5cqw)] font-semibold tabular-nums leading-none text-fg shadow-1 hover:border-accent-text"
       >
         {count}
       </button>

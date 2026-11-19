@@ -241,3 +241,58 @@ export function finalizeDoc(doc: ComboDoc, now: string): ComboDoc {
 }
 
 export const handSize = (first: boolean) => (first ? 5 : 6)
+
+/** Uid citati da un passo (carta, mosse, bersagli, costi, cercate). */
+export function uidsOfStep(s: Step): Uid[] {
+  const out: Uid[] = []
+  if (s.card) out.push(s.card)
+  for (const m of s.moves) {
+    out.push(m.uid)
+    if (m.to.host) out.push(m.to.host)
+    if (m.from?.host) out.push(m.from.host)
+  }
+  if (s.to?.host) out.push(s.to.host)
+  out.push(...(s.targets ?? []), ...(s.searched ?? []))
+  for (const c of s.costs ?? []) out.push(...c.cards)
+  for (const c of s.counters ?? []) out.push(c.uid)
+  return out
+}
+
+/**
+ * Nuova combo che copia setup + passi fino a `stepIndex` (compreso se `inclusive`, altrimenti fino al precedente).
+ * Il registro delle istanze tiene solo le carte ancora citate; `derivedFrom` punta alla madre.
+ */
+export function deriveDoc(mother: ComboDoc, stepIndex: number, inclusive: boolean, o: { id: string; title: Localized; now: string }): ComboDoc {
+  const end = inclusive ? stepIndex + 1 : stepIndex
+  const steps = structuredClone(mother.steps.slice(0, Math.max(0, end)))
+  const ids = new Set(steps.map((s) => s.id))
+  const used = new Set<Uid>()
+  const st = mother.setup
+  for (const uid of st.hand.required) used.add(uid)
+  for (const b of [st.own, st.opponent?.board]) for (const bp of b?.places ?? []) used.add(bp.uid)
+  for (const i of st.opponent?.interrupts ?? []) used.add(i.uid)
+  for (const s of steps) for (const u of uidsOfStep(s)) used.add(u)
+  const cards: Record<Uid, number> = {}
+  for (const [uid, code] of Object.entries(mother.cards)) if (used.has(uid)) cards[uid] = code
+  const lastId = steps[steps.length - 1]?.id ?? null
+  const doc: ComboDoc = {
+    ...structuredClone(mother),
+    cards,
+    steps,
+    branches: structuredClone(mother.branches.filter((b) => ids.has(b.condition.afterStep) && (b.rejoin === null || ids.has(b.rejoin)))),
+    meta: {
+      ...structuredClone(mother.meta),
+      id: o.id,
+      title: o.title,
+      favorite: false,
+      createdAt: o.now,
+      updatedAt: o.now,
+      derivedFrom: { comboId: mother.meta.id, afterStep: lastId, title: structuredClone(mother.meta.title) },
+    },
+  }
+  delete doc.endboard
+  delete doc.engine
+  const tokens = tokensOf(mother).filter((t) => used.has(t))
+  if (mother.x) doc.x = { ...structuredClone(mother.x), ...(mother.x.tokens ? { tokens } : {}) }
+  return finalizeDoc(doc, o.now)
+}

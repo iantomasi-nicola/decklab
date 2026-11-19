@@ -50,18 +50,26 @@ export function TagPicker({ tags, value, onChange }: { tags: readonly TagRecord[
       ) : (
         <p className="text-[15px] text-muted">{t('archetypes.noTags')}</p>
       )}
-      <form
-        className="flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          void add()
-        }}
-      >
-        <Input value={name} onChange={(e) => setName(e.target.value)} aria-label={t('archetypes.newTag')} placeholder={t('archetypes.newTag')} maxLength={32} autoComplete="off" />
-        <Button type="submit" icon={<Plus size={18} />} disabled={!name.trim()}>
+      {/* niente <form>: il selettore vive dentro il form del dialog e i form annidati inviavano quello esterno */}
+      <div className="flex gap-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              void add()
+            }
+          }}
+          aria-label={t('archetypes.newTag')}
+          placeholder={t('archetypes.newTag')}
+          maxLength={32}
+          autoComplete="off"
+        />
+        <Button icon={<Plus size={18} />} disabled={!name.trim()} onClick={() => void add()}>
           {t('common.add')}
         </Button>
-      </form>
+      </div>
     </div>
   )
 }

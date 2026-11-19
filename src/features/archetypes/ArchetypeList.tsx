@@ -62,13 +62,19 @@ function ArchetypeCard({
   const other = archetype.name[lang === 'it' ? 'en' : 'it']
   const keys = archetype.keyCards.slice(0, 4)
   return (
-    <article className="flex flex-col rounded-lg border border-line bg-surface-1 shadow-1 transition-colors duration-150 hover:border-line-strong" data-testid="archetype-card" data-archetype-id={archetype.id}>
+    <article className="relative flex flex-col rounded-lg border border-line bg-surface-1 shadow-1 transition-colors duration-150 hover:border-line-strong" data-testid="archetype-card" data-archetype-id={archetype.id}>
       <div className="flex items-start gap-1 p-1">
-        <Link to="/archetipi/$archetypeId" params={{ archetypeId: archetype.id }} className="min-w-0 flex-1 rounded-md px-3 py-2">
+        {/* link "esteso": l'intera scheda è cliccabile, i pulsanti restano sopra (z-10) */}
+        <Link
+          to="/archetipi/$archetypeId"
+          params={{ archetypeId: archetype.id }}
+          className="min-w-0 flex-1 rounded-md px-3 py-2 after:absolute after:inset-0 after:rounded-lg after:content-['']"
+        >
           <h2 className="truncate text-lg font-semibold text-fg">{name}</h2>
           {other && other !== name ? <p className="truncate text-sm text-muted">{other}</p> : null}
         </Link>
         <IconButton
+          className="relative z-10"
           label={favorite ? t('archetypes.unfavorite', { name }) : t('archetypes.favorite', { name })}
           aria-pressed={favorite}
           icon={<Star size={20} className={cn(favorite && 'fill-current text-warn')} />}
@@ -76,7 +82,7 @@ function ArchetypeCard({
           data-testid="favorite-toggle"
         />
         <Menu
-          trigger={<IconButton label={t('archetypes.menu', { name })} icon={<Ellipsis size={20} />} />}
+          trigger={<IconButton className="relative z-10" label={t('archetypes.menu', { name })} icon={<Ellipsis size={20} />} />}
           items={[
             { id: 'edit', label: t('common.edit'), icon: <Pencil size={18} />, onSelect: onEdit },
             {
@@ -92,17 +98,23 @@ function ArchetypeCard({
           ]}
         />
       </div>
-      <Link to="/archetipi/$archetypeId" params={{ archetypeId: archetype.id }} tabIndex={-1} aria-hidden className="px-4">
+      <div className="px-4">
         {keys.length && cards.status === 'ready' ? (
           <div className="flex gap-2">
             {keys.map((id) => (
               <CardThumb key={id} id={id} name={cardName(cards.index.byId(id), lang, id)} className="w-12" />
             ))}
           </div>
+        ) : keys.length ? (
+          <div className="flex gap-2">
+            {keys.map((id) => (
+              <Skeleton key={id} className="aspect-[59/86] w-12" />
+            ))}
+          </div>
         ) : (
-          <p className="text-sm text-subtle">{keys.length ? '' : t('archetypes.noKeyCards')}</p>
+          <p className="text-sm text-subtle">{t('archetypes.noKeyCards')}</p>
         )}
-      </Link>
+      </div>
       <div className="mt-auto flex flex-wrap items-center gap-1.5 p-4 pt-3">
         <Badge tone={variantCount ? 'accent' : 'neutral'}>{t('archetypes.variantCount', { count: variantCount })}</Badge>
         {tagNames.map((n) => (
