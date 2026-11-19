@@ -6,6 +6,7 @@ import { initI18n, i18n } from './i18n'
 import { initTheme } from './app/theme'
 import { toast } from './ui/Toast'
 import { App } from './app/App'
+import { startSync } from './sync'
 
 initI18n()
 initTheme()
@@ -14,6 +15,8 @@ registerSW({
   immediate: true,
   onOfflineReady: () => toast(i18n.t('pwa.offlineReady'), { tone: 'ok' }),
 })
+
+startSync()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
