@@ -41,3 +41,6 @@
 - Fare una combo deve costare meno tocchi possibile ed essere velocissimo: default intelligenti, scelte uniche automatiche, ricorda l'ultima azione, annulla sempre disponibile, scorciatoie e gesture.
 - Modalità Automatica: l'esperienza deve ricordare Yu-Gi-Oh! Master Duel (menu azione vicino alla carta, zone evidenziate, richieste di catena compatte, informazioni carta a pressione lunga, nessun passaggio superfluo).
 - Il funzionamento (non grafica né contenuti) del simulatore di playmat TrainMyMat è il riferimento per l'editor manuale: replicare i flussi di interazione, non copiare asset.
+
+## Obiettivo di usabilità (permanente, da Nicola)
+- La modalità Automatica deve raggiungere lo stesso livello di usabilità di Yu-Gi-Oh! Master Duel, copiando il funzionamento del simulatore di riferimento (TrainMyMat) e facendo meglio. Specifica e fasi in docs/AUTO-UX.md. Si copiano meccanismi e flussi, non grafica, asset o contenuti.
