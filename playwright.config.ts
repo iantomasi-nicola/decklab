@@ -5,7 +5,7 @@ const executablePath = process.env.PW_CHROMIUM_PATH ?? process.env.CHROME_BIN
 
 export default defineConfig({
   testDir: 'tests/e2e',
-  testIgnore: /(decks|side|qa-).*\.spec\.ts/, // hanno una config propria (playwright.decks.config.ts, dati carte di prova)
+  testIgnore: /(decks|side|qa-|hand-start).*\.spec\.ts/, // hanno una config propria (playwright.decks.config.ts, dati carte di prova)
   outputDir: 'test-results', // screenshot in test-results/visual (ignorata da git)
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4,

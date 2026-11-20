@@ -5,6 +5,7 @@ import { ID, MOCK_CARDS } from '../mocks/cardsData'
 import { seedSide } from './side.helpers'
 import { overflowing, smallTargets } from './decks.helpers'
 import { sampleDoc } from './helpers/guide'
+import { alignmentIssues } from './helpers/align'
 
 /**
  * Giro QA completo: ogni rotta × 375/768/1024/1440 × scuro/chiaro × it/en (mock carte, porta 4190).
@@ -154,6 +155,7 @@ for (const theme of themes) {
             issues[w] = {
               hscroll: sw.s > sw.w ? sw : null,
               overflow: await overflowing(page),
+              align: await alignmentIssues(page),
               small: w === 375 ? await smallTargets(page) : undefined,
             }
           }
