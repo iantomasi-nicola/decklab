@@ -564,6 +564,7 @@ export function Board({
     else if (p === 0 && ((info.extra ? pool.extra : pool.main).get(a.code) ?? 0) === 0) draft.deckAdd = { code: a.code, extra: !!info.extra }
     useEditor.getState().apply(draft)
     announce(t('combos.announce.added', { card: cards.nameOf(a.code) }))
+    if (draft.deckAdd && !useEditor.getState().handAsk) toast(t('combos.hand.deckAdded', { name: cards.nameOf(a.code) }))
     setAddFor(null)
   }
 

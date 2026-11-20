@@ -18,7 +18,8 @@ import { Field, Input } from '@/ui/Input'
 import { IconButton } from '@/ui/IconButton'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/Toast'
-import { createBlankDoc } from './model'
+import { HandIssueList, HandPicker, type HandValue } from './HandPicker'
+import { createBlankDoc, handSize, setHand } from './model'
 
 function useLive<T>(make: () => Observable<T>): T | undefined {
   const [v, setV] = useState<T>()
@@ -173,8 +174,11 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
   const [variantId, setVariantId] = useState('')
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
+  const [hand, setHandValue] = useState<HandValue>({ codes: [], mode: 'random', size: handSize(true) })
+  const [handOpen, setHandOpen] = useState(false)
   const nm = (n: { it?: string; en?: string } | undefined) => n?.[lang] ?? n?.it ?? n?.en ?? ''
   const own = variants.filter((v) => v.archetypeId === archId)
+  const deckMain = archId && variantId ? (own.find((v) => v.id === variantId)?.deck.main ?? []) : []
   const ok = title.trim() !== '' && (archId !== '' || newName.trim() !== '')
 
   const create = async () => {
@@ -198,7 +202,7 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
         })()
       const id = crypto.randomUUID()
       const titleL = { [lang]: title.trim() }
-      const doc = createBlankDoc({
+      const blank = createBlankDoc({
         id,
         title: titleL,
         archetype: { id: aid, name: aName },
@@ -208,6 +212,8 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
         deck: variant?.deck ?? { main: [], extra: [], side: [] },
         now: new Date().toISOString(),
       })
+      // la mano di partenza scelta alla creazione (solo con un mazzo di variante): carte, modalità e dimensione
+      const doc = variant && variant.deck.main.length ? setHand(blank, hand).doc : blank
       await repos.combos.create({ id, archetypeId: aid, variantId: variant?.id ?? null, name: titleL, tagIds: [], payload: doc })
       void navigate({ to: '/combo/$comboId', params: { comboId: id } })
     } finally {
@@ -241,7 +247,7 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
         </Field>
         <Field label={t('combos.new.archetype')}>
           {({ id }) => (
-            <select id={id} className={selectCls} value={archId} onChange={(e) => { setArchId(e.target.value); setVariantId('') }} data-testid="combo-archetype">
+            <select id={id} className={selectCls} value={archId} onChange={(e) => { setArchId(e.target.value); setVariantId(''); setHandValue({ codes: [], mode: 'random', size: handSize(true) }) }} data-testid="combo-archetype">
               {archetypes.map((a) => (
                 <option key={a.id} value={a.id}>
                   {nm(a.name)}
@@ -258,7 +264,7 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
         ) : (
           <Field label={t('combos.new.scope')} hint={t('combos.new.scopeHint')}>
             {({ id, describedBy }) => (
-              <select id={id} aria-describedby={describedBy} className={selectCls} value={variantId} onChange={(e) => setVariantId(e.target.value)} data-testid="combo-variant">
+              <select id={id} aria-describedby={describedBy} className={selectCls} value={variantId} onChange={(e) => { setVariantId(e.target.value); setHandValue({ codes: [], mode: 'random', size: handSize(true) }) }} data-testid="combo-variant">
                 <option value="">{t('combos.new.general')}</option>
                 {own.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -269,6 +275,30 @@ function NewComboDialog({ archetypes, variants, onClose }: { archetypes: Archety
             )}
           </Field>
         )}
+        <section className="flex flex-col gap-2" aria-label={t('combos.new.hand')}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="text-sm font-medium">{t('combos.new.hand')}</h3>
+              <p className="text-sm text-muted" data-testid="new-hand-summary">
+                {hand.codes.length ? t('combos.new.handPicked', { count: hand.codes.length }) : t('combos.new.handSummaryRandom')}
+              </p>
+            </div>
+            {deckMain.length ? (
+              <Button onClick={() => setHandOpen((v) => !v)} aria-expanded={handOpen} data-testid="new-hand-toggle">
+                {t('combos.new.handChoose')}
+              </Button>
+            ) : null}
+          </div>
+          {deckMain.length ? (
+            handOpen ? (
+              <HandPicker deck={deckMain} value={hand} onChange={setHandValue} issues={<HandIssueList items={[]} />} />
+            ) : (
+              <p className="text-sm text-muted">{t('combos.new.handHint')}</p>
+            )
+          ) : (
+            <p className="text-sm text-muted">{t('combos.new.handPickVariant')}</p>
+          )}
+        </section>
       </form>
     </Dialog>
   )

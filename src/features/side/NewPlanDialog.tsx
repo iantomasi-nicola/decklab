@@ -48,7 +48,20 @@ export function NewPlanDialog({ open, onOpenChange, onCreate }: { open: boolean;
     onOpenChange(false)
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title={t('side.newTitle')} description={t('side.newLead')}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('side.newTitle')}
+      description={t('side.newLead')}
+      footer={
+        <>
+          <Button onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button variant="primary" type="submit" form="side-new-form" data-testid="side-create">
+            {t('side.create')}
+          </Button>
+        </>
+      }
+    >
       <form id="side-new-form" onSubmit={submit} className="flex flex-col gap-4">
         <Field label={t('side.plan.name')}>
           {({ id, describedBy }) => (
@@ -65,14 +78,6 @@ export function NewPlanDialog({ open, onOpenChange, onCreate }: { open: boolean;
           <TurnSegmented value={turn} onValueChange={setTurn} />
         </div>
       </form>
-      <div className="mt-6 flex flex-wrap justify-end gap-2">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          {t('common.cancel')}
-        </Button>
-        <Button variant="primary" type="submit" form="side-new-form" data-testid="side-create">
-          {t('side.create')}
-        </Button>
-      </div>
     </Dialog>
   )
 }

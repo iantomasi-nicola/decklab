@@ -44,7 +44,7 @@ export interface FieldEmphasis {
 export interface FieldHandlers {
   selected: Uid | null
   highlight: ReadonlySet<string> | null
-  picking: { candidates: ReadonlySet<Uid>; chosen: ReadonlySet<Uid> } | null
+  picking: { candidates: ReadonlySet<Uid>; chosen: ReadonlySet<Uid>; order?: ReadonlyMap<Uid, number>; numbered?: boolean } | null
   onCardClick: (uid: Uid) => void
   onCardDouble: (uid: Uid) => void
   onCardMenu: (uid: Uid, x: number, y: number) => void
@@ -196,6 +196,8 @@ interface CardViewProps {
   selected: boolean
   candidate: boolean
   chosen: boolean
+  /** posizione di scelta (0 = nessun numero: si mostra la spunta) */
+  chosenN?: number
   dimmed: boolean
   active: boolean
   inChain: boolean
@@ -215,7 +217,7 @@ interface CardViewProps {
 /** Vista memorizzata di una carta: si ridisegna solo se cambia una delle sue proprietà (non per ogni passo). */
 const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
   const h = useContext(HandlersCtx)!
-  const { uid, place, code, name, selected, candidate, chosen, active, inChain, inPile, readOnly, fanLeft } = p
+  const { uid, place, code, name, selected, candidate, chosen, chosenN, active, inChain, inPile, readOnly, fanLeft } = p
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: cardDragId(uid), data: { uid }, disabled: readOnly })
   const lastTap = useRef(0)
   const def = isDefPos(place.pos)
@@ -256,6 +258,7 @@ const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
       data-loc={place.loc}
       data-active={active || undefined}
       data-chain={inChain || undefined}
+      data-pick={chosen ? 'chosen' : candidate ? 'cand' : p.dimmed ? 'dim' : undefined}
       data-newest={p.fanNewest || undefined}
       aria-label={name}
       title={name}
@@ -265,7 +268,7 @@ const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
         fanLeft !== undefined && 'cl-fan-card',
         readOnly ? 'pointer-events-none' : 'touch-none',
         isDragging && 'opacity-30',
-        p.dimmed && 'opacity-45',
+        p.dimmed && 'cl-pickdim',
       )}
     >
       <div className={cn('cl-fit', def && 'cl-def')}>
@@ -277,8 +280,6 @@ const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
           className={cn(
             'rounded-[6px] transition-shadow duration-150',
             selected && 'shadow-[0_0_0_3px_var(--accent-text)]',
-            candidate && !chosen && 'shadow-[0_0_0_3px_var(--ok)]',
-            chosen && 'shadow-[0_0_0_4px_var(--ok)]',
             inChain && 'shadow-[0_0_0_3px_var(--warn)]',
             active && 'shadow-[0_0_0_4px_var(--accent-text),0_0_16px_2px_var(--accent-text)]',
           )}
@@ -290,8 +291,8 @@ const FieldCardView = memo(function FieldCardView(p: CardViewProps) {
         {!inPile && p.overlays ? <span className="cl-badge -bottom-1 -left-1" data-overlays={p.overlays}>×{p.overlays}</span> : null}
         {p.marks}
         {chosen ? (
-          <span className="cl-badge -right-1 -top-1 grid place-items-center !bg-ok !text-bg">
-            <Check className="size-3.5" aria-hidden />
+          <span className="cl-badge -right-1 -top-1 grid place-items-center !bg-ok !text-bg" data-pick-badge>
+            {chosenN ? chosenN : <Check className="size-3.5" aria-hidden />}
           </span>
         ) : null}
       </div>
@@ -316,6 +317,7 @@ function FieldCard({ uid, inPile, fan }: { uid: Uid; inPile?: boolean; fan?: { l
       selected={selected === uid}
       candidate={cand}
       chosen={!!picking?.chosen.has(uid)}
+      chosenN={picking?.numbered ? (picking.order?.get(uid) ?? 0) : 0}
       dimmed={!!picking && !cand}
       active={emphasis.active === uid}
       inChain={!!emphasis.chain?.has(uid)}

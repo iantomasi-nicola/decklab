@@ -8,7 +8,8 @@ import { playSound } from '@/features/sound'
 import { useDuel } from './duelStore'
 import { CardAnnounceRequest, MaskRequest, NumberRequest } from './requests/announce'
 import { ChainRequest } from './requests/chain'
-import { CardsRequest, CounterRequest, SumRequest, UnselectRequest } from './requests/choice'
+import { CounterRequest } from './requests/choice'
+import { CardsPick, SumPick, UnselectPick } from './requests/pick'
 import { OptionRequest, PositionRequest, RpsRequest, YesNoRequest } from './requests/simple'
 import { SortRequest } from './requests/sort'
 import { useEngT } from './strings'
@@ -18,9 +19,9 @@ export function RequestView({ req, onAnswer }: { req: PendingRequest; onAnswer: 
     case 'chain': return <ChainRequest req={req} onAnswer={onAnswer} />
     case 'effectYn': case 'yesNo': return <YesNoRequest req={req} onAnswer={onAnswer} />
     case 'option': return <OptionRequest req={req} onAnswer={onAnswer} />
-    case 'cards': return <CardsRequest req={req} onAnswer={onAnswer} />
-    case 'unselect': return <UnselectRequest req={req} onAnswer={onAnswer} />
-    case 'sum': return <SumRequest req={req} onAnswer={onAnswer} />
+    case 'cards': return <CardsPick req={req} onAnswer={onAnswer} />
+    case 'unselect': return <UnselectPick req={req} onAnswer={onAnswer} />
+    case 'sum': return <SumPick req={req} onAnswer={onAnswer} />
     case 'counter': return <CounterRequest req={req} onAnswer={onAnswer} />
     case 'position': return <PositionRequest req={req} onAnswer={onAnswer} />
     case 'sort': return <SortRequest req={req} onAnswer={onAnswer} />

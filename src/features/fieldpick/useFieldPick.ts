@@ -19,6 +19,8 @@ export interface FieldPickOptions {
   validate?: ((selected: readonly Uid[]) => boolean) | undefined
   onConfirm: (selected: Uid[]) => void
   onCancel?: (() => void) | undefined
+  /** carte sempre scelte (obbligatorie): il tocco le ignora */
+  locked?: ReadonlySet<Uid> | undefined
   /** avviso quando si tocca oltre il massimo */
   onFull?: ((max: number) => void) | undefined
 }
@@ -51,6 +53,10 @@ export function useFieldPick(o: FieldPickOptions): FieldPick {
 
   const toggle = useCallback((uid: Uid) => {
     const { state: s, o: opt } = ref.current
+    if (opt.locked?.has(uid)) {
+      playSound('error')
+      return
+    }
     const r = togglePick(s, uid)
     if (r.change === 'ignored') return
     if (r.change === 'full') {
@@ -66,7 +72,10 @@ export function useFieldPick(o: FieldPickOptions): FieldPick {
       opt.onConfirm([...r.state.selected])
     }
   }, [])
-  const undo = useCallback(() => setState((s) => undoPick(s)), [])
+  const undo = useCallback(() => setState((s) => {
+    const last = s.selected[s.selected.length - 1]
+    return last !== undefined && ref.current.o.locked?.has(last) ? s : undoPick(s)
+  }), [])
   const okNow = (s: PickState, v: FieldPickOptions['validate']) => canConfirmPick(s) && (!v || v(s.selected))
   const confirm = useCallback(() => {
     const { state: s, o: opt } = ref.current

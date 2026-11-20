@@ -21,6 +21,9 @@ export type DuelError =
 /** Indizio lasciato da un rilascio: la prossima richiesta di zona/bersaglio lo usa al posto di chiedere di nuovo. */
 export interface DropHint { zone?: string; uid?: Uid }
 
+/** Azione del menu principale che ha aperto le richieste successive (materiali, zona…): serve a titoli e contatori. */
+export interface RequestSource { uid: Uid; kind: 'summon' | 'specialSummon' | 'monsterSet' | 'spellSet' | 'activate' | 'posChange' | 'attack' | 'chain' }
+
 interface DuelStore {
   status: DuelStatus
   busy: boolean
@@ -38,12 +41,15 @@ interface DuelStore {
   unsupported: number[]
   prefs: AutoSettings
   hint: DropHint | null
+  /** carta e azione che hanno aperto la richiesta corrente (si azzera tornando al menu principale) */
+  source: RequestSource | null
   /** contatore che cresce a ogni nuovo stato (chiave per animazioni/annunci) */
   tick: number
 
   setClientFactory: (f: (() => EngineClient) | null) => void
   setPrefs: (p: Partial<AutoSettings>) => void
   setHint: (h: DropHint | null) => void
+  setSource: (s: RequestSource | null) => void
   start: (req: Omit<StartDuelRequest, 'auto'>, replay?: { answers: Answer[]; auto?: boolean[] }) => Promise<boolean>
   respond: (a: Answer) => Promise<boolean>
   undo: () => Promise<void>
@@ -121,12 +127,13 @@ export const useDuel = create<DuelStore>((set, get) => {
     set((s) => ({
       state: d, view: viewFromDuel(d), engine: engine ?? s.engine, status: 'running', error: null, tick: s.tick + 1,
       unsupported: unsupportedFromErrors(d.errors), hint: d.pending && (d.pending.kind === 'idle' || d.pending.kind === 'battle') ? null : s.hint,
+      source: !d.pending || d.pending.kind === 'idle' || d.pending.kind === 'battle' ? null : s.source,
     }))
   }
 
   return {
     status: 'off', busy: false, load: null, replaying: 0, state: null, view: null, engine: null, init: null, error: null, unsupported: [],
-    prefs: readPrefs(), hint: null, tick: 0,
+    prefs: readPrefs(), hint: null, source: null, tick: 0,
 
     setClientFactory: (f) => {
       factory = f
@@ -144,6 +151,7 @@ export const useDuel = create<DuelStore>((set, get) => {
       } catch { /* storage non disponibile */ }
     },
     setHint: (hint) => set({ hint }),
+    setSource: (source) => set({ source }),
     clearError: () => set({ error: null, status: get().state ? 'running' : 'off' }),
 
     start: (req, replay) =>
@@ -212,7 +220,7 @@ export function resetDuelForTests() {
   client = null
   factory = null
   chain = Promise.resolve()
-  useDuel.setState({ status: 'off', busy: false, load: null, replaying: 0, state: null, view: null, engine: null, init: null, error: null, unsupported: [], hint: null, tick: 0 })
+  useDuel.setState({ status: 'off', busy: false, load: null, replaying: 0, state: null, view: null, engine: null, init: null, error: null, unsupported: [], hint: null, source: null, tick: 0 })
 }
 
 // solo sviluppo/test: permette ai test di leggere lo stato del duello

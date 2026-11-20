@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 const executablePath = process.env.PW_CHROMIUM_PATH ?? process.env.CHROME_BIN
 export default defineConfig({
   testDir: 'tests/e2e',
-  testMatch: /ui-states\.spec\.ts/,
+  testMatch: new RegExp(process.env.VISIVO_MATCH ?? "ui-states\\.spec\\.ts"),
   outputDir: 'test-results/visivo-out',
   fullyParallel: true,
   workers: 2,

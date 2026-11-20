@@ -100,6 +100,7 @@ export function ComboEditor({ comboId }: { comboId: string }) {
   const cursor = useEditor((s) => s.cursor)
   const mode = useEditor((s) => s.mode)
   const rev = useEditor((s) => s.rev)
+  const handAsk = useEditor((s) => s.handAsk)
   const canUndoManual = useEditor((s) => s.past.length > 0)
   const canRedoManual = useEditor((s) => s.future.length > 0)
   const auto = isAutoDoc(doc)
@@ -450,6 +451,20 @@ export function ComboEditor({ comboId }: { comboId: string }) {
       </header>
 
       {readOnly ? <Banner tone="warn" title={t('combos.readOnly')}>{t('combos.readOnlyBody')}</Banner> : null}
+      {handAsk && !auto ? (
+        <div role="group" aria-label={t('combos.hand.askHint')} className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border border-accent-text/60 bg-surface-1 p-2" data-testid="hand-ask">
+          <p className="min-w-0 flex-1 basis-48 text-[15px] font-medium">
+            {t('combos.hand.ask', { name: cards.nameOf(Object.values(handAsk.register ?? {})[0] ?? 0) })}
+          </p>
+          <button type="button" className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-accent px-3 text-[15px] font-medium text-accent-fg hover:bg-accent-hover" onClick={() => { store.resolveHandAsk('setup'); playSound('uiTap') }} data-testid="hand-ask-setup">
+            {t('combos.hand.askSetup')}
+          </button>
+          <button type="button" className="inline-flex min-h-11 cursor-pointer items-center rounded-md border border-line-strong bg-surface-2 px-3 text-[15px] font-medium hover:bg-surface-3" onClick={() => { store.resolveHandAsk('step'); playSound('uiTap') }} data-testid="hand-ask-step">
+            {t('combos.hand.askStep')}
+          </button>
+          <IconButton label={t('common.cancel')} icon={<X size={20} />} onClick={() => store.resolveHandAsk('cancel')} data-testid="hand-ask-cancel" />
+        </div>
+      ) : null}
       {auto ? <AutoNotices onManual={() => setAuto(false)} nameOf={cards.nameOf} /> : null}
       {auto && duelLive && !(inlinePanel && activeTab === 'steps') ? <AutoDock turn={timeline?.[cursor]} /> : null}
 

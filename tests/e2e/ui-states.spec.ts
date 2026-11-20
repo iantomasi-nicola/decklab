@@ -61,8 +61,8 @@ for (const [theme, lang] of combos) {
         await page.getByRole('button', { name: /Nuovo matchup|New matchup/ }).first().click()
         await shot('matchup-nuovo', w)
         await page.goto(`/mazzi/${seed.variantId}`)
-        await page.getByRole('button', { name: /Impostazioni|Settings|Modifica|Edit/ }).first().click().catch(() => {})
-        if (await page.getByRole('dialog').count()) await shot('variante', w)
+        await page.getByTestId('open-settings').click()
+        await shot('variante', w)
       }
       writeFileSync(`${OUT}/dlg-${theme}-${lang}.json`, JSON.stringify(found, null, 1))
       expect(found).toEqual({})

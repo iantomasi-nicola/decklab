@@ -144,6 +144,43 @@
   .cl-dim {
     opacity: 0.45;
   }
+  /* selezione sul campo: i non candidati si attenuano; i candidati hanno un anello con un respiro sobrio (solo opacity/transform) */
+  .cl-pickdim {
+    opacity: 0.38;
+    filter: saturate(0.6);
+  }
+  [data-pick='cand'] .cl-fit::after,
+  [data-pick='chosen'] .cl-fit::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border: 2px solid var(--ok);
+    border-radius: 9px;
+    pointer-events: none;
+  }
+  [data-pick='cand'] .cl-fit::after {
+    animation: cl-cand 1.5s ease-in-out infinite;
+  }
+  [data-pick='chosen'] .cl-fit::after {
+    border-width: 3px;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ok) 50%, transparent);
+  }
+  @keyframes cl-cand {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.03);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-pick='cand'] .cl-fit::after {
+      animation: none;
+    }
+  }
   .cl-label {
     position: absolute;
     inset: 0;

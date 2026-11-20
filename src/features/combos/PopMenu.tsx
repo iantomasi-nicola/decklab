@@ -13,7 +13,10 @@ export interface PopItem {
 }
 
 /** Menu al punto di rilascio / del clic destro. Frecce per scegliere, Invio per confermare, Esc o clic fuori per chiudere. */
-export function PopMenu({ x, y, items, title, onClose }: { x: number; y: number; items: PopItem[]; title?: string; onClose: () => void }) {
+export interface PopAnchor { left: number; right: number; top: number; bottom: number }
+
+/** Con `anchor` (rettangolo della carta) il menu sta attaccato alla carta: sotto se c'è posto, altrimenti sopra; non la copre mai. */
+export function PopMenu({ x, y, items, title, onClose, anchor }: { x: number; y: number; items: PopItem[]; title?: string; onClose: () => void; anchor?: PopAnchor | undefined }) {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState({ left: x, top: y })
 
@@ -22,10 +25,17 @@ export function PopMenu({ x, y, items, title, onClose }: { x: number; y: number;
     if (!el) return
     const r = el.getBoundingClientRect()
     const m = 8
-    setPos({
-      left: Math.max(m, Math.min(x - r.width / 2, window.innerWidth - r.width - m)),
-      top: Math.max(m, Math.min(y + 8, window.innerHeight - r.height - m)),
-    })
+    if (anchor) {
+      const cx = (anchor.left + anchor.right) / 2
+      const below = anchor.bottom + 6
+      const top = below + r.height <= window.innerHeight - m ? below : anchor.top - r.height - 6
+      setPos({ left: Math.max(m, Math.min(cx - r.width / 2, window.innerWidth - r.width - m)), top: Math.max(m, top) })
+    } else {
+      setPos({
+        left: Math.max(m, Math.min(x - r.width / 2, window.innerWidth - r.width - m)),
+        top: Math.max(m, Math.min(y + 8, window.innerHeight - r.height - m)),
+      })
+    }
     el.querySelector<HTMLElement>('[role=menuitem]:not([disabled])')?.focus()
   }, [x, y, items.length])
 
