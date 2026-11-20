@@ -73,8 +73,8 @@ test.describe('archetipi', () => {
     await page.goto(`/archetipi/${s.archetypeId}`)
     await expect(page.getByTestId('archetype-title')).toHaveText('Drago Bianco')
 
-    await page.getByTestId('name-en').fill('Blue-Eyes Deck')
-    await page.getByTestId('name-en').blur()
+    await page.getByTestId('name').fill('Blue-Eyes Deck')
+    await page.getByTestId('name').blur()
     await page.getByTestId('notes').fill('Nuovo piano di gioco')
     await page.getByTestId('notes').blur()
 
@@ -110,7 +110,7 @@ test.describe('archetipi', () => {
 
     await page.goto(`/archetipi/${s.archetypeId}`)
     await page.reload()
-    await expect(page.getByTestId('name-en')).toHaveValue('Blue-Eyes Deck')
+    await expect(page.getByTestId('name')).toHaveValue('Blue-Eyes Deck')
     await expect(page.getByTestId('notes')).toHaveValue('Nuovo piano di gioco')
     await expect(page.getByTestId('role-extenders').getByTestId('role-card')).toHaveCount(1)
   })

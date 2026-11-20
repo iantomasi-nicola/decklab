@@ -82,6 +82,20 @@ export function localized(value: Localized | undefined, lang: Lang, fallback = '
   return value[lang] ?? value.en ?? value.it ?? fallback
 }
 
+/**
+ * Scrittura di un testo a campo unico: sostituisce la chiave che la lettura mostra
+ * (lingua corrente, poi en, poi it); se il testo e' vuoto la chiave viene tolta.
+ * Le altre lingue gia' presenti restano intatte (nessuna perdita di dati).
+ */
+export function setLocalized(old: Localized | undefined, lang: Lang, text: string): Localized {
+  const key: Lang = old?.[lang] !== undefined ? lang : old?.en !== undefined ? 'en' : old?.it !== undefined ? 'it' : lang
+  const next: Localized = { ...(old ?? {}) }
+  const v = text.trim()
+  if (v) next[key] = v
+  else delete next[key]
+  return next
+}
+
 /** Hook: restituisce una funzione `(value) => string` legata alla lingua corrente. */
 export function useLocalized() {
   const { i18n: inst } = useTranslation()

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { localized, setLocalized } from '@/i18n'
 import type { Archetype } from '@/domain/types'
 import { repos } from '@/data/repo'
 import { Button } from '@/ui/Button'
@@ -15,31 +16,28 @@ interface Props {
   onDone?: (a: Archetype) => void
 }
 
-/** Crea o modifica un archetipo: nome IT/EN e tag. */
+/** Crea o modifica un archetipo: nome (campo unico) e tag. */
 export function ArchetypeDialog({ open, onOpenChange, archetype, onDone }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.resolvedLanguage === 'it' ? 'it' : 'en'
   const { tags, tagMap, setTags } = useTagMap()
-  const [nameIt, setNameIt] = useState('')
-  const [nameEn, setNameEn] = useState('')
+  const [nameText, setNameText] = useState('')
   const [tagIds, setTagIds] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     if (!open) return
-    setNameIt(archetype?.name.it ?? '')
-    setNameEn(archetype?.name.en ?? '')
+    setNameText(localized(archetype?.name, lang))
     setTagIds(archetype ? (tagMap[archetype.id] ?? []) : [])
     setBusy(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, archetype?.id])
 
-  const canSave = !busy && (nameIt.trim() !== '' || nameEn.trim() !== '')
+  const canSave = !busy && nameText.trim() !== ''
   const save = async () => {
     setBusy(true)
     try {
-      const it = nameIt.trim()
-      const en = nameEn.trim()
-      const name = { ...(it ? { it } : {}), ...(en ? { en } : {}) }
+      const name = setLocalized(archetype?.name, lang, nameText)
       const a = archetype
         ? await repos.archetypes.update(archetype.id, { name })
         : await repos.archetypes.create({ name, keyCards: [], starters: [], extenders: [] })
@@ -74,14 +72,9 @@ export function ArchetypeDialog({ open, onOpenChange, archetype, onDone }: Props
           if (canSave) void save()
         }}
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('archetypes.dialog.nameIt')} hint={t('archetypes.dialog.nameHint')}>
-            {({ id, describedBy }) => <Input id={id} aria-describedby={describedBy} value={nameIt} onChange={(e) => setNameIt(e.target.value)} placeholder={t('archetypes.dialog.namePlaceholder')} autoComplete="off" autoFocus />}
-          </Field>
-          <Field label={t('archetypes.dialog.nameEn')}>
-            {({ id }) => <Input id={id} value={nameEn} onChange={(e) => setNameEn(e.target.value)} autoComplete="off" />}
-          </Field>
-        </div>
+        <Field label={t('archetypes.dialog.name')} hint={t('archetypes.dialog.nameHint')}>
+          {({ id, describedBy }) => <Input id={id} aria-describedby={describedBy} value={nameText} onChange={(e) => setNameText(e.target.value)} placeholder={t('archetypes.dialog.namePlaceholder')} autoComplete="off" autoFocus />}
+        </Field>
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-fg">{t('archetypes.tags')}</span>
           <TagPicker tags={tags} value={tagIds} onChange={setTagIds} />

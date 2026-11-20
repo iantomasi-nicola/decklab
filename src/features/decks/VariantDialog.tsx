@@ -6,7 +6,7 @@ import { Button } from '@/ui/Button'
 import { Dialog } from '@/ui/Dialog'
 import { Field, Input } from '@/ui/Input'
 import { Segmented } from '@/ui/Segmented'
-import { localized } from '@/i18n'
+import { localized, setLocalized } from '@/i18n'
 import { BanlistSelect } from './BanlistSelect'
 import { defaultBanlistRef, latestBanlist, useCards, type BanlistRef } from './cardData'
 import { NativeSelect } from './fields'
@@ -33,8 +33,7 @@ export function VariantDialog({ open, onOpenChange, mode, variant, archetypeId, 
   const lang = i18n.resolvedLanguage === 'it' ? 'it' : 'en'
   const cards = useCards()
   const banlists = cards.status === 'ready' ? cards.banlists : []
-  const [nameIt, setNameIt] = useState('')
-  const [nameEn, setNameEn] = useState('')
+  const [nameText, setNameText] = useState('')
   const [rules, setRules] = useState<Rules>('TCG')
   const [ban, setBan] = useState<BanlistRef>({ format: 'TCG', id: '' })
   const [arch, setArch] = useState('')
@@ -46,13 +45,11 @@ export function VariantDialog({ open, onOpenChange, mode, variant, archetypeId, 
     if (!open) return
     setBusy(false)
     if (mode === 'edit' && variant) {
-      setNameIt(variant.name.it ?? '')
-      setNameEn(variant.name.en ?? '')
+      setNameText(localized(variant.name, lang))
       setRules(variant.rules)
       setBan(variant.banlist)
     } else {
-      setNameIt(defaultName ?? '')
-      setNameEn(defaultName ?? '')
+      setNameText(defaultName ?? '')
       setRules('TCG')
       setBan({ format: 'TCG', id: '' })
     }
@@ -83,8 +80,8 @@ export function VariantDialog({ open, onOpenChange, mode, variant, archetypeId, 
     setBusy(true)
     try {
       const fallback = t('decks.defaultVariantName')
-      const name = { it: nameIt.trim() || undefined, en: nameEn.trim() || undefined }
-      const cleaned = name.it || name.en ? { ...(name.it ? { it: name.it } : {}), ...(name.en ? { en: name.en } : {}) } : { it: fallback, en: fallback }
+      const typed = nameText.trim()
+      const cleaned = typed ? setLocalized(mode === 'edit' ? variant?.name : undefined, lang, typed) : { it: fallback, en: fallback }
       let result: Variant
       if (mode === 'edit' && variant) {
         result = await repos.variants.update(variant.id, { name: cleaned, rules, banlist: ban })
@@ -148,14 +145,9 @@ export function VariantDialog({ open, onOpenChange, mode, variant, archetypeId, 
             ) : null}
           </>
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={t('decks.variantDialog.nameIt')}>
-            {({ id }) => <Input id={id} value={nameIt} onChange={(e) => setNameIt(e.target.value)} placeholder={t('decks.variantDialog.namePlaceholder')} autoComplete="off" />}
-          </Field>
-          <Field label={t('decks.variantDialog.nameEn')}>
-            {({ id }) => <Input id={id} value={nameEn} onChange={(e) => setNameEn(e.target.value)} autoComplete="off" />}
-          </Field>
-        </div>
+        <Field label={t('decks.variantDialog.name')}>
+          {({ id }) => <Input id={id} value={nameText} onChange={(e) => setNameText(e.target.value)} placeholder={t('decks.variantDialog.namePlaceholder')} autoComplete="off" />}
+        </Field>
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium text-fg">{t('decks.variantDialog.rules')}</span>
           <Segmented<Rules>

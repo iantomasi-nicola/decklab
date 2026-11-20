@@ -13,7 +13,7 @@ import Copy from 'lucide-react/icons/copy'
 import Trash2 from 'lucide-react/icons/trash-2'
 import type { Archetype, DeckLists, Lang } from '@/domain/types'
 import { repos } from '@/data/repo'
-import { localized } from '@/i18n'
+import { localized, setLocalized } from '@/i18n'
 import { Badge } from '@/ui/Badge'
 import { Button } from '@/ui/Button'
 import { cn } from '@/ui/cn'
@@ -22,7 +22,6 @@ import { EmptyState } from '@/ui/EmptyState'
 import { Field, Input } from '@/ui/Input'
 import { IconButton } from '@/ui/IconButton'
 import { Menu } from '@/ui/Menu'
-import { Segmented } from '@/ui/Segmented'
 import { Skeleton } from '@/ui/Skeleton'
 import { toast } from '@/ui/Toast'
 import { cardName, useCards } from '@/features/decks/cardData'
@@ -117,13 +116,12 @@ function Detail({ archetype }: { archetype: Archetype }) {
   const variants = useObservable(() => repos.variants.watchByArchetype(archetype.id), [archetype.id])
   const { favorites, toggle } = useFavorites()
   const { tagMap, tags } = useTagMap()
-  const [notesLang, setNotesLang] = useState<Lang>(lang)
-  const [notesDraft, setNotesDraft] = useState(archetype.notes?.[notesLang] ?? '')
+  const [notesDraft, setNotesDraft] = useState(localized(archetype.notes, lang))
   const [edit, setEdit] = useState(false)
   const [newVariant, setNewVariant] = useState<{ open: boolean; deck?: DeckLists; name?: string }>({ open: false })
   const [importOpen, setImportOpen] = useState(false)
 
-  useEffect(() => setNotesDraft(archetype.notes?.[notesLang] ?? ''), [archetype.notes, notesLang])
+  useEffect(() => setNotesDraft(localized(archetype.notes, lang)), [archetype.notes, lang])
 
   const name = localized(archetype.name, lang, t('archetypes.untitled'))
   const fav = favorites.includes(archetype.id)
@@ -132,9 +130,8 @@ function Detail({ archetype }: { archetype: Archetype }) {
   const sorted = useMemo(() => [...list].sort((a, b) => localized(a.name, lang).localeCompare(localized(b.name, lang), lang)), [list, lang])
 
   const saveNotes = () => {
-    const cur = archetype.notes?.[notesLang] ?? ''
-    if (notesDraft === cur) return
-    void repos.archetypes.update(archetype.id, { notes: { ...archetype.notes, [notesLang]: notesDraft } })
+    if (notesDraft === localized(archetype.notes, lang)) return
+    void repos.archetypes.update(archetype.id, { notes: setLocalized(archetype.notes, lang, notesDraft) })
   }
 
   return (
@@ -197,17 +194,11 @@ function Detail({ archetype }: { archetype: Archetype }) {
         <h2 id="sec-details" className="text-xl font-semibold">
           {t('archetypes.details')}
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SavedInput label={t('archetypes.dialog.nameIt')} value={archetype.name.it ?? ''} testId="name-it" onSave={(v) => void repos.archetypes.update(archetype.id, { name: { ...archetype.name, ...(v ? { it: v } : { it: undefined }) } })} />
-          <SavedInput label={t('archetypes.dialog.nameEn')} value={archetype.name.en ?? ''} testId="name-en" onSave={(v) => void repos.archetypes.update(archetype.id, { name: { ...archetype.name, ...(v ? { en: v } : { en: undefined }) } })} />
-        </div>
+        <SavedInput label={t('archetypes.dialog.name')} value={localized(archetype.name, lang)} testId="name" onSave={(v) => void repos.archetypes.update(archetype.id, { name: setLocalized(archetype.name, lang, v) })} />
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label htmlFor="notes" className="text-sm font-medium text-fg">
-              {t('archetypes.notes')}
-            </label>
-            <Segmented<Lang> label={t('archetypes.notesLang')} value={notesLang} onValueChange={setNotesLang} options={[{ value: 'it', label: 'IT' }, { value: 'en', label: 'EN' }]} />
-          </div>
+          <label htmlFor="notes" className="text-sm font-medium text-fg">
+            {t('archetypes.notes')}
+          </label>
           <Textarea id="notes" data-testid="notes" rows={6} value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} onBlur={saveNotes} placeholder={t('archetypes.notesPlaceholder')} />
           <p className="text-sm text-muted">{t('archetypes.notesHint')}</p>
         </div>
