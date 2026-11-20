@@ -326,3 +326,100 @@ export function deriveDoc(mother: ComboDoc, stepIndex: number, inclusive: boolea
   if (mother.x) doc.x = { ...structuredClone(mother.x), ...(mother.x.tokens ? { tokens } : {}) }
   return finalizeDoc(doc, o.now)
 }
+
+// ------------------------------------------------------------------ mano di partenza
+// Unica fonte di verità: `setup.hand` ({ required, size, fill }). "Esatta" = fill none; "mista" = necessarie + completamento
+// casuale; "a caso" = nessuna carta necessaria + completamento casuale. Lo stesso modello vale per Setup, Avvia e creazione.
+
+export type HandMode = 'exact' | 'mixed' | 'random'
+export const MAX_HAND = 10
+
+export const handModeOf = (h: ComboDoc['setup']['hand']): HandMode => (h.fill === 'none' ? 'exact' : h.required.length > 0 ? 'mixed' : 'random')
+
+/** Passcode delle carte necessarie in mano, nell'ordine. */
+export const handCodes = (doc: ComboDoc): number[] => doc.setup.hand.required.flatMap((u) => (doc.cards[u] !== undefined ? [doc.cards[u]!] : []))
+
+/** Quante carte avrà davvero la mano iniziale (prima di un eventuale mazzo troppo corto). */
+export const handTotal = (h: ComboDoc['setup']['hand']): number => (h.fill === 'none' ? h.required.length : Math.max(h.size, h.required.length))
+
+/** Uid citati dai passi della linea principale e dei rami: non si possono togliere dalla mano iniziale. */
+function stepUids(doc: ComboDoc): Set<Uid> {
+  const s = new Set<Uid>()
+  for (const st of [...doc.steps, ...doc.branches.flatMap((b) => b.steps)]) for (const u of uidsOfStep(st)) s.add(u)
+  return s
+}
+
+/**
+ * Imposta la mano di partenza. Gli uid già esistenti con lo stesso passcode vengono riusati (i passi restano validi);
+ * le carte tolte che i passi usano ancora NON si tolgono e sono ritornate in `blocked` (mai una perdita silenziosa).
+ */
+export function setHand(doc: ComboDoc, o: { codes: readonly number[]; mode: HandMode; size?: number }): { doc: ComboDoc; blocked: Uid[] } {
+  const hand = doc.setup.hand
+  const codes = o.mode === 'random' ? [] : o.codes.slice(0, MAX_HAND)
+  const pool = new Map<number, Uid[]>()
+  const orphan: Uid[] = []
+  for (const u of hand.required) {
+    const c = doc.cards[u]
+    if (c === undefined) orphan.push(u)
+    else pool.set(c, [...(pool.get(c) ?? []), u])
+  }
+  const required: Uid[] = []
+  const register: Record<Uid, number> = {}
+  const reserved: Uid[] = []
+  for (const c of codes) {
+    const reuse = pool.get(c)?.shift()
+    if (reuse) required.push(reuse)
+    else {
+      const u = nextUid(doc, 0, reserved)
+      reserved.push(u)
+      register[u] = c
+      required.push(u)
+    }
+  }
+  const leftover = [...[...pool.values()].flat(), ...orphan]
+  const used = stepUids(doc)
+  const blocked = leftover.filter((u) => used.has(u))
+  const dropped = leftover.filter((u) => !used.has(u))
+  const elsewhere = new Set<Uid>([...(doc.setup.own?.places ?? []).map((p) => p.uid), ...(doc.setup.opponent?.board?.places ?? []).map((p) => p.uid), ...(doc.setup.opponent?.interrupts ?? []).map((i) => i.uid)])
+  const cards = { ...doc.cards, ...register }
+  for (const u of dropped) if (!elsewhere.has(u)) delete cards[u]
+  const all = [...required, ...blocked]
+  const size = Math.min(MAX_HAND, Math.max(o.size ?? hand.size, all.length, 1))
+  return {
+    doc: { ...doc, cards, setup: { ...doc.setup, hand: { required: all, size, fill: o.mode === 'exact' ? 'none' : 'random' } } },
+    blocked,
+  }
+}
+
+export interface HandIssue {
+  code: 'notInDeck' | 'emptyExact' | 'unknownCard'
+  uid?: Uid
+  card?: number
+}
+
+/** Cose della mano che il motore non potrà rispettare: si mostrano PRIMA di avviare. */
+export function handIssues(doc: ComboDoc): HandIssue[] {
+  const out: HandIssue[] = []
+  const h = doc.setup.hand
+  const left = new Map<number, number>()
+  for (const c of doc.deck.main) left.set(c, (left.get(c) ?? 0) + 1)
+  for (const u of h.required) {
+    const c = doc.cards[u]
+    if (c === undefined) {
+      out.push({ code: 'unknownCard', uid: u })
+      continue
+    }
+    const n = left.get(c) ?? 0
+    if (n <= 0) out.push({ code: 'notInDeck', uid: u, card: c })
+    else left.set(c, n - 1)
+  }
+  if (h.fill === 'none' && h.required.length === 0) out.push({ code: 'emptyExact' })
+  return out
+}
+
+/** Una bozza che porta una carta NUOVA (da Deck o aggiunta) nella mano del giocatore: è una carta di setup, non un effetto. */
+export function isOwnHandAdd(d: Draft): boolean {
+  const reg = d.register
+  if (!reg || d.tokens?.length) return false
+  return d.step.moves.some((m) => m.to.loc === 'hand' && (m.to.p ?? 0) === 0 && reg[m.uid] !== undefined)
+}

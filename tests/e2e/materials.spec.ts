@@ -62,11 +62,20 @@ test('REPRO Link: Extra -> materiali', async ({ page }) => {
     const A = await import(/* @vite-ignore */ '/src/engine/answers.ts')
     const D = (window as any).__duel
     const out: unknown[] = []
+    const show = (tag: string) => { const p = D.getState().state.pending; out.push({ tag, kind: p?.kind, min: p?.min, max: p?.max, canFinish: p?.canFinish, sel: p?.selectable?.map((x: any) => x.uid), selected: p?.selected?.map((x: any) => x.uid), avail: p?.available?.map((x: any) => x.loc + x.seq) }) }
     for (const index of [0, 1]) {
-      await D.getState().respond(A.answerIdle('specialSummon', index))
+      const idx = D.getState().state.pending.specialSummons[index].index
+      await D.getState().respond(A.answerIdle('specialSummon', idx))
+      show('c' + index + ' first')
       const p = D.getState().state.pending
-      out.push({ index, kind: p.kind, min: p.min, max: p.max, canFinish: p.canFinish, canCancel: p.canCancel, sel: p.selectable?.map((x: any) => x.uid), opts: p.options?.map((x: any) => x.uid), selected: p.selected?.map((x: any) => x.uid) })
-      await D.getState().undo()
+      await D.getState().respond(A.answerUnselect(p.selectable[0].index))
+      show('after1')
+      let q = D.getState().state.pending
+      if (q.kind === 'unselect') { await D.getState().respond(A.answerUnselect(q.selectable[0].index)); show('after2') }
+      q = D.getState().state.pending
+      if (q.kind === 'unselect' && q.canFinish) { await D.getState().respond(A.answerUnselect(null)); show('finish') }
+      await D.getState().undo(); await D.getState().undo(); await D.getState().undo()
+      show('undone')
     }
     return out
   })

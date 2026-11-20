@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { ComboDoc, Step, Uid } from '@/domain/combo/types'
-import { addStep, applySetupDraft, moveStep, patchStep, removeCard, removeStep, toggleGroup, type Draft } from './model'
+import { addStep, applySetupDraft, isOwnHandAdd, moveStep, patchStep, removeCard, removeStep, setHand, toggleGroup, type Draft, type HandMode } from './model'
 
 export type EditorMode = 'setup' | 'steps'
 
@@ -11,6 +11,8 @@ interface EditorStore {
   recordId: string | null
   cursor: number
   mode: EditorMode
+  /** carta messa in mano dopo che esistono già passi: l'utente sceglie "mano iniziale" o "come passo" */
+  handAsk: Draft | null
   past: Snap[]
   future: Snap[]
   /** cresce a ogni modifica al documento (serve all'autosalvataggio) */
@@ -23,6 +25,10 @@ interface EditorStore {
   edit: (fn: (doc: ComboDoc, cursor: number) => { doc: ComboDoc; cursor?: number } | null) => boolean
   /** Un rilascio/azione sul campo: nel manuale crea un passo, nella configurazione modifica lo stato iniziale. */
   apply: (d: Draft) => string | null
+  /** Risposta alla scelta di `handAsk`. */
+  resolveHandAsk: (choice: 'setup' | 'step' | 'cancel') => string | null
+  /** Mano di partenza (unica via per Setup, Avvia e creazione): ritorna gli uid che i passi usano ancora e che non si sono potuti togliere. */
+  setHand: (o: { codes: readonly number[]; mode: HandMode; size?: number }) => string[]
   /** Aggiornamento silenzioso (modalità automatica): niente cronologia, cursore alla fine; l'annulla è quello del motore. */
   sync: (fn: (doc: ComboDoc) => ComboDoc) => void
   patchStep: (id: string, patch: Partial<Step>) => void
@@ -47,11 +53,12 @@ export const useEditor = create<EditorStore>((set, get) => {
     recordId: null,
     cursor: 0,
     mode: 'steps',
+    handAsk: null,
     past: [],
     future: [],
     rev: 0,
-    open: (doc, recordId) => set({ doc, recordId, cursor: doc.steps.length, mode: 'steps', past: [], future: [], rev: 0 }),
-    close: () => set({ doc: null, recordId: null, past: [], future: [] }),
+    open: (doc, recordId) => set({ doc, recordId, cursor: doc.steps.length, mode: 'steps', handAsk: null, past: [], future: [], rev: 0 }),
+    close: () => set({ doc: null, recordId: null, handAsk: null, past: [], future: [] }),
     setMode: (mode) => set({ mode }),
     setCursor: (n) => {
       const d = get().doc
@@ -72,9 +79,38 @@ export const useEditor = create<EditorStore>((set, get) => {
         commit(applySetupDraft(doc, d), cursor)
         return null
       }
+      // una carta messa in mano PRIMA del primo passo è una carta di setup (mai persa passando ad Automatica/Avvia);
+      // con passi già presenti si chiede dove metterla
+      if (isOwnHandAdd(d)) {
+        if (doc.steps.length === 0) {
+          commit(applySetupDraft(doc, d), cursor)
+          return null
+        }
+        set({ handAsk: d })
+        return null
+      }
       const r = addStep(doc, cursor, d)
       commit(r.doc, r.cursor)
       return r.stepId
+    },
+    resolveHandAsk: (choice) => {
+      const { doc, cursor, handAsk } = get()
+      set({ handAsk: null })
+      if (!doc || !handAsk || choice === 'cancel') return null
+      if (choice === 'setup') {
+        commit(applySetupDraft(doc, handAsk), cursor)
+        return null
+      }
+      const r = addStep(doc, cursor, handAsk)
+      commit(r.doc, r.cursor)
+      return r.stepId
+    },
+    setHand: (o) => {
+      const { doc, cursor } = get()
+      if (!doc) return []
+      const r = setHand(doc, o)
+      if (r.doc !== doc) commit(r.doc, cursor)
+      return r.blocked
     },
     sync: (fn) => {
       const s = get()
