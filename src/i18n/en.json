@@ -195,7 +195,14 @@
       "scope": "Link to",
       "general": "General (whole archetype)",
       "scopeHint": "A variant combo uses that variant's deck; a general one starts without a deck.",
-      "create": "Create and open"
+      "create": "Create and open",
+      "hand": "Opening hand",
+      "handHint": "Optional: you can also decide it later, in the Setup tab.",
+      "handChoose": "Pick cards",
+      "handSummaryRandom": "Random",
+      "handPickVariant": "Pick a variant with a deck to choose the opening hand.",
+      "handPicked_one": "{{count}} card picked",
+      "handPicked_other": "{{count}} cards picked"
     },
     "derived": "Variant created from the chosen step",
     "tab": {
@@ -534,6 +541,51 @@
       "playable": "Playable",
       "missing_one": "1 card missing",
       "missing_other": "{{count}} cards missing"
+    },
+    "hand": {
+      "title": "Opening hand",
+      "mode": "How the hand is built",
+      "exact": "Exact",
+      "mixed": "Mixed",
+      "random": "Random",
+      "desc": {
+        "exact": "Start with exactly the cards you pick, nothing else.",
+        "mixed": "Start with the cards you pick and fill the rest of the hand at random.",
+        "random": "The whole hand is drawn at random from the deck."
+      },
+      "slots": "Cards in hand",
+      "remove": "Remove {{name}} from the hand",
+      "drawn": "Random: {{name}}",
+      "randomSlot": "Random card",
+      "empty": "Tap the deck cards below to put them in your hand.",
+      "size": "Cards in hand",
+      "clear": "Clear",
+      "reshuffle": "Reshuffle",
+      "sum": {
+        "exact_one": "Exact hand: {{count}} card, none at random.",
+        "exact_other": "Exact hand: {{count}} cards, none at random.",
+        "mixed": "{{n}} picked + {{f}} random = {{size}} cards.",
+        "random": "{{size}} random cards."
+      },
+      "pick": "Pick cards from the deck",
+      "filter": "Search the deck",
+      "full": "Hand is full: remove a card or raise the hand size.",
+      "tile": "{{name}}: {{n}} of {{max}} in hand",
+      "noDeck": "The deck is empty: pick a variant with a deck to choose the hand.",
+      "issue": {
+        "notInDeck": "{{name}} is not in the deck in enough copies: the duel cannot start.",
+        "emptyExact": "The hand is empty: pick at least one card or switch to “Mixed”.",
+        "unknownCard": "A card in the hand is no longer known: remove it from the hand."
+      },
+      "blocked": "{{name}} is used by the steps: it stays in the opening hand.",
+      "ask": "Add “{{name}}” to the hand?",
+      "askSetup": "Opening hand",
+      "askStep": "As a step",
+      "askHint": "In the opening hand it is there from the start; as a step it is a search during the combo.",
+      "addedSetup": "“{{name}}” is in the opening hand.",
+      "deckAdded": "“{{name}}” was not in the deck: I added it to the combo deck.",
+      "previewNote": "Preview with the current shuffle: dashed cards are the random ones.",
+      "previewError": "Preview not available with this deck."
     }
   },
   "learn": {

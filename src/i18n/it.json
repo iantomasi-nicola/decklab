@@ -195,7 +195,14 @@
       "scope": "Collega a",
       "general": "Generale (tutto l'archetipo)",
       "scopeHint": "Una combo di variante usa il mazzo di quella variante; una generale parte senza mazzo.",
-      "create": "Crea e apri"
+      "create": "Crea e apri",
+      "hand": "Mano di partenza",
+      "handHint": "Facoltativa: puoi deciderla anche dopo, dalla scheda Configurazione.",
+      "handChoose": "Scegli le carte",
+      "handSummaryRandom": "A caso",
+      "handPickVariant": "Scegli una variante con un mazzo per decidere la mano di partenza.",
+      "handPicked_one": "{{count}} carta scelta",
+      "handPicked_other": "{{count}} carte scelte"
     },
     "derived": "Variante creata dal passo scelto",
     "tab": {
@@ -534,6 +541,51 @@
       "playable": "Giocabile",
       "missing_one": "Manca 1 carta",
       "missing_other": "Mancano {{count}} carte"
+    },
+    "hand": {
+      "title": "Mano di partenza",
+      "mode": "Come si forma la mano",
+      "exact": "Esatta",
+      "mixed": "Mista",
+      "random": "A caso",
+      "desc": {
+        "exact": "Parti con esattamente le carte che scegli, senza altre.",
+        "mixed": "Parti con le carte che scegli e il resto della mano a caso.",
+        "random": "Tutta la mano è pescata a caso dal mazzo."
+      },
+      "slots": "Carte in mano",
+      "remove": "Togli {{name}} dalla mano",
+      "drawn": "A caso: {{name}}",
+      "randomSlot": "Carta a caso",
+      "empty": "Tocca le carte del mazzo qui sotto per metterle in mano.",
+      "size": "Carte in mano",
+      "clear": "Svuota",
+      "reshuffle": "Rimescola",
+      "sum": {
+        "exact_one": "Mano esatta: {{count}} carta, nessuna a caso.",
+        "exact_other": "Mano esatta: {{count}} carte, nessuna a caso.",
+        "mixed": "{{n}} scelte + {{f}} a caso = {{size}} carte.",
+        "random": "{{size}} carte a caso."
+      },
+      "pick": "Scegli le carte dal mazzo",
+      "filter": "Cerca nel mazzo",
+      "full": "Mano piena: togli una carta o aumenta le carte in mano.",
+      "tile": "{{name}}: {{n}} di {{max}} in mano",
+      "noDeck": "Il mazzo è vuoto: scegli una variante con un mazzo per decidere la mano.",
+      "issue": {
+        "notInDeck": "{{name}} non è nel mazzo in numero sufficiente: il duello non può partire.",
+        "emptyExact": "La mano è vuota: scegli almeno una carta o passa a «Mista».",
+        "unknownCard": "Una carta della mano non è più nota: toglila dalla mano."
+      },
+      "blocked": "{{name}} è usata nei passi: resta nella mano iniziale.",
+      "ask": "Aggiungere «{{name}}» alla mano?",
+      "askSetup": "Mano iniziale",
+      "askStep": "Come passo",
+      "askHint": "Nella mano iniziale c’è già all’avvio; come passo è una ricerca durante la combo.",
+      "addedSetup": "«{{name}}» è nella mano iniziale.",
+      "deckAdded": "«{{name}}» non era nel mazzo: l’ho aggiunta al mazzo della combo.",
+      "previewNote": "Anteprima con il mescolamento attuale: le carte tratteggiate sono quelle a caso.",
+      "previewError": "Anteprima non disponibile con questo mazzo."
     }
   },
   "learn": {

@@ -19,14 +19,14 @@ Obiettivo (utente, 2026-11-20): stesso livello di usabilità di Master Duel per 
 **Fasi**: pulsante fase in un angolo (Draw → Main1 → Battle → Main2 → End) con un solo tocco per passare alla successiva, menu per saltare; indicatore "Normal Summon fatta", effetti OPT usati.
 **Info carta**: pressione lunga ovunque → scheda con arte, testo e stato; mai a tutto schermo.
 **Log duello**: pulsante con cronologia azioni/catene (apre un pannello laterale/vassoio piccolo).
-**Animazioni**: evocazione (normale/speciale/synchro/xyz/link con effetto distinto), attivazione, negazione, distruzione, Cimitero/Bandite, pesca, cambio posizione, attacco, danno LP; velocità regolabile (×1, ×2, salta) e rispetto di "riduci movimento".
+**Animazioni (solo funzionali, NIENTE effetto cinematografico — richiesta dell'utente)**: brevi e sobrie, che servono a capire cosa è successo: spostamento della carta nella zona, comparsa/scomparsa, evidenza dell'anello di catena, evidenza della carta negata/distrutta, cambio posizione, variazione LP. Nessuna sequenza scenografica per evocazioni o attacchi. Velocità regolabile (×1, ×2, salta) e rispetto di "riduci movimento".
 **Suoni**: già presenti (src/features/sound): collegarli a ogni evento.
 **Gesture**: tocco = seleziona/azione principale; doppio tocco = azione principale rapida; pressione lunga = info; trascinamento = sposta/evoca; pizzica = zoom campo; due dita = annulla/ripeti.
 **Impostazioni**: velocità animazioni, conferme (zona unica auto, materiali auto, catena), haptic, suoni.
 
 ## Fasi di lavoro
 - **M1 Flusso** (priorità): menu a fumetto sulla mano, scelta zona, vassoio Extra, materiali sul campo con contatori, avvisi di catena compatti, fase con un tocco, info carta a pressione lunga, mano di partenza guidata.
-- **M2 Feedback**: animazioni per tipo di evocazione e catena, alone e badge delle azioni disponibili, frecce bersagli, log duello, suoni/haptic su ogni evento.
+- **M2 Feedback**: animazioni funzionali di spostamento e catena (senza effetti cinematografici), alone e badge delle azioni disponibili, frecce bersagli, log duello, suoni/haptic su ogni evento.
 - **M3 Rifinitura**: gesture avanzate, impostazioni, test di usabilità con l'utente su telefono, ottimizzazione prestazioni.
 
 ## Come si misura "livello Master Duel"
