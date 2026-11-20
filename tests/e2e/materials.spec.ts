@@ -35,7 +35,8 @@ test('REPRO Link: Extra -> materiali', async ({ page }) => {
   const main = [...times('Gagaga Magician', 3), ...times('Wind-Up Soldier', 3), ...times('Elemental HERO Stratos', 2), ...FILL]
   const extra = [code('Knightmare Phoenix'), code('Decode Talker'), code('Link Spider')]
   const id = await seedCombo(page, {
-    cards: { u1: code('Gagaga Magician'), u2: code('Wind-Up Soldier'), u3: code('Elemental HERO Stratos') },
+    hand: ['h1'],
+    cards: { h1: code('Pot of Desires'), u1: code('Gagaga Magician'), u2: code('Wind-Up Soldier'), u3: code('Elemental HERO Stratos') },
     own: [
       { uid: 'u1', place: { loc: 'mzone', seq: 1, pos: 'FACEUP_ATK' } },
       { uid: 'u2', place: { loc: 'mzone', seq: 2, pos: 'FACEUP_ATK' } },
@@ -48,14 +49,26 @@ test('REPRO Link: Extra -> materiali', async ({ page }) => {
   await openCombo(page, id, 'it')
   await page.getByTestId('mode-auto').click()
   await page.getByTestId('start-panel').waitFor()
-  await page.getByRole('radio', { name: 'A caso' }).click()
   await page.getByTestId('start-duel').click()
   await page.getByTestId('auto-board').waitFor({ timeout: 60_000 })
   await page.waitForTimeout(800)
   await page.screenshot({ path: `test-results/materials/repro-${w}-0-start.png` })
-  // tocca l'Extra
+  // tocca l'Extra: fascia compatta sotto il campo
   await page.locator('[data-pile-drag="extra"]').first().click()
+  await page.getByTestId('pile-band').waitFor()
+  await page.waitForTimeout(400)
+  await page.screenshot({ path: `test-results/materials/new-${w}-1-extra.png` })
+  await page.locator('.fp-tile[data-state="cand"]').first().click()
+  await page.getByTestId('pile-band').waitFor({ state: 'detached' })
+  await page.getByTestId('pick-bar').waitFor()
   await page.waitForTimeout(500)
-  await page.screenshot({ path: `test-results/materials/repro-${w}-1-extra.png` })
-  console.log('pending after extra tap', await pending(page))
+  await page.screenshot({ path: `test-results/materials/new-${w}-2-materials.png` })
+  console.log('pending', await pending(page))
+  await page.locator('[data-card="u1"]').click()
+  await page.waitForTimeout(300)
+  await page.screenshot({ path: `test-results/materials/new-${w}-3-one.png` })
+  await page.locator('[data-card="u2"]').click()
+  await page.waitForTimeout(500)
+  console.log('pending', await pending(page))
+  await page.screenshot({ path: `test-results/materials/new-${w}-4-zone.png` })
 })

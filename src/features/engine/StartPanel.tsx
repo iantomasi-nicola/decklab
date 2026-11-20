@@ -161,7 +161,7 @@ export function StartPanel({ doc, onClose }: { doc: ComboDoc; onClose?: (() => v
         <button type="button" onClick={() => setSheet(true)} className="flex min-h-11 min-w-0 cursor-pointer flex-col items-start gap-1 rounded-md text-left" aria-label={t('start.edit')} data-testid="hand-edit">
           <span className="flex items-start gap-1.5" data-testid="hand-preview" aria-hidden>
             {previewCodes.map((c, i) => (
-              <span key={`${c}-${i}`} className={cn('relative block w-8 shrink-0 rounded-[5px] sm:w-9', i < required.length ? 'ring-2 ring-accent-text' : 'opacity-80 outline-dashed outline-2 -outline-offset-2 outline-line-strong')}>
+              <span key={`${c}-${i}`} data-code={c} className={cn('relative block w-8 shrink-0 rounded-[5px] sm:w-9', i < required.length ? 'ring-2 ring-accent-text' : 'opacity-80 outline-dashed outline-2 -outline-offset-2 outline-line-strong')}>
                 <CardFace code={c} name={nameOf(c)} />
               </span>
             ))}

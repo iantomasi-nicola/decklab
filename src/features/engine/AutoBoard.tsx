@@ -2,8 +2,11 @@
  * Campo della modalità automatica. Stesso Field del manuale, ma ogni azione è una risposta legale del core:
  * - presa di una carta → si evidenziano SOLO le zone che hanno un'azione legale (SELECT_IDLECMD/BATTLECMD);
  * - rilascio = risposta; più azioni sulla stessa zona → menu al punto di rilascio con le icone di gioco;
- * - zona/carta non legale → la zona non accetta e un avviso spiega il motivo;
- * - doppio tocco = attiva; tocco = selezione con barra delle azioni; pressione lunga/clic destro = menu.
+ * - zona/carta non legale → la zona non accetta e un avviso (toast) spiega il motivo;
+ * - tocco = menu delle azioni legali attaccato alla carta (come Master Duel) + zone evidenziate; doppio tocco = azione rapida;
+ *   pressione lunga = scheda carta compatta; clic destro = menu completo;
+ * - Extra/Cimitero/Bandite/Deck = fascia compatta in flusso sotto il campo, che si chiude alla scelta;
+ * - mai niente sopra il campo: barre e fasce stanno in flusso (il campo si ridimensiona) e le scelte si fanno sul campo.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, rectIntersection, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
@@ -14,9 +17,10 @@ import { usesOfCard, type TurnState } from '@/domain/combo/turn'
 import { CardFace } from '@/features/combos/CardFace'
 import { cardInfo } from '@/features/combos/cardKind'
 import { Field, type FieldView } from '@/features/combos/Field'
-import { PopMenu, type PopItem } from '@/features/combos/PopMenu'
+import { PopMenu, type PopAnchor, type PopItem } from '@/features/combos/PopMenu'
 import { useCards } from '@/features/combos/useCards'
 import { destKey, occupantAt, parseDest, type Dest, type PileLoc } from '@/features/combos/zones'
+import { CardInfoStrip, PickBand, PickBar, isPicking, pickClick, useFpT, usePickUi, type BandItem } from '@/features/fieldpick'
 import { playSound, type SoundName } from '@/features/sound'
 import { CardOptMarks } from '@/features/turn'
 import { toast } from '@/ui/Toast'
@@ -24,7 +28,6 @@ import { GameIcon } from '@/ui/gameIcons'
 import { useDuel } from './duelStore'
 import { refsOf } from './view'
 import { actionsAt, actionsForCard, destsForCard, legalActions, whyNot, type LegalAction, type LegalKind } from './legal'
-import { PileView } from './PileView'
 import { RequestHost } from './RequestHost'
 import { descLabel } from './requests/parts'
 import { useEngT } from './strings'
@@ -39,7 +42,7 @@ const SOUND: Record<LegalKind, SoundName> = {
   summon: 'summonNormal', specialSummon: 'summonSpecial', monsterSet: 'summonSet', spellSet: 'summonSet', activate: 'activate', posChange: 'positionChange', attack: 'attack', chain: 'activate',
 }
 
-interface Menu { x: number; y: number; title: string; items: PopItem[] }
+interface Menu { x: number; y: number; title: string; items: PopItem[]; anchor?: PopAnchor | undefined }
 
 export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mineOnly?: boolean }) {
   const { t } = useEngT()
@@ -54,7 +57,9 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   const [dragSize, setDragSize] = useState(60)
   const [menu, setMenu] = useState<Menu | null>(null)
   const [pile, setPile] = useState<{ p: 0 | 1; loc: PileLoc } | null>(null)
-  const [why, setWhy] = useState<string | null>(null)
+  // avvisi brevi come toast (mai un pannello sopra il campo)
+  const setWhy = useCallback((m: string | null) => { if (m) toast(m, { durationMs: 2800 }) }, [])
+  const [info, setInfo] = useState<number | null>(null)
   const [live, setLive] = useState('')
   const lastPointer = useRef({ x: 0, y: 0 })
   const longPress = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -70,7 +75,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   useEffect(() => {
     setSel(null)
     setMenu(null)
-    setWhy(null)
+    setInfo(null)
   }, [reqKey])
 
   const fieldView: FieldView | null = useMemo(
@@ -98,6 +103,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   }, [placeKeys, dragFresh, extraUids, active, legal])
 
   const nameOfUid = useCallback((uid: Uid) => cards.nameOf(registry?.[uid] ?? 0), [cards, registry])
+  const pickSpec = usePickUi((st) => st.spec)
 
   const actionLabel = useCallback(
     (a: LegalAction) => {
@@ -114,7 +120,10 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     async (a: LegalAction, hint?: { zone?: string; uid?: Uid }) => {
       setSel(null)
       setMenu(null)
+      setInfo(null)
+      setPile(null)
       setHint(hint ?? null)
+      useDuel.getState().setSource({ uid: a.uid, kind: a.kind })
       playSound(SOUND[a.kind])
       setLive(t('a11y.done', { action: t(a.labelKey), card: nameOfUid(a.uid) }))
       const ok = await respond(a.answer)
@@ -128,7 +137,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
 
   const menuItems = useCallback(
     (list: LegalAction[], hint?: { zone?: string; uid?: Uid }): PopItem[] =>
-      list.map((a) => ({ id: a.id, label: actionLabel(a), icon: <GameIcon name={a.icon} size={20} label={false} />, onSelect: () => void run(a, hint) })),
+      list.map((a) => ({ id: a.id, testId: `act-${a.kind}`, label: actionLabel(a), icon: <GameIcon name={a.icon} size={20} label={false} />, onSelect: () => void run(a, hint) })),
     [actionLabel, run],
   )
 
@@ -138,18 +147,46 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     return t(whyNot(pending, { owner: pl?.p ?? 0, loc: pl?.loc ?? 'hand', isMonster: info.kind === 'monster', normalUsed: !!turn?.normalSummonUsed }))
   }
 
+  const rectOf = (uid: Uid): PopAnchor | undefined => {
+    const r = document.querySelector(`[data-card="${CSS.escape(uid)}"]`)?.getBoundingClientRect()
+    return r ? { left: r.left, right: r.right, top: r.top, bottom: r.bottom } : undefined
+  }
+
+  /** Menu delle azioni legali attaccato alla carta (stile Master Duel): nessuna barra sopra il campo. */
+  const openActionMenu = useCallback(
+    (uid: Uid, list: LegalAction[], anchor?: PopAnchor) => {
+      const a = anchor ?? rectOf(uid)
+      setMenu({ x: a ? (a.left + a.right) / 2 : lastPointer.current.x, y: a ? a.bottom : lastPointer.current.y, title: nameOfUid(uid), items: menuItems(list), anchor: a })
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [menuItems, nameOfUid],
+  )
+
+  const showInfo = useCallback(
+    (code: number) => {
+      if (!code) return
+      setMenu(null)
+      setSel(null)
+      playSound('uiOpen')
+      setInfo(code)
+    },
+    [],
+  )
+
+  /** Clic destro / tasto Menu: azioni legali + scheda carta. */
   const openMenu = useCallback(
     (uid: Uid, x: number, y: number) => {
       const list = actionsForCard(legal, uid)
-      if (!list.length) {
-        setWhy(reasonFor(uid))
-        playSound('error')
-        return
-      }
-      setMenu({ x, y, title: t('act.title', { name: nameOfUid(uid) }), items: menuItems(list) })
+      const code = registry?.[uid] ?? 0
+      const items: PopItem[] = [
+        ...menuItems(list),
+        ...(code ? [{ id: 'info', testId: 'act-info', label: t('act.info'), icon: <GameIcon name="check" size={20} label={false} />, onSelect: () => showInfo(code) }] : []),
+      ]
+      if (!list.length) setWhy(reasonFor(uid))
+      setMenu({ x, y, title: t('act.title', { name: nameOfUid(uid) }), items })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [legal, menuItems, t, nameOfUid],
+    [legal, menuItems, t, nameOfUid, registry, showInfo],
   )
 
   // ---- rilascio
@@ -191,6 +228,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   const onDragStart = (e: DragStartEvent) => {
     suppress.current = false
     setMenu(null)
+    if (isPicking()) return
     const id = String(e.active.id)
     const r0 = e.active.rect.current.initial
     setDragSize(r0 ? Math.min(r0.width, (r0.height * 59) / 86) : 60)
@@ -212,8 +250,9 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
       longPress.current = setTimeout(() => {
         suppress.current = true
         setDragUid(null)
-        openMenu(uid, t0?.clientX ?? lastPointer.current.x, t0?.clientY ?? lastPointer.current.y)
-      }, 450)
+        void t0
+        showInfo(registry?.[uid] ?? 0)
+      }, 300)
     }
   }
   const onDragMove = (e: { delta: { x: number; y: number } }) => {
@@ -256,30 +295,36 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
 
   // ---- tocchi sul campo
   const onCardClick = (uid: Uid) => {
+    if (pickClick(uid)) return
     setMenu(null)
-    setWhy(null)
     if (sel && sel !== uid && highlight?.has(`c:${uid}`)) {
       const el = document.querySelector(`[data-card="${CSS.escape(uid)}"]`)?.getBoundingClientRect()
       return dropOn(sel, { t: 'card', uid }, el ? { x: el.left + el.width / 2, y: el.top + el.height / 2 } : lastPointer.current)
     }
     if (sel === uid) return setSel(null)
-    if (!actionsForCard(legal, uid).length) {
+    const list = actionsForCard(legal, uid)
+    if (!list.length) {
       setSel(null)
       setWhy(reasonFor(uid))
+      playSound('error')
+      const code = registry?.[uid] ?? 0
+      if (code) setInfo(code)
       return
     }
     playSound('targetSelect')
+    setInfo(null)
     setSel(uid)
+    openActionMenu(uid, list)
   }
   const onCardDouble = (uid: Uid) => {
+    if (isPicking()) return
     const list = actionsForCard(legal, uid)
-    if (!list.length) return setWhy(reasonFor(uid))
+    if (!list.length) return
     const act = list.filter((a) => a.kind === 'activate' || a.kind === 'chain')
     const pool = act.length ? act : list
     if (pool.length === 1) return void run(pool[0]!)
-    const el = document.querySelector(`[data-card="${CSS.escape(uid)}"]`)?.getBoundingClientRect()
     setSel(null)
-    setMenu({ x: el ? el.left + el.width / 2 : lastPointer.current.x, y: el ? el.top + el.height / 2 : lastPointer.current.y, title: nameOfUid(uid), items: menuItems(pool) })
+    openActionMenu(uid, pool)
   }
   const onZone = (d: Dest, el: HTMLElement) => {
     const r = el.getBoundingClientRect()
@@ -292,7 +337,9 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
       e.preventDefault()
       e.stopPropagation()
       const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
-      openMenu(uid, r.left + r.width / 2, r.top + r.height / 2)
+      const list = actionsForCard(legal, uid)
+      if (list.length) openActionMenu(uid, list, { left: r.left, right: r.right, top: r.top, bottom: r.bottom })
+      else openMenu(uid, r.left + r.width / 2, r.top + r.height / 2)
     } else if (e.key === ' ') {
       e.preventDefault()
       onCardClick(uid)
@@ -303,7 +350,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     const k = (e: globalThis.KeyboardEvent) => {
       if (e.key !== 'Escape') return
       setSel(null)
-      setWhy(null)
+      setInfo(null)
     }
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
@@ -329,78 +376,65 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
   if (!fieldView || !state) return null
   // telefono verticale: il campo dell'avversario serve quando si attacca o si scelgono sue carte
   const needOpp = pending?.kind === 'battle' || refsOf(pending).some((r) => r.place.p === 1)
-  const selInfo = sel ? actionsForCard(legal, sel) : []
   const overlayCode = dragUid ? (registry?.[dragUid] ?? 0) : 0
 
   return (
-    <div className="relative h-full min-h-0" data-testid="auto-board">
-      {pending?.kind === 'place' ? (
-        <PlaceBanner req={pending} chosen={zones} onConfirm={() => void respond(placeAnswer(pending, pending.available.filter((a) => zones.includes(destKey({ t: 'zone', p: a.loc === 'emz' ? 0 : a.p, loc: a.loc, seq: a.seq ?? 0 })))))} />
-      ) : sel && selInfo.length ? (
-        <div className="eng-sel-bar" role="group" aria-label={t('act.title', { name: nameOfUid(sel) })} data-testid="sel-bar">
-          <p className="truncate text-sm font-semibold text-fg">{selInfo.some((a) => a.dests.length) ? t('act.selected', { name: nameOfUid(sel) }) : nameOfUid(sel)}</p>
-          <div className="eng-sel-actions">
-            {selInfo.map((a, i) => (
-              <button key={a.id} type="button" className="eng-act" data-primary={i === 0 || undefined} onClick={() => void run(a)} data-testid={`act-${a.kind}`}>
-                <GameIcon name={a.icon} size={20} label={false} />
-                {actionLabel(a)}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : why ? (
-        <div role="status" className="eng-sel-bar !flex-row !items-center" data-testid="why" onClick={() => setWhy(null)}>
-          <GameIcon name="check" size={18} label={false} />
-          <p className="text-sm text-fg">{why}</p>
-        </div>
-      ) : null}
+    <div className="flex h-full min-h-0 flex-col gap-2" data-testid="auto-board">
+      <div className="relative min-h-0 flex-1">
+        <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={onDragCancel} autoScroll={false}>
+          <Field
+            view={fieldView}
+            mineOnly={!!mineOnly && !needOpp}
+            selected={sel}
+            highlight={highlight}
+            picking={pickSpec}
+            renderMarks={(uid, code) => {
+              if (!turn) return null
+              return usesOfCard(turn, uid, code).length ? (
+                <span className="pointer-events-none absolute -bottom-1 -right-1 z-10"><CardOptMarks turn={turn} uid={uid} code={code} size="sm" /></span>
+              ) : null
+            }}
+            onCardClick={onCardClick}
+            onCardDouble={onCardDouble}
+            onCardMenu={(uid, x, y) => openMenu(uid, x, y)}
+            onCardKey={onCardKey}
+            onZone={onZone}
+            onPile={(p, loc) => { setMenu(null); setSel(null); setPile({ p, loc }) }}
+          />
+          <DragOverlay dropAnimation={null}>
+            {dragUid && !suppress.current ? (
+              <div style={{ width: dragSize }} className="pointer-events-none opacity-90 drop-shadow-lg">
+                <CardFace code={overlayCode} name={overlayCode ? cards.nameOf(overlayCode) : ''} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </div>
 
-      <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} onDragCancel={onDragCancel} autoScroll={false}>
-        <Field
-          view={fieldView}
-          mineOnly={!!mineOnly && !needOpp}
-          selected={sel}
-          highlight={highlight}
-          picking={null}
-          renderMarks={(uid, code) => {
-            if (!turn) return null
-            return usesOfCard(turn, uid, code).length ? (
-              <span className="pointer-events-none absolute -bottom-1 -right-1 z-10"><CardOptMarks turn={turn} uid={uid} code={code} size="sm" /></span>
-            ) : null
-          }}
-          onCardClick={onCardClick}
-          onCardDouble={onCardDouble}
-          onCardMenu={(uid, x, y) => openMenu(uid, x, y)}
-          onCardKey={onCardKey}
-          onZone={onZone}
-          onPile={(p, loc) => setPile({ p, loc })}
-        />
-        <DragOverlay dropAnimation={null}>
-          {dragUid && !suppress.current ? (
-            <div style={{ width: dragSize }} className="pointer-events-none opacity-90 drop-shadow-lg">
-              <CardFace code={overlayCode} name={overlayCode ? cards.nameOf(overlayCode) : ''} />
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-
-      <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
-      {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} onClose={() => setMenu(null)} /> : null}
+      {info ? <CardInfoStrip code={info} onClose={() => setInfo(null)} /> : null}
       {pile ? (
-        <PileView
+        <PileBand
           p={pile.p}
           loc={pile.loc}
           state={state}
           registry={registry!}
-          legalUids={new Set(legal.map((a) => a.uid))}
-          onPick={(uid) => {
-            setPile(null)
-            if (actionsForCard(legal, uid).length) setSel(uid)
-            else setWhy(reasonFor(uid))
-          }}
+          legal={legal}
           onClose={() => setPile(null)}
+          onAct={(uid, list, anchor) => {
+            setPile(null)
+            if (list.length === 1) void run(list[0]!)
+            else openActionMenu(uid, list, anchor)
+          }}
+          onNone={(uid) => setWhy(reasonFor(uid))}
+          onInfo={(code) => setInfo(code)}
         />
       ) : null}
+      {pending?.kind === 'place' ? (
+        <PlaceBar req={pending} chosen={zones} onConfirm={() => void respond(placeAnswer(pending, pending.available.filter((a) => zones.includes(destKey({ t: 'zone', p: a.loc === 'emz' ? 0 : a.p, loc: a.loc, seq: a.seq ?? 0 })))))} />
+      ) : null}
+
+      <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
+      {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} anchor={menu.anchor} onClose={() => setMenu(null)} /> : null}
       <RequestHost />
     </div>
   )
@@ -408,17 +442,55 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
 
 const placeAnswer = (req: Extract<PendingRequest, { kind: 'place' }>, list: PlaceOpt[]) => answerPlace(req, list)
 
-function PlaceBanner({ req, chosen, onConfirm }: { req: Extract<PendingRequest, { kind: 'place' }>; chosen: string[]; onConfirm: () => void }) {
+function PlaceBar({ req, chosen, onConfirm }: { req: Extract<PendingRequest, { kind: 'place' }>; chosen: string[]; onConfirm: () => void }) {
   const { t } = useEngT()
+  const { t: fp } = useFpT()
+  const source = useDuel((st) => st.source)
+  const registry = useDuel((st) => st.view?.registry)
+  const cards = useCards()
+  const host = source ? cards.nameOf(registry?.[source.uid] ?? 0) : ''
+  const many = req.count > 1
   return (
-    <div role="status" className="eng-sel-bar !flex-row !items-center" data-testid="place-banner">
-      <p className="min-w-0 flex-1 text-sm font-semibold text-fg">{req.count > 1 ? t('sel.placeTitleN', { n: req.count }) : t('sel.placeTitle')}</p>
-      {req.count > 1 ? (
-        <>
-          <span className="eng-pill" data-tone={chosen.length === req.count ? 'ok' : undefined}>{t('sel.placeCounter', { c: chosen.length, n: req.count })}</span>
-          <button type="button" className="eng-act" data-primary="true" disabled={chosen.length !== req.count} onClick={onConfirm} data-testid="place-confirm">{t('sel.confirm')}</button>
-        </>
-      ) : null}
-    </div>
+    <PickBar
+      testId="place-banner"
+      title={host || undefined}
+      count={many ? fp('lbl.chosen', { label: fp('lbl.zones'), c: chosen.length, n: req.count }) : t('sel.placeTitle')}
+      ok={chosen.length === req.count}
+      noConfirm={!many}
+      onConfirm={onConfirm}
+    />
+  )
+}
+
+/** Fascia compatta di una pila (Extra, Cimitero, Bandite, Deck, mano): le carte con un'azione legale sono evidenziate; alla scelta si chiude. */
+function PileBand({ p, loc, state, registry, legal, onClose, onAct, onNone, onInfo }: {
+  p: 0 | 1
+  loc: PileLoc
+  state: NonNullable<ReturnType<typeof useDuel.getState>['view']>['state']
+  registry: Record<Uid, number>
+  legal: readonly LegalAction[]
+  onClose: () => void
+  onAct: (uid: Uid, list: LegalAction[], anchor: PopAnchor) => void
+  onNone: (uid: Uid) => void
+  onInfo: (code: number) => void
+}) {
+  const { t } = useEngT()
+  const cards = useCards()
+  const uids = Object.entries(state.places).filter(([, pl]) => pl.p === p && pl.loc === loc).sort((a, b) => (a[1].seq ?? 0) - (b[1].seq ?? 0)).map(([u]) => u)
+  const ordered = loc === 'gy' || loc === 'banished' ? [...uids].reverse() : uids
+  const legalUids = new Set(legal.map((a) => a.uid))
+  const items: BandItem[] = ordered.map((u) => ({ key: u, code: registry[u] ?? 0, name: cards.nameOf(registry[u] ?? 0), state: legalUids.has(u) ? 'cand' : 'dim' }))
+  const name = t(loc === 'gy' ? 'sel.inGy' : loc === 'banished' ? 'sel.inBanished' : loc === 'extra' ? 'sel.inExtra' : loc === 'deck' ? 'sel.inDeck' : 'sel.inHand')
+  return (
+    <PickBand
+      title={name} sub={String(ordered.length)} items={items} onClose={onClose} searchable={ordered.length > 12} testId="pile-band"
+      onTap={(uid, el) => {
+        const list = actionsForCard(legal, uid)
+        const r = el.getBoundingClientRect()
+        if (list.length) onAct(uid, list, { left: r.left, right: r.right, top: r.top, bottom: r.bottom })
+        else onNone(uid)
+      }}
+      onLongPress={(uid) => onInfo(registry[uid] ?? 0)}
+    />
   )
 }

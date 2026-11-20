@@ -37,7 +37,8 @@ const handNames = (page: Page) => page.locator('[data-card][data-loc="hand"]').e
 test.skip(!have, 'cache degli script non presente')
 
 const handLabel = async (page: Page) => (await handNames(page)).sort()
-const previewNames = (page: Page) => page.locator('[data-testid=hand-preview] img').evaluateAll((els) => els.map((e) => e.getAttribute('alt') ?? '').sort())
+const nameOfCode = (c: number) => cards.get(c)!.name.it ?? cards.get(c)!.name.en
+const previewNames = async (page: Page) => (await page.locator('[data-testid=hand-preview] [data-code]').evaluateAll((els) => els.map((e) => Number(e.getAttribute('data-code'))))).map(nameOfCode).sort()
 const noOverflow = async (page: Page) => {
   const [sw, iw] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth])
   expect(sw).toBeLessThanOrEqual(iw!)
@@ -58,7 +59,7 @@ async function addToHandFromMenu(page: Page, name: string) {
   await page.getByTestId('add-menu').click()
   await page.getByRole('menuitem', { name: /Aggiungi carta o token|Add card or token/ }).click()
   await page.getByTestId('add-search').fill(name)
-  await page.getByRole('button', { name: new RegExp(`^.*${name}`) }).first().click()
+  await page.getByRole('list', { name: /Risultati|Results/ }).getByRole('button').first().click()
   await page.getByRole('radio', { name: /^(Mano|Hand)$/ }).click()
   await page.getByTestId('add-confirm').click()
 }
@@ -75,10 +76,10 @@ test('REPRO (era rotto): carta aggiunta alla mano dalla scheda Passi, poi Automa
   expect((await docOf(page)).steps).toHaveLength(0)
   await startAuto(page)
   // la fascia mostra la mano che partirà e dice la verità
-  await expect(page.getByTestId('hand-preview').locator('img')).toHaveCount(1)
+  await expect(page.getByTestId('hand-preview').locator('[data-code]')).toHaveCount(1)
   await expect(page.getByTestId('hand-line')).toContainText('Mano esatta: 1 carta')
   await begin(page)
-  expect(await handLabel(page)).toEqual(['Raigeki'])
+  expect(await handLabel(page)).toEqual([nameOfCode(code('Raigeki'))])
   expect(Object.values((await docOf(page)).cards)).toContain(code('Raigeki'))
 })
 
@@ -90,9 +91,9 @@ test('la fascia Avvia dice la verità: esatta = solo le scelte; l\'anteprima coi
   await startAuto(page)
   await expect(page.getByTestId('hand-line')).toContainText('Mano esatta: 2 carte')
   expect(await page.getByTestId('start-panel').innerText()).not.toMatch(/5 carte|Carte in mano: 5/)
-  expect(await previewNames(page)).toEqual(['Dark Hole', 'Raigeki'])
+  expect(await previewNames(page)).toEqual([nameOfCode(code('Dark Hole')), nameOfCode(code('Raigeki'))].sort())
   await begin(page)
-  expect(await handLabel(page)).toEqual(['Dark Hole', 'Raigeki'])
+  expect(await handLabel(page)).toEqual([nameOfCode(code('Dark Hole')), nameOfCode(code('Raigeki'))].sort())
 })
 
 test('mista: scelte + a caso; anteprima = mano reale; Rimescola la cambia; Ripeti l\'ultima mano la ripristina', async ({ page }) => {
@@ -106,9 +107,9 @@ test('mista: scelte + a caso; anteprima = mano reale; Rimescola la cambia; Ripet
   await page.getByRole('radio', { name: 'Mista' }).click()
   await page.getByTestId('start-sheet-done').click()
   await expect(page.getByTestId('hand-line')).toContainText('1 scelte + 4 a caso = 5 carte')
-  await expect(page.getByTestId('hand-preview').locator('img')).toHaveCount(5)
+  await expect(page.getByTestId('hand-preview').locator('[data-code]')).toHaveCount(5)
   const first = await previewNames(page)
-  expect(first).toContain('Raigeki')
+  expect(first).toContain(nameOfCode(code('Raigeki')))
   // Rimescola: nuova anteprima (con 18 carte da 6 nomi è praticamente certo che cambi in qualche tentativo)
   let changed = false
   for (let i = 0; i < 6 && !changed; i++) {
@@ -176,13 +177,13 @@ test('carta in mano dopo che esistono passi: si chiede "mano iniziale" o "come p
   expect((await docOf(page)).steps).toHaveLength(2)
 })
 
-test('mano esatta vuota o carta non nel mazzo: avviso chiaro prima di avviare', async ({ page }) => {
+test('mano esatta vuota: avviso chiaro prima di avviare (mai una mano vuota in silenzio)', async ({ page }) => {
   await serveScripts(page)
-  const id = await seedCombo(page, { cards: { u1: code('Raigeki') }, hand: ['u1'], deck: { main: [code('Dark Hole'), code('Dark Hole')], extra: [] } })
+  const id = await seedCombo(page, { cards: {}, deck: { main: DECK, extra: [] } })
   await page.setViewportSize({ width: 1280, height: 900 })
   await openCombo(page, id, 'it')
   await startAuto(page)
-  await expect(page.getByTestId('hand-issues')).toContainText('Raigeki non è nel mazzo')
+  await expect(page.getByTestId('hand-issues')).toContainText('La mano è vuota')
 })
 
 for (const [width, theme, lang] of [[375, 'dark', 'it'], [375, 'light', 'en'], [768, 'dark', 'en'], [768, 'light', 'it'], [1440, 'light', 'it'], [1440, 'dark', 'en']] as const) {

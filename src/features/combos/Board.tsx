@@ -19,13 +19,15 @@ import { AddCardDialog, CounterDialog, LpDialog, MoveToDialog, type AddDest } fr
 import { useEditor } from './editorStore'
 import { Field, type FieldView } from './Field'
 import { nextUid, remainingPool, poolTotal, type Draft } from './model'
-import { CardOptMarks, TargetPickerOverlay } from '@/features/turn'
+import { CardInfoStrip, PickBand, PickBar, isPicking, pickClick, useFieldPick, useFpT, usePickUi, type BandItem } from '@/features/fieldpick'
+import { CardOptMarks } from '@/features/turn'
 import { usesOfCard, type TurnState } from '@/domain/combo/turn'
 import { GameIcon, iconForAction } from '@/ui/gameIcons'
 import { playSound, soundForAction } from '@/features/sound'
 import { PileSheet } from './PileSheet'
 import { PilesPanel } from './PilesPanel'
 import { PopMenu, type PopItem } from './PopMenu'
+import { zoneCards } from '@/domain/combo/state'
 import type { Sel } from './selection'
 import { useCards } from './useCards'
 import { destKey, freeSeq, occupantAt, parseDest, pileSeq, type Dest, type PileLoc } from './zones'
@@ -131,7 +133,9 @@ export function Board({
   const [lpFor, setLpFor] = useState<PlayerIdx | null>(null)
   const [counterFor, setCounterFor] = useState<Uid | null>(null)
   const [addFor, setAddFor] = useState<PlayerIdx | null>(null)
+  const [info, setInfo] = useState<{ code: number; uid?: Uid } | null>(null)
   const [live, setLive] = useState('')
+  const pickSpec = usePickUi((x) => x.spec)
   const mods = useRef<Mods>({})
   const suppress = useRef(false)
   const longPress = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -334,14 +338,6 @@ export function Board({
     [srcOf, ctx, execute],
   )
 
-  const togglePick = (uid: Uid) => {
-    setPending((p) => {
-      if (!p) return p
-      const chosen = p.chosen.includes(uid) ? p.chosen.filter((u) => u !== uid) : [...p.chosen, uid]
-      return { ...p, chosen }
-    })
-  }
-
   const candidates = useMemo<Set<Uid>>(() => {
     const out = new Set<Uid>()
     if (!pending) return out
@@ -423,6 +419,7 @@ export function Board({
     const r0 = e.active.rect.current.initial
     setDragSize(r0 ? Math.min(r0.width, (r0.height * 59) / 86) : 60)
     setMenu(null)
+    if (isPicking()) return
     const s = selOfDrag(id)
     if (s) {
       setDragSel(s)
@@ -439,8 +436,12 @@ export function Board({
       longPress.current = setTimeout(() => {
         suppress.current = true
         setDragSel(null)
-        openMenu(uid, t0?.clientX ?? lastPointer.current.x, t0?.clientY ?? lastPointer.current.y)
-      }, 450)
+        void t0
+        setMenu(null)
+        setSel(null)
+        playSound('uiOpen')
+        setInfo({ code: doc.cards[uid] ?? 0, uid })
+      }, 300)
     }
   }
   const stopLongPress = () => {
@@ -489,11 +490,8 @@ export function Board({
   // ---------- Field handlers
   const onCardClick = (uid: Uid) => {
     if (readOnly) return
+    if (pickClick(uid)) return
     setMenu(null)
-    if (pending) {
-      if (candidates.has(uid)) togglePick(uid)
-      return
-    }
     if (sel && highlight?.has(`c:${uid}`)) {
       const el = document.querySelector(`[data-card="${CSS.escape(uid)}"]`)
       dropOn(sel, { t: 'card', uid }, el ? center(el) : lastPointer.current, { ...mods.current })
@@ -526,7 +524,7 @@ export function Board({
     const k = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSel(null)
-        setPending((p) => (p?.kind === 'tribute' ? null : p))
+        setInfo(null)
       }
     }
     window.addEventListener('keydown', k)
@@ -576,25 +574,14 @@ export function Board({
         : undefined
   const candList = useMemo(() => [...candidates], [candidates])
 
-  return (
-    <div className="relative h-full min-h-0">
-      {pending ? (
-        <TargetPickerOverlay
-          candidates={candList}
-          min={pending.kind === 'tribute' ? Math.min(1, candList.length) : 0}
-          max={pending.kind === 'tribute' ? Math.max(1, Math.min(pending.need, candList.length)) : Math.max(1, candList.length)}
-          title={pickTitle ?? ''}
-          cardName={nameOfUid}
-          onChange={() => playSound('targetSelect')}
-          onConfirm={(chosen) => confirmPending(chosen)}
-          onCancel={() => setPending(null)}
-        />
-      ) : sel && !readOnly ? (
-        <div role="status" className="pointer-events-none absolute inset-x-2 top-2 z-30 mx-auto max-w-xl rounded-md border border-accent-text/60 bg-surface-1 px-3 py-2 text-[15px] text-fg shadow-2">
-          {t('combos.selected', { name: cards.nameOf(codeOf(sel)) })}
-        </div>
-      ) : null}
+  // niente da scegliere (nessun candidato): si salta
+  useEffect(() => {
+    if (pending && candidates.size === 0) setPending(null)
+  }, [pending, candidates])
 
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="relative min-h-0 flex-1">
       <DndContext
         sensors={sensors}
         collisionDetection={collision}
@@ -611,7 +598,7 @@ export function Board({
           mineOnly={!!mineOnly}
           selected={sel?.kind === 'uid' ? sel.uid : null}
           highlight={highlight}
-          picking={null}
+          picking={pickSpec}
           renderMarks={(uid, code) => {
             if (!turn) return null
             const uses = usesOfCard(turn, uid, code)
@@ -643,12 +630,50 @@ export function Board({
         </DragOverlay>
         {pilesEl && !readOnly ? createPortal(<PilesPanel view={view} onMenu={openMenu} />, pilesEl) : null}
       </DndContext>
+      </div>
+
+      {info ? (
+        <CardInfoStrip
+          code={info.code}
+          onClose={() => setInfo(null)}
+          onMenu={info.uid && !readOnly ? () => { const u = info.uid!; setInfo(null); openMenu(u, window.innerWidth / 2, window.innerHeight / 2) } : undefined}
+        />
+      ) : null}
+
+      {sheet && sheet.loc === 'extra' && sheet.p === 0 && !sheet.forDrop ? (
+        <ExtraBand
+          view={view}
+          pool={[...pool.extra]}
+          onClose={() => setSheet(null)}
+          onPick={(s) => {
+            setSheet(null)
+            setSel(s)
+            toast(t('combos.tapZone'), { durationMs: 2500 })
+          }}
+          onMove={(s) => {
+            setSheet(null)
+            setMoveFor(s)
+          }}
+          onInfo={(code) => setInfo({ code })}
+        />
+      ) : null}
+
+      {pending && !readOnly ? (
+        <ManualPick
+          key={pending.kind === 'materials' ? pending.stepId : 'tribute'}
+          pending={pending}
+          candidates={candList}
+          title={pickTitle}
+          onConfirm={confirmPending}
+          onCancel={() => setPending(null)}
+        />
+      ) : null}
 
       <div aria-live="polite" role="status" className="sr-only" data-testid="announcer">{live}</div>
 
       {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} onClose={() => setMenu(null)} /> : null}
 
-      {sheet ? (
+      {sheet && !(sheet.loc === 'extra' && sheet.p === 0 && !sheet.forDrop) ? (
         <PileSheet
           p={sheet.p}
           loc={sheet.loc}
@@ -718,3 +743,54 @@ export function Board({
 }
 
 interface Mods { shift?: boolean; alt?: boolean; ctrl?: boolean }
+/** Scelta di materiali/tributi nell'editor manuale: stessa UX dell'automatica (candidati sul campo, barra sottile in flusso). */
+function ManualPick({ pending, candidates, title, onConfirm, onCancel }: {
+  pending: Pending
+  candidates: readonly Uid[]
+  title: string | undefined
+  onConfirm: (chosen: Uid[]) => void
+  onCancel: () => void
+}) {
+  const { t } = useFpT()
+  const tribute = pending.kind === 'tribute'
+  const need = tribute ? Math.max(1, Math.min(pending.need, candidates.length)) : candidates.length
+  const pick = useFieldPick({
+    candidates,
+    min: tribute ? Math.min(1, candidates.length) : 0,
+    max: Math.max(1, need),
+    // tributi esattamente quanti servono: già scelti, resta solo Conferma
+    ...(tribute && candidates.length === pending.need ? { preselected: candidates } : {}),
+    onConfirm,
+    onCancel,
+  })
+  const label = tribute ? t('lbl.tribute') : t('lbl.materials')
+  const count = tribute ? t('lbl.chosen', { label, c: pick.selected.length, n: pending.need }) : t('lbl.chosenOpen', { label, c: pick.selected.length })
+  return <PickBar title={title} count={count} ok={pick.canConfirm} onConfirm={pick.confirm} onCancel={pick.cancel} onUndo={pick.undo} canUndo={pick.selected.length > 0} />
+}
+
+/** Extra Deck dell'editor manuale come fascia compatta sotto il campo: scegli la carta, la fascia si chiude, poi tocchi la zona. */
+function ExtraBand({ view, pool, onClose, onPick, onMove, onInfo }: {
+  view: FieldView
+  pool: [number, number][]
+  onClose: () => void
+  onPick: (s: Sel) => void
+  onMove: (s: Sel) => void
+  onInfo: (code: number) => void
+}) {
+  const { t } = useTranslation()
+  const placed = zoneCards(view.state, 0, 'extra')
+  const rows = [
+    ...placed.map((uid) => ({ key: uid, sel: { kind: 'uid', uid } as Sel, code: view.registry[uid] ?? 0, n: 1 })),
+    ...pool.map(([code, n]) => ({ key: `f${code}`, sel: { kind: 'fresh', p: 0, loc: 'extra', code } as Sel, code, n })),
+  ]
+  const items: BandItem[] = rows.map((r) => ({ key: r.key, code: r.code, name: view.nameOf(r.code), state: 'cand', badge: r.n > 1 ? `×${r.n}` : undefined }))
+  const byKey = new Map(rows.map((r) => [r.key, r]))
+  return (
+    <PickBand
+      title={t('combos.pile.extra')} sub={String(rows.reduce((a, r) => a + r.n, 0))} items={items} onClose={onClose} searchable={rows.length > 12} testId="extra-band"
+      onTap={(k) => { const r = byKey.get(k); if (r) onPick(r.sel) }}
+      onAlt={(k) => { const r = byKey.get(k); if (r) onMove(r.sel) }}
+      onLongPress={(k) => { const r = byKey.get(k); if (r) onInfo(r.code) }}
+    />
+  )
+}

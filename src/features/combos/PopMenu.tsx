@@ -4,6 +4,7 @@ import { cn } from '@/ui/cn'
 
 export interface PopItem {
   id: string
+  testId?: string
   label: string
   icon?: ReactNode
   hint?: string
@@ -86,6 +87,7 @@ export function PopMenu({ x, y, items, title, onClose, anchor }: { x: number; y:
           type="button"
           disabled={it.disabled}
           data-action={it.id}
+          data-testid={it.testId}
           onClick={() => {
             onClose()
             it.onSelect()

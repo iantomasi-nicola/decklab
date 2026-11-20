@@ -22,7 +22,7 @@ export interface BandItem {
   badge?: string | undefined
 }
 
-const MIN_H = 164
+const MIN_H = 176
 const KEY = 'combolab.band.h'
 const readH = (): number => {
   try {
@@ -32,12 +32,14 @@ const readH = (): number => {
 }
 const maxH = () => Math.max(MIN_H, Math.round((typeof window === 'undefined' ? 800 : window.innerHeight) * 0.5))
 
-export function PickBand({ title, sub, items, onTap, onLongPress, onClose, searchable, children, testId = 'pick-band', empty }: {
+export function PickBand({ title, sub, items, onTap, onLongPress, onAlt, onClose, searchable, children, testId = 'pick-band', empty }: {
   title: string
   sub?: string | undefined
   items: readonly BandItem[]
   onTap: (key: string, el: HTMLElement) => void
   onLongPress?: ((key: string) => void) | undefined
+  /** alternativa da tastiera (Maiusc+Invio o M) */
+  onAlt?: ((key: string) => void) | undefined
   onClose?: (() => void) | undefined
   searchable?: boolean | undefined
   children?: ReactNode
@@ -112,6 +114,7 @@ export function PickBand({ title, sub, items, onTap, onLongPress, onClose, searc
                 type="button" className="fp-tile" data-state={it.state} data-testid={`band-${it.key}`} aria-pressed={it.state === 'chosen'} aria-label={it.name}
                 onPointerDown={() => down(it.key)} onPointerUp={cancelLong} onPointerLeave={cancelLong} onPointerCancel={cancelLong}
                 onContextMenu={(e) => { e.preventDefault(); onLongPress?.(it.key) }}
+                onKeyDown={(e) => { if (onAlt && ((e.key === 'Enter' && e.shiftKey) || e.key === 'm' || e.key === 'M')) { e.preventDefault(); onAlt(it.key) } }}
                 onClick={(e) => { if (longFired.current) { longFired.current = false; return } onTap(it.key, e.currentTarget) }}
               >
                 <CardFace code={it.code} name={it.name} />
