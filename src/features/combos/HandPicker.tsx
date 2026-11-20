@@ -168,7 +168,7 @@ export function HandPicker({ deck, value, onChange, drawn, onReshuffle, issues, 
             </button>
           ) : null}
           {onReshuffle && mode !== 'exact' ? (
-            <button type="button" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-line bg-surface-2 px-3 text-[15px] font-medium hover:bg-surface-3" onClick={onReshuffle} data-testid="reshuffle">
+            <button type="button" className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-line bg-surface-2 px-3 text-[15px] font-medium hover:bg-surface-3" onClick={onReshuffle} data-testid="hand-reshuffle">
               <Dice5 aria-hidden size={18} />
               {t('combos.hand.reshuffle')}
             </button>

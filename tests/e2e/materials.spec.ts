@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { test, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 import { openCombo, seedCombo } from './helpers/combo'
@@ -58,26 +58,4 @@ test('REPRO Link: Extra -> materiali', async ({ page }) => {
   await page.waitForTimeout(500)
   await page.screenshot({ path: `test-results/materials/repro-${w}-1-extra.png` })
   console.log('pending after extra tap', await pending(page))
-  const info = await page.evaluate(async () => {
-    const A = await import(/* @vite-ignore */ '/src/engine/answers.ts')
-    const D = (window as any).__duel
-    const out: unknown[] = []
-    const show = (tag: string) => { const p = D.getState().state.pending; out.push({ tag, kind: p?.kind, min: p?.min, max: p?.max, canFinish: p?.canFinish, sel: p?.selectable?.map((x: any) => x.uid), selected: p?.selected?.map((x: any) => x.uid), avail: p?.available?.map((x: any) => x.loc + x.seq) }) }
-    for (const index of [0, 1]) {
-      const idx = D.getState().state.pending.specialSummons[index].index
-      await D.getState().respond(A.answerIdle('specialSummon', idx))
-      show('c' + index + ' first')
-      const p = D.getState().state.pending
-      await D.getState().respond(A.answerUnselect(p.selectable[0].index))
-      show('after1')
-      let q = D.getState().state.pending
-      if (q.kind === 'unselect') { await D.getState().respond(A.answerUnselect(q.selectable[0].index)); show('after2') }
-      q = D.getState().state.pending
-      if (q.kind === 'unselect' && q.canFinish) { await D.getState().respond(A.answerUnselect(null)); show('finish') }
-      await D.getState().undo(); await D.getState().undo(); await D.getState().undo()
-      show('undone')
-    }
-    return out
-  })
-  console.log(JSON.stringify(info))
 })

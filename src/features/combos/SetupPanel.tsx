@@ -2,12 +2,15 @@ import { useTranslation } from 'react-i18next'
 import type { ComboDoc } from '@/domain/combo/types'
 import { Segmented } from '@/ui/Segmented'
 import { useEditor } from './editorStore'
+import { HandIssueList, HandPicker } from './HandPicker'
 import { handSize } from './model'
+import { useDocHand } from './useDocHand'
 
-export function SetupPanel({ doc, nameOf }: { doc: ComboDoc; nameOf: (uid: string) => string }) {
+export function SetupPanel({ doc }: { doc: ComboDoc; nameOf?: (uid: string) => string }) {
   const { t } = useTranslation()
   const store = useEditor.getState()
-  const hand = doc.setup.hand
+  const h = doc.setup.hand
+  const hand = useDocHand(doc)
   const set = (patch: Partial<ComboDoc['setup']>) => store.edit((d) => ({ doc: { ...d, setup: { ...d.setup, ...patch } } }))
   return (
     <div className="flex flex-col gap-5">
@@ -17,39 +20,16 @@ export function SetupPanel({ doc, nameOf }: { doc: ComboDoc; nameOf: (uid: strin
         <Segmented<'first' | 'second'>
           label={t('combos.setup.turn')}
           value={doc.setup.first ? 'first' : 'second'}
-          onValueChange={(v) => set({ first: v === 'first', hand: { ...hand, size: Math.max(handSize(v === 'first'), hand.required.length) } })}
+          onValueChange={(v) => set({ first: v === 'first', hand: { ...h, size: Math.max(handSize(v === 'first'), h.required.length) } })}
           options={[
             { value: 'first', label: t('combos.setup.first') },
             { value: 'second', label: t('combos.setup.second') },
           ]}
         />
       </section>
-      <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">{t('combos.setup.handFill')}</h3>
-        <Segmented<'random' | 'none'>
-          label={t('combos.setup.handFill')}
-          value={hand.fill}
-          onValueChange={(v) => set({ hand: { ...hand, fill: v } })}
-          options={[
-            { value: 'random', label: t('combos.setup.fillRandom') },
-            { value: 'none', label: t('combos.setup.fillNone') },
-          ]}
-        />
-        <p className="text-sm text-muted">{t('combos.setup.handInfo', { size: hand.size, n: hand.required.length })}</p>
-      </section>
-      <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium">{t('combos.setup.required')}</h3>
-        {hand.required.length === 0 ? (
-          <p className="text-sm text-muted">{t('combos.setup.requiredEmpty')}</p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {hand.required.map((u) => (
-              <li key={u} className="rounded-full border border-line bg-surface-2 px-3 py-1 text-sm">
-                {nameOf(u)}
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="flex flex-col gap-2" aria-label={t('combos.hand.title')}>
+        <h3 className="text-sm font-medium">{t('combos.hand.title')}</h3>
+        <HandPicker deck={doc.deck.main} value={hand.value} onChange={hand.onChange} issues={<HandIssueList items={hand.issues} />} />
       </section>
       <p className="text-sm text-muted">{t('combos.setup.opponent')}</p>
     </div>

@@ -14,16 +14,17 @@ export function AutoStage({ doc, turn, mineOnly, children }: { doc: ComboDoc; tu
   const [closed, setClosed] = useState(false)
   if (live) return <AutoBoard turn={turn} mineOnly={!!mineOnly} />
   return (
-    <div className="relative h-full min-h-0">
-      {children}
-      {closed ? (
-        <button type="button" className="eng-act absolute left-1/2 top-2 z-40 -translate-x-1/2 shadow-2" data-primary="true" onClick={() => setClosed(false)} data-testid="open-start">
-          <Play aria-hidden size={18} />
-          {t('start.begin')}
-        </button>
-      ) : (
-        <StartPanel doc={doc} onClose={doc.steps.length ? () => setClosed(true) : undefined} />
-      )}
+    <div className="flex h-full min-h-0 flex-col gap-2">
+      <div className="relative min-h-0 flex-1">
+        {children}
+        {closed ? (
+          <button type="button" className="eng-act absolute left-1/2 top-2 z-40 -translate-x-1/2 shadow-2" data-primary="true" onClick={() => setClosed(false)} data-testid="open-start">
+            <Play aria-hidden size={18} />
+            {t('start.begin')}
+          </button>
+        ) : null}
+      </div>
+      {closed ? null : <StartPanel doc={doc} onClose={doc.steps.length ? () => setClosed(true) : undefined} />}
     </div>
   )
 }
