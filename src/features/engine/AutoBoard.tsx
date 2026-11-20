@@ -317,7 +317,7 @@ export function AutoBoard({ turn, mineOnly }: { turn?: TurnState | undefined; mi
     openActionMenu(uid, list)
   }
   const onCardDouble = (uid: Uid) => {
-    if (isPicking()) return
+    if (pickClick(uid)) return // durante una scelta il secondo tocco ravvicinato è un altro tocco (toglie la carta)
     const list = actionsForCard(legal, uid)
     if (!list.length) return
     const act = list.filter((a) => a.kind === 'activate' || a.kind === 'chain')

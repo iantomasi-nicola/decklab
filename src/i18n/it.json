@@ -585,7 +585,13 @@
       "addedSetup": "«{{name}}» è nella mano iniziale.",
       "deckAdded": "«{{name}}» non era nel mazzo: l’ho aggiunta al mazzo della combo.",
       "previewNote": "Anteprima con il mescolamento attuale: le carte tratteggiate sono quelle a caso.",
-      "previewError": "Anteprima non disponibile con questo mazzo."
+      "previewError": "Anteprima non disponibile con questo mazzo.",
+      "short": {
+        "exact_one": "{{count}} carta esatta",
+        "exact_other": "{{count}} carte esatte",
+        "mixed": "{{n}} scelte + {{f}} a caso",
+        "random": "{{size}} a caso"
+      }
     }
   },
   "learn": {

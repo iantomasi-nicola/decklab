@@ -585,7 +585,13 @@
       "addedSetup": "“{{name}}” is in the opening hand.",
       "deckAdded": "“{{name}}” was not in the deck: I added it to the combo deck.",
       "previewNote": "Preview with the current shuffle: dashed cards are the random ones.",
-      "previewError": "Preview not available with this deck."
+      "previewError": "Preview not available with this deck.",
+      "short": {
+        "exact_one": "{{count}} exact card",
+        "exact_other": "{{count}} exact cards",
+        "mixed": "{{n}} picked + {{f}} random",
+        "random": "{{size}} random"
+      }
     }
   },
   "learn": {

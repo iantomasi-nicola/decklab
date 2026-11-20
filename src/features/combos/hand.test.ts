@@ -13,7 +13,7 @@ describe('mano di partenza: modello', () => {
   it('una bozza che porta una carta nuova in mano è una carta di setup', () => {
     expect(isOwnHandAdd(toHand('u1', 100))).toBe(true)
     expect(isOwnHandAdd({ step: { action: 'sendToGY', card: 'u1', moves: [{ uid: 'u1', to: { p: 0, loc: 'gy' } }] }, register: { u1: 100 } })).toBe(false)
-    expect(isOwnHandAdd({ step: { action: 'bounce', card: 'u1', moves: [{ uid: 'u1', to: { p: 0, loc: 'hand' } }] } })).toBe(false)
+    expect(isOwnHandAdd({ step: { action: 'returnToHand', card: 'u1', moves: [{ uid: 'u1', to: { p: 0, loc: 'hand' } }] } })).toBe(false)
   })
 
   it('setHand: esatta, mista, a caso; riusa gli uid e produce un documento valido', () => {

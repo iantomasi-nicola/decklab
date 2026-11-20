@@ -610,7 +610,8 @@ export function Board({
           }}
           onCardClick={onCardClick}
           onCardDouble={(uid) => {
-            if (readOnly || pending) return
+            if (readOnly) return
+            if (pickClick(uid)) return
             setSel(null)
             activate(uid)
           }}
@@ -640,13 +641,15 @@ export function Board({
         />
       ) : null}
 
-      {sheet && sheet.loc === 'extra' && sheet.p === 0 && !sheet.forDrop ? (
+      {sheet && sheet.loc === 'extra' && sheet.p === 0 ? (
         <ExtraBand
           view={view}
           pool={[...pool.extra]}
           onClose={() => setSheet(null)}
           onPick={(s) => {
+            const drop = sheet.forDrop
             setSheet(null)
+            if (drop) return dropOn(s, drop.dest, drop, drop.mods)
             setSel(s)
             toast(t('combos.tapZone'), { durationMs: 2500 })
           }}
@@ -673,7 +676,7 @@ export function Board({
 
       {menu ? <PopMenu x={menu.x} y={menu.y} title={menu.title} items={menu.items} onClose={() => setMenu(null)} /> : null}
 
-      {sheet && !(sheet.loc === 'extra' && sheet.p === 0 && !sheet.forDrop) ? (
+      {sheet && !(sheet.loc === 'extra' && sheet.p === 0) ? (
         <PileSheet
           p={sheet.p}
           loc={sheet.loc}

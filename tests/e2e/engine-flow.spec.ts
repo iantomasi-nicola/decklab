@@ -54,7 +54,7 @@ test.describe('campo: azioni legali', () => {
     await drag(page, '[data-card="u1"]', '[data-zone="z:0:mzone:1"]')
     await expect(page.getByRole('menu')).toHaveCount(0)
     expect(await answers(page)).toHaveLength(0)
-    await expect(page.getByTestId('why')).toContainText('zona')
+    await expect(page.getByText('Questa zona non può ricevere la carta.').first()).toBeVisible()
   })
 
   test('carta dell\'avversario: nessuna zona evidenziata e motivo', async ({ page }) => {
@@ -62,16 +62,19 @@ test.describe('campo: azioni legali', () => {
     await drag(page, '[data-card="o1"]', '[data-zone="z:0:mzone:3"]', false)
     expect(await validZones(page)).toEqual([])
     await page.mouse.up()
-    await expect(page.getByTestId('why')).toContainText('avversario')
+    await expect(page.getByText('Non puoi muovere le carte dell’avversario.').first()).toBeVisible()
   })
 
-  test('tocco: barra delle azioni; azione senza zona (Cala magia) risponde subito', async ({ page }) => {
+  test('tocco: menu delle azioni attaccato alla carta; azione senza zona (Cala magia) risponde subito', async ({ page }) => {
     await open(page, 'scenario=flow')
     await page.locator('[data-card="u3"]').click()
-    const bar = page.getByTestId('sel-bar')
-    await expect(bar).toBeVisible()
+    const menu = page.getByRole('menu')
+    await expect(menu).toBeVisible()
     expect(await validZones(page)).toContain('z:0:szone:0')
-    await bar.getByRole('button', { name: 'Cala' }).click()
+    // il menu non copre la carta toccata
+    const [mb, cb] = await Promise.all([menu.boundingBox(), page.locator('[data-card="u3"]').boundingBox()])
+    expect(mb!.y >= cb!.y + cb!.height - 1 || mb!.y + mb!.height <= cb!.y + 1, 'menu sopra o sotto la carta').toBe(true)
+    await menu.getByRole('menuitem', { name: 'Cala' }).click()
     await expect.poll(() => answers(page).then((a) => a.length)).toBe(1)
     expect((await answers(page))[0]).toMatchObject({ action: 4, index: 0 }) // SELECT_SPELL_SET
   })
@@ -95,7 +98,7 @@ test.describe('campo: azioni legali', () => {
   test('menu contestuale con tutte le azioni (clic destro)', async ({ page }) => {
     await open(page, 'scenario=flow')
     await page.locator('[data-card="u6"]').click({ button: 'right' })
-    await expect(page.getByRole('menuitem')).toHaveCount(2)
+    await expect(page.getByRole('menuitem')).toHaveCount(3) // 2 azioni legali + scheda carta
   })
 
   test('Extra Deck: si trascina dalla pila, le azioni legali scelgono la carta', async ({ page }) => {
@@ -163,32 +166,34 @@ test.describe('richieste', () => {
 
   test('selezione sul campo: conferma da tastiera', async ({ page }) => {
     await open(page, 'req=cardsField')
-    await page.locator('.tpick-hit').first().click()
+    await page.locator('[data-card][data-pick="cand"]').first().click()
     await page.keyboard.press('Control+Enter')
     await expect.poll(() => answers(page).then((a) => a.length)).toBe(1)
     expect((await answers(page))[0]).toMatchObject({ indicies: [0] })
   })
 
-  test('griglia: obbligatoria, senza Annulla, con ricerca', async ({ page }) => {
+  test('fascia: candidati fuori dal campo, obbligatoria, senza Annulla, il campo resta visibile', async ({ page }) => {
     await open(page, 'req=cardsGrid')
-    await expect(page.getByTestId('choice-cancel')).toHaveCount(0)
-    await expect(page.getByTestId('choice-confirm')).toBeDisabled()
-    await page.getByTestId('tile-4').click()
-    await expect(page.getByTestId('choice-counter')).toHaveText('1 / 1')
-    await page.getByTestId('choice-confirm').click()
+    await expect(page.getByTestId('pick-band')).toBeVisible()
+    await expect(page.getByTestId('pick-cancel')).toHaveCount(0)
+    await expect(page.getByTestId('pick-confirm')).toBeDisabled()
+    await expect(page.locator('[data-zone]').first()).toBeVisible()
+    await expect(page.getByTestId('pick-count')).toContainText('0/1')
+    await page.locator('[data-testid^="band-"].fp-tile').nth(4).click() // una sola scelta: il tocco conferma
     expect((await answers(page))[0]).toMatchObject({ indicies: [4] })
   })
 
-  test('somma: totale parziale e conferma solo a 8', async ({ page }) => {
+  test('somma: totale parziale live e conferma solo a 8', async ({ page }) => {
     await open(page, 'req=sum')
-    await expect(page.getByTestId('sum-total')).toContainText('4 su 8')
-    await expect(page.getByTestId('sum-confirm')).toBeDisabled()
-    await page.getByTestId('tile-2').click() // valore 7: supera
-    await expect(page.getByTestId('sum-confirm')).toBeDisabled()
-    await page.getByTestId('tile-2').click()
-    await page.getByTestId('tile-1').click() // valore 4: 4 + 4
-    await expect(page.getByTestId('sum-total')).toContainText('8 su 8')
-    await page.getByTestId('sum-confirm').click()
+    await expect(page.getByTestId('pick-count')).toContainText('4/8')
+    await expect(page.getByTestId('pick-confirm')).toBeDisabled()
+    const card = (uid: string) => page.locator(`[data-card="${uid}"]`)
+    await card('u5').click() // valore 7: supera
+    await expect(page.getByTestId('pick-confirm')).toBeDisabled()
+    await card('u5').click()
+    await card('u1').click() // valore 4: 4 + 4
+    await expect(page.getByTestId('pick-count')).toContainText('8/8')
+    await page.getByTestId('pick-confirm').click()
     expect((await answers(page))[0]).toMatchObject({ indicies: [1] })
   })
 
@@ -207,9 +212,10 @@ test.describe('richieste', () => {
   test('zone: due zone e conferma', async ({ page }) => {
     await open(page, 'req=place2')
     await page.locator('[data-zone="z:0:mzone:0"]').click()
-    await expect(page.getByTestId('place-confirm')).toBeDisabled()
+    const bar = page.getByTestId('place-banner')
+    await expect(bar.getByTestId('pick-confirm')).toBeDisabled()
     await page.locator('[data-zone="z:0:mzone:3"]').click()
-    await page.getByTestId('place-confirm').click()
+    await bar.getByTestId('pick-confirm').click()
     const a = (await answers(page))[0] as { places: { sequence: number }[] }
     expect(a.places.map((p) => p.sequence).sort()).toEqual([0, 3])
   })
@@ -234,10 +240,13 @@ test.describe('richieste', () => {
     const before = await page.getByTestId('seed').textContent()
     await page.getByTestId('reshuffle').click()
     await expect(page.getByTestId('seed')).not.toHaveText(before!)
+    // turno e dimensione della mano stanno nel foglio "Mano e turno" (la fascia sotto il campo resta compatta)
+    await page.getByTestId('hand-edit-btn').click()
     await page.getByRole('radio', { name: 'Secondo' }).click()
     await expect(page.getByTestId('second-note')).toBeVisible()
     await page.getByRole('button', { name: 'Carte in mano +' }).click()
     await expect(page.getByTestId('hand-size')).toContainText('7')
+    await page.getByTestId('start-sheet-done').click()
     await page.getByTestId('start-duel').click()
     await page.getByTestId('auto-board').waitFor()
     const started = await page.evaluate(() => (window as unknown as { __fake: { started: { setup: { first: boolean } }[] } }).__fake.started)

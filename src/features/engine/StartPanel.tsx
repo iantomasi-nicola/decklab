@@ -117,7 +117,7 @@ export function StartPanel({ doc, onClose }: { doc: ComboDoc; onClose?: (() => v
   }
   const hasManual = doc.steps.length > 0 && doc.meta.source !== 'engine'
   const previewCodes = preview.hand ?? [...dh.value.codes]
-  const summary = mode === 'exact' ? tc('combos.hand.sum.exact', { count: required.length }) : mode === 'mixed' ? tc('combos.hand.sum.mixed', { n: required.length, f: Math.max(0, total - required.length), size: total }) : tc('combos.hand.sum.random', { size: total })
+  const summary = mode === 'exact' ? tc('combos.hand.short.exact', { count: required.length }) : mode === 'mixed' ? tc('combos.hand.short.mixed', { n: required.length, f: Math.max(0, total - required.length) }) : tc('combos.hand.short.random', { size: total })
   const turnLabel = doc.setup.first ? t('start.first') : t('start.second')
 
   const sheetBody = (
@@ -157,28 +157,30 @@ export function StartPanel({ doc, onClose }: { doc: ComboDoc; onClose?: (() => v
 
   return (
     <section aria-label={t('start.title')} className="shrink-0 rounded-lg border border-line bg-surface-1 p-2 shadow-2" data-testid="start-panel">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
-        <button type="button" onClick={() => setSheet(true)} className="flex min-h-11 min-w-0 cursor-pointer flex-col items-start gap-1 rounded-md text-left" aria-label={t('start.edit')} data-testid="hand-edit">
-          <span className="flex items-start gap-1.5" data-testid="hand-preview" aria-hidden>
-            {previewCodes.map((c, i) => (
-              <span key={`${c}-${i}`} data-code={c} className={cn('relative block w-8 shrink-0 rounded-[5px] sm:w-9', i < required.length ? 'ring-2 ring-accent-text' : 'opacity-80 outline-dashed outline-2 -outline-offset-2 outline-line-strong')}>
-                <CardFace code={c} name={nameOf(c)} />
-              </span>
-            ))}
-            {previewCodes.length === 0 ? <span className="grid h-[46px] place-items-center text-sm text-muted">{preview.failed ? tc('combos.hand.previewError') : '…'}</span> : null}
-          </span>
-          <span className="max-w-full truncate text-sm text-muted" data-testid="hand-line">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+        <div className="max-sm:contents sm:flex sm:min-w-0 sm:flex-col sm:gap-1">
+          <button type="button" onClick={() => setSheet(true)} className="flex min-h-11 min-w-0 cursor-pointer items-center justify-self-start rounded-md text-left" aria-label={t('start.edit')} data-testid="hand-edit">
+            <span className="flex items-start gap-1.5" data-testid="hand-preview" aria-hidden>
+              {previewCodes.map((c, i) => (
+                <span key={`${c}-${i}`} data-code={c} className={cn('relative block w-8 shrink-0 rounded-[5px] sm:w-9', i < required.length ? 'ring-2 ring-accent-text' : 'opacity-80 outline-dashed outline-2 -outline-offset-2 outline-line-strong')}>
+                  <CardFace code={c} name={nameOf(c)} />
+                </span>
+              ))}
+              {previewCodes.length === 0 ? <span className="grid h-[46px] place-items-center text-sm text-muted">{preview.failed ? tc('combos.hand.previewError') : '…'}</span> : null}
+            </span>
+          </button>
+          <p className="min-w-0 truncate text-sm text-muted max-sm:row-start-2 max-sm:min-h-11 max-sm:content-center" data-testid="hand-line">
             {turnLabel} · {summary}
-            <span className="max-sm:hidden"> · <span data-testid="seed">{t('start.shuffle', { seed: effSeed })}</span></span>
-          </span>
-        </button>
+            <span className="max-lg:hidden"> · <span data-testid="seed">{t('start.shuffle', { seed: effSeed })}</span></span>
+          </p>
+        </div>
 
         <button type="button" className="eng-btn sm:order-3" data-primary="true" disabled={empty || loading} onClick={() => begin(false)} data-testid="start-duel">
           <Play aria-hidden size={18} />
           {t('start.begin')}
         </button>
 
-        <div className="col-span-2 flex items-center justify-end gap-2 sm:order-2 sm:col-span-1">
+        <div className="flex items-center justify-end gap-2 max-sm:row-start-2 sm:order-2">
           {saved ? (
             <button type="button" className={btn} aria-pressed={useSavedOrder} onClick={repeatLast} data-testid="repeat-last" aria-label={t('start.repeatLast')} title={t('start.repeatLastHint')}>
               <History aria-hidden size={18} />
