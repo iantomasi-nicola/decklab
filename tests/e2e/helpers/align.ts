@@ -31,7 +31,7 @@ export async function alignmentIssues(page: Page): Promise<string[]> {
       })
     })
     // pulsanti, tab, chip, badge: testo tagliato
-    document.querySelectorAll('button, [role="tab"], [data-slot="badge"], a').forEach((el) => {
+    document.querySelectorAll('button, [role="tab"], [data-slot="badge"], a:not(.sr-only)').forEach((el) => {
       if (!vis(el)) return
       if (el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflowX !== 'visible' && getComputedStyle(el).overflowX !== 'auto' && getComputedStyle(el).overflowX !== 'scroll') bad.push(`testo tagliato: ${desc(el)}`)
     })

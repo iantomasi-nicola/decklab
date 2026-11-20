@@ -191,3 +191,40 @@ test('editor 375×667: le zone Mostri/Magie-Trappole hanno carta ≥ 42 px di la
   expect((own.m!.h * 59) / 86).toBeGreaterThanOrEqual(41.5)
   expect((own.t!.h * 59) / 86).toBeGreaterThanOrEqual(41.5)
 })
+
+// Pannelli dell'editor combo (Passi/Setup/Info/Pile): allineamento + screenshot a piena risoluzione del viewport.
+for (const theme of themes) {
+  for (const lang of langs) {
+    test(`pannelli editor ${theme} ${lang}`, async ({ page }) => {
+      await page.addInitScript(([th, lg]) => {
+        try {
+          localStorage.setItem('combolab.theme', th!)
+          localStorage.setItem('combolab.lang', lg!)
+        } catch { /* */ }
+      }, [theme, lang])
+      await page.setViewportSize({ width: 1024, height: 768 })
+      const seeded = await seedAll(page)
+      const found: Record<string, string[]> = {}
+      for (const w of WIDTHS) {
+        await page.setViewportSize({ width: w, height: HEIGHTS[w]! })
+        await page.goto(`/combo/${seeded.comboId}`)
+        await page.waitForSelector('[data-field]')
+        await page.waitForTimeout(500)
+        const tabs = page.getByRole('tab')
+        const n = await tabs.count()
+        for (let i = 0; i < n; i++) {
+          const tab = tabs.nth(i)
+          if (!(await tab.isVisible())) continue
+          const label = ((await tab.textContent()) ?? `t${i}`).trim().replace(/\W+/g, '_')
+          await tab.click()
+          await page.waitForTimeout(300)
+          await page.screenshot({ path: `${OUT}/panel-${label}-${w}-${theme}-${lang}.png` })
+          const a = await alignmentIssues(page)
+          if (a.length) found[`${label}@${w}`] = a
+        }
+      }
+      writeFileSync(`${OUT}/issues/panels-${theme}-${lang}.json`, JSON.stringify(found, null, 1))
+      expect(found, 'difetti di allineamento nei pannelli').toEqual({})
+    })
+  }
+}

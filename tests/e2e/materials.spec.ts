@@ -32,10 +32,10 @@ test.skip(!have, 'cache degli script non presente')
 test('REPRO Link: Extra -> materiali', async ({ page }) => {
   test.setTimeout(120_000)
   await serveScripts(page)
-  const main = [...times('Gagaga Magician', 3), ...times('Wind-Up Soldier', 3), ...FILL]
+  const main = [...times('Gagaga Magician', 3), ...times('Wind-Up Soldier', 3), ...times('Elemental HERO Stratos', 2), ...FILL]
   const extra = [code('Knightmare Phoenix'), code('Decode Talker'), code('Link Spider')]
   const id = await seedCombo(page, {
-    cards: { u1: code('Gagaga Magician'), u2: code('Wind-Up Soldier'), u3: code('Gagaga Magician') },
+    cards: { u1: code('Gagaga Magician'), u2: code('Wind-Up Soldier'), u3: code('Elemental HERO Stratos') },
     own: [
       { uid: 'u1', place: { loc: 'mzone', seq: 1, pos: 'FACEUP_ATK' } },
       { uid: 'u2', place: { loc: 'mzone', seq: 2, pos: 'FACEUP_ATK' } },
@@ -60,18 +60,14 @@ test('REPRO Link: Extra -> materiali', async ({ page }) => {
   console.log('pending after extra tap', await pending(page))
   const info = await page.evaluate(async () => {
     const A = await import(/* @vite-ignore */ '/src/engine/answers.ts')
-    const d = (window as unknown as { __duel: { getState(): { state: { pending: any } | null; respond(a: unknown): Promise<boolean> } } }).__duel.getState()
-    const idle = d.state!.pending
-    const lst = idle.specialSummons.map((o: any) => ({ index: o.index, code: o.code, loc: o.place.loc }))
-    const out: unknown[] = [lst]
-    for (const o of idle.specialSummons) {
-      const st = (window as unknown as { __duel: { getState(): { state: { pending: any } | null; respond(a: unknown): Promise<boolean>; undo(): Promise<void> } } }).__duel.getState()
-      await st.respond(A.answerIdle('specialSummon', o.index))
-      const p2 = (window as unknown as { __duel: { getState(): { state: { pending: any } | null } } }).__duel.getState().state?.pending
-      out.push({ code: o.code, kind: p2?.kind, min: p2?.min, max: p2?.max, canFinish: p2?.canFinish, canCancel: p2?.canCancel, sel: p2?.selectable?.map((x: any) => x.uid), n: p2?.options?.map((x: any) => x.uid) })
-      await page_undo()
+    const D = (window as any).__duel
+    const out: unknown[] = []
+    for (const index of [0, 1]) {
+      await D.getState().respond(A.answerIdle('specialSummon', index))
+      const p = D.getState().state.pending
+      out.push({ index, kind: p.kind, min: p.min, max: p.max, canFinish: p.canFinish, canCancel: p.canCancel, sel: p.selectable?.map((x: any) => x.uid), opts: p.options?.map((x: any) => x.uid), selected: p.selected?.map((x: any) => x.uid) })
+      await D.getState().undo()
     }
-    async function page_undo() { await (window as unknown as { __duel: { getState(): { undo(): Promise<void> } } }).__duel.getState().undo() }
     return out
   })
   console.log(JSON.stringify(info))

@@ -26,7 +26,7 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
       value={value}
       aria-label={label}
       onValueChange={(v) => v && onValueChange(v as T)}
-      className={cn('grid max-w-full auto-cols-[minmax(0,1fr)] grid-flow-col gap-1 rounded-md border border-line bg-surface-2 p-0.5', fill ? 'w-full' : 'w-fit', className)}
+      className={cn('grid max-w-full auto-cols-fr grid-flow-col gap-1 rounded-md border border-line bg-surface-2 p-0.5', fill ? 'w-full' : 'w-fit', className)}
     >
       {options.map((o) => (
         <TG.Item
@@ -36,8 +36,8 @@ export function Segmented<T extends string>({ value, onValueChange, options, lab
             'inline-flex min-h-11 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-sm px-3 py-1 text-center text-[15px] font-medium leading-tight text-muted transition-colors duration-150 hover:text-fg data-[state=on]:bg-accent data-[state=on]:text-accent-fg',
           )}
         >
-          {o.icon ? <span aria-hidden className="inline-flex">{o.icon}</span> : null}
-          <span className="min-w-0 break-words">{o.label}</span>
+          {o.icon ? <span aria-hidden className="inline-flex max-[420px]:hidden">{o.icon}</span> : null}
+          <span className="min-w-0">{o.label}</span>
         </TG.Item>
       ))}
     </TG.Root>
