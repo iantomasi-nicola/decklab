@@ -27,7 +27,7 @@ export function PickBar({ title, count, ok, warn, noConfirm, onConfirm, onCancel
         <p className="fp-count" data-ok={ok || undefined} data-warn={warn || undefined} role="status" aria-live="polite" data-testid="pick-count">{count}</p>
       </div>
       {onUndo ? (
-        <button type="button" className="fp-btn" data-icon="true" disabled={!canUndo} onClick={onUndo} aria-label={t('bar.undo')} title={t('bar.undo')} data-testid="pick-undo">
+        <button type="button" className="fp-btn" data-icon="true" data-undo="true" disabled={!canUndo} onClick={onUndo} aria-label={t('bar.undo')} title={t('bar.undo')} data-testid="pick-undo">
           <Undo2 aria-hidden size={20} />
         </button>
       ) : null}

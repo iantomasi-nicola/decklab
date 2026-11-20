@@ -1,6 +1,6 @@
 /* Selezione sul campo: barra sottile, fascia (vassoio) e scheda carta in flusso (sotto il campo); anelli sul Field. Solo transform/opacity animati. */
 .fp-bar {
-  flex: none; display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px; box-sizing: border-box;
+  flex: none; width: 100%; max-width: 720px; margin-inline: auto; display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px; box-sizing: border-box;
   background: var(--surface-1); border: 1px solid var(--accent-text); border-radius: 12px; box-shadow: var(--shadow-1);
 }
 .fp-info { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -19,17 +19,17 @@
 .fp-btn[data-primary='true'] { background: var(--accent); border-color: transparent; color: var(--accent-fg); }
 .fp-btn[data-primary='true']:hover:not(:disabled) { background: var(--accent-hover); }
 .fp-btn[data-icon='true'] { min-width: 48px; width: 48px; padding: 0; }
-@media (max-width: 420px) { .fp-btn { min-width: 72px; padding: 0 12px; font-size: 15px; } .fp-btn[data-icon='true'] { min-width: 48px; padding: 0; } }
+@media (max-width: 420px) { .fp-btn[data-undo='true'] { display: none; } .fp-btn { min-width: 72px; padding: 0 12px; font-size: 15px; } .fp-btn[data-icon='true'] { min-width: 48px; padding: 0; } }
 
 /* fascia (vassoio) ridimensionabile */
-.fp-band { flex: none; display: flex; flex-direction: column; min-height: 0; box-sizing: border-box; background: var(--surface-1); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-1); overflow: hidden; }
+.fp-band { flex: none; width: 100%; max-width: 720px; margin-inline: auto; display: flex; flex-direction: column; min-height: 0; box-sizing: border-box; background: var(--surface-1); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-1); overflow: hidden; }
 .fp-grip { flex: none; display: grid; place-items: center; height: 16px; cursor: ns-resize; touch-action: none; outline: none; }
 .fp-grip::before { content: ''; width: 40px; height: 4px; border-radius: 4px; background: var(--border-strong); }
 .fp-grip:focus-visible::before { background: var(--accent-text); }
 .fp-band-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 4px 12px; min-height: 44px; }
 .fp-band-title { flex: 1 1 0; min-width: 0; margin: 0; font-size: 15px; font-weight: 600; line-height: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
 .fp-band-sub { color: var(--fg-muted); font-weight: 500; font-size: 13px; }
-.fp-search { flex: 0 1 160px; min-width: 96px; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--fg); font-size: 14px; }
+.fp-search { flex: 0 1 160px; min-width: 96px; height: 44px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--fg); font-size: 14px; }
 .fp-icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; border: 0; background: transparent; color: var(--fg-muted); cursor: pointer; }
 .fp-icon:hover { background: var(--surface-3); color: var(--fg); }
 .fp-list { flex: 1 1 auto; min-height: 0; margin: 0; padding: 4px 12px 8px; list-style: none; display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: thin; }
@@ -49,7 +49,7 @@
 .fp-empty { margin: 0; padding: 16px; text-align: center; color: var(--fg-muted); width: 100%; }
 
 /* scheda carta compatta (pressione lunga) */
-.fp-info-strip { flex: none; display: flex; gap: 12px; align-items: flex-start; padding: 8px; box-sizing: border-box; max-height: 168px; background: var(--surface-1); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-1); }
+.fp-info-strip { flex: none; width: 100%; max-width: 720px; margin-inline: auto; display: flex; gap: 12px; align-items: flex-start; padding: 8px; box-sizing: border-box; max-height: 168px; background: var(--surface-1); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: var(--shadow-1); }
 .fp-info-art { flex: none; width: 64px; }
 .fp-info-body { flex: 1 1 0; min-width: 0; align-self: stretch; display: flex; flex-direction: column; gap: 2px; }
 .fp-info-name { margin: 0; font-size: 15px; font-weight: 700; line-height: 20px; color: var(--fg); }
