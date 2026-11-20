@@ -54,9 +54,9 @@ function pairs(name: string, drag: Drag, kbd = false) {
       await chooseMenu(page, 'tributeSummon')
       const bar = page.getByTestId('pick-bar')
       await expect(bar).toBeVisible()
-      await expect(bar.getByTestId('pick-count')).toContainText('0/')
-      await page.locator('[data-card][data-pick="cand"]').locator('xpath=self::*[@aria-label[contains(.,"Reborn Tengu")]]').click()
-      await page.locator('[data-card][data-pick="cand"]').locator('xpath=self::*[@aria-label[contains(.,"Magi Magi")]]').click()
+      // esattamente due candidati per due tributi: già scelti (auto-selezione), basta Conferma
+      await expect(bar.getByTestId('pick-count')).toContainText('2/2')
+      await expect(page.locator('[data-card][data-pick="chosen"]')).toHaveCount(2)
       await bar.getByTestId('pick-confirm').click()
       const s = await last(page)
       expect(s).toMatchObject({ action: 'tributeSummon', card: 'u2' })

@@ -8,11 +8,13 @@ const LANGS = ['it', 'en'] as const
 const OUT = process.env.SHOTS_DIR ?? 'test-results/visual-engine'
 mkdirSync(OUT, { recursive: true })
 const URL = '/tests/harness/engine.html'
+/** richieste di scelta di carte: si risponde sul campo con la barra sottile (e la fascia per le carte fuori dal campo) */
+const PICKS = new Set(['cardsField', 'cardsGrid', 'tribute', 'unselect', 'sum'])
 
 /** [chiave di esempio, test id del pannello (assente = si risponde sul campo / overlay)] */
 const REQS: [string, string | null][] = [
   ['idle', null], ['battle', null], ['chain', 'req-chain'], ['chainEmpty', 'req-chain'], ['effectYn', 'req-yesno'], ['yesNo', 'req-yesno'],
-  ['option', 'req-option'], ['cardsField', null], ['cardsGrid', 'req-cards'], ['tribute', 'req-cards'], ['unselect', 'req-unselect'], ['sum', 'req-sum'],
+  ['option', 'req-option'], ['cardsField', null], ['cardsGrid', null], ['tribute', null], ['unselect', null], ['sum', null],
   ['counter', 'req-counter'], ['place', null], ['place2', null], ['position', 'req-position'], ['sort', 'req-sort'], ['race', 'req-race'],
   ['attribute', 'req-attr'], ['number', 'req-number'], ['announceCard', 'req-announce-card'], ['rps', 'req-rps'],
 ]
@@ -37,7 +39,8 @@ async function checks(page: Page, scope: string) {
       if (cs.display === 'none' || cs.visibility === 'hidden') continue
       const b = el.getBoundingClientRect()
       if (b.width <= 1 || b.height <= 1) continue
-      if (b.right > vw + 1 || b.left < -1) out.bad.push(`${el.tagName}.${(el.getAttribute('class') ?? '').slice(0, 30)} ${Math.round(b.left)}-${Math.round(b.right)}`)
+      // la fascia scorre in orizzontale: le carte fuori dallo schermo sono dentro un contenitore che scorre
+      if ((b.right > vw + 1 || b.left < -1) && !el.closest('.fp-list')) out.bad.push(`${el.tagName}.${(el.getAttribute('class') ?? '').slice(0, 30)} ${Math.round(b.left)}-${Math.round(b.right)}`)
       if (el.matches('button, input') && !el.closest('.sr-only') && !el.matches('[data-card] *') && (b.height < 43.5 || b.width < 43.5)) out.small.push(`${el.tagName} ${(el.textContent ?? '').trim().slice(0, 18)} ${Math.round(b.width)}x${Math.round(b.height)}`)
     }
     for (const el of roots.flatMap((r) => [...r.querySelectorAll('.eng-btn, .eng-pill, .eng-act, h2, .eng-row > span')])) {
@@ -62,11 +65,20 @@ for (const width of WIDTHS) {
             await page.goto(`${URL}?req=${key}`)
             await page.getByTestId('auto-board').waitFor()
             if (id) await page.getByTestId(id).waitFor()
-            else if (key.startsWith('cards')) await page.locator('.tpick-actions, [data-testid=req-cards]').first().waitFor()
+            else if (PICKS.has(key)) await page.getByTestId('pick-bar').waitFor()
             else if (key.startsWith('place')) await page.getByTestId('place-banner').waitFor()
             await page.waitForTimeout(350)
             await page.screenshot({ path: `${OUT}/${key}-${width}-${theme}-${lang}.png` })
-            await checks(page, id ? '[data-engine-sheet]' : '.eng-sel-bar, [data-testid=auto-dock], .tpick-head, .tpick-actions')
+            await checks(page, id ? '[data-engine-sheet]' : '.fp-bar, .fp-band')
+            if (PICKS.has(key)) {
+              // la barra e la fascia stanno SOTTO il campo (in flusso): non lo coprono mai
+              const r = await page.evaluate(() => {
+                const f = document.querySelector('.cl-field')!.getBoundingClientRect()
+                return { fb: f.bottom, ft: f.top, others: [...document.querySelectorAll('.fp-bar, .fp-band')].map((e) => e.getBoundingClientRect().top), cands: document.querySelectorAll('[data-pick="cand"], [data-pick="chosen"], .fp-tile[data-state="cand"]').length }
+              })
+              for (const top of r.others) expect(top, 'la barra/fascia non copre il campo').toBeGreaterThanOrEqual(r.fb - 1)
+              expect(r.cands, 'candidati evidenziati').toBeGreaterThan(0)
+            }
             if (id) {
               const box = await page.getByTestId(id).boundingBox()
               expect(box!.y, 'pannello dentro il viewport').toBeGreaterThanOrEqual(0)
